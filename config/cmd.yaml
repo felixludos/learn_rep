@@ -1,0 +1,6 @@
+#name: 'test-cmd'
+
+inline: True
+
+#dataset:
+#  device: cpu

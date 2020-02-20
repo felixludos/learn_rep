@@ -1,0 +1,15 @@
+parents: ['model']
+
+inline: True
+
+training:
+  step_limit: 50000
+
+dataset:
+  batch_size: 128
+
+#dataset.kwargs.download = true
+
+#resume = 'test-pycharm_191121-154737'
+#
+#extend = 7
