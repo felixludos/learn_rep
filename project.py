@@ -35,7 +35,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		criterion = A.pull('criterion', 'bce') # {'_type':'criterion', 'name':'bce', 'kwargs':{'reduction':'sum'}}
 
 		reg_wt = A.pull('reg_wt', 0)
-		reg = A.pull('regularization', 'L2')
+		reg = A.pull('reg', 'L2')
 
 		viz_gen = A.pull('viz_gen', False)
 
@@ -175,6 +175,11 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		B = q.size(0)
 		mag = self.reg_fn(q)
 		return mag / B
+
+@fd.Component('vae')
+def VAE(AutoEncoder):
+	def __init__()
+
 
 @fd.AutoComponent('regularization')
 def get_regularization(name, p=2, dim=1, reduction='mean', **kwargs):
