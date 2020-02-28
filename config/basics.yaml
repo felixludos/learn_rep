@@ -44,8 +44,6 @@ model:
 
     criterion: 'bce'
 
-    latent_reg_wt: 0
-
     encoder:
       _type: 'dislib-enc'
 

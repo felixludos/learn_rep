@@ -1,0 +1,12 @@
+parents: ['basics']
+
+model:
+  _type: 'vae'
+
+  reg_wt: 1
+
+  encoder:
+    _mod: 'normal'
+
+info:
+  model_type: 'vae'

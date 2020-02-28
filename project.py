@@ -129,7 +129,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		out.loss = loss
 
 		if self.train_me():
-			self._q = q.detach()
+			self._q = q.loc.detach() if isinstance(q, distrib.Normal) else q.detach()
 
 			self.optim.zero_grad()
 			loss.backward()
@@ -175,10 +175,26 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		B = q.size(0)
 		mag = self.reg_fn(q)
 		return mag / B
-#
-# @fd.Component('vae')
-# def VAE(AutoEncoder):
-# 	def __init__()
+
+@fd.Component('vae')
+class VAE(AutoEncoder):
+	def __init__(self, A):
+
+		assert 'reg_wt' in A and A.reg_wt > 0, 'not a vae without regularization'
+
+		A.reg = None
+
+		super().__init__(A)
+
+		assert isinstance(self.enc, models.Normal), 'encoder must output a normal distrib'
+
+	def regularize(self, q):
+		return util.standard_kl(q).sum().div(q.loc.size(0))
+
+	def decode(self, q):
+		if isinstance(q, distrib.Distribution):
+			q = q.rsample()
+		return super().decode(q)
 
 
 @fd.AutoComponent('regularization')
@@ -194,7 +210,8 @@ def get_regularization(name, p=2, dim=1, reduction='mean', **kwargs):
 	elif name == 'Lp':
 		return util.Lp_Norm(p=p, dim=dim, reduction=reduction)
 	else:
-		raise Exception(f'unknown: {name}')
+		print(f'Unknown reg: {name}')
+		# raise Exception(f'unknown: {name}')
 
 
 
