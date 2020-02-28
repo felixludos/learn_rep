@@ -175,10 +175,10 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		B = q.size(0)
 		mag = self.reg_fn(q)
 		return mag / B
-
-@fd.Component('vae')
-def VAE(AutoEncoder):
-	def __init__()
+#
+# @fd.Component('vae')
+# def VAE(AutoEncoder):
+# 	def __init__()
 
 
 @fd.AutoComponent('regularization')
