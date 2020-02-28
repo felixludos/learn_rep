@@ -1,0 +1,19 @@
+parents: ['basics']
+
+output:
+    print_freq: 200
+
+training:
+    step_limit: 200000
+
+dataset:
+    name: 'celeba'
+
+    batch_size: 32
+
+    val_split: 0.1
+
+info:
+    dataset_type: 'celeba'
+
+

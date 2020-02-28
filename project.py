@@ -35,6 +35,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		criterion = A.pull('criterion', 'bce') # {'_type':'criterion', 'name':'bce', 'kwargs':{'reduction':'sum'}}
 
 		reg_wt = A.pull('reg_wt', 0)
+		reg = A.pull('regularization', 'L2')
 
 		viz_gen = A.pull('viz_gen', False)
 
@@ -45,8 +46,9 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 
 		self.criterion = util.get_loss_type(criterion, reduction='sum')
 		self.reg_wt = reg_wt
-
-		self.stats.new('reg')
+		self.reg_fn = get_regularization(reg, reduction='sum')
+		if self.reg_wt > 0:
+			self.stats.new('reg')
 
 		self.set_optim()
 		self.set_scheduler()
@@ -107,7 +109,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		x = batch[0]
 		B = x.size(0)
 
-		out.x = x
+		out.original = x
 
 		rec, q = self(x, ret_q=True)
 		out.latent = q
@@ -120,6 +122,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 
 		if self.reg_wt > 0:
 			reg_loss = self.regularize(q)
+			self.stats.update('reg', reg_loss)
 			out.reg_loss = reg_loss
 			loss += self.reg_wt * reg_loss
 
@@ -168,8 +171,142 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 			return rec, q
 		return rec
 
-	def regularize(self, q, p=None): # simple L2 regularization
-		return q.pow(2).sum().div(q.size(0))
+	def regularize(self, q):
+		B = q.size(0)
+		mag = self.reg_fn(q)
+		return mag / B
+
+@fd.AutoComponent('regularization')
+def get_regularization(name, p=2, dim=1, reduction='mean', **kwargs):
+
+	if not isinstance(name, str):
+		return name
+
+	if name == 'L2' or name =='l2':
+		return util.Lp_Norm(p=2, dim=dim, reduction=reduction)
+	elif name == 'L1' or name == 'l1':
+		return util.Lp_Norm(p=1, dim=dim, reduction=reduction)
+	elif name == 'Lp':
+		return util.Lp_Norm(p=p, dim=dim, reduction=reduction)
+	else:
+		raise Exception(f'unknown: {name}')
+
+
+
+
+@fd.Component('dislib-enc')
+class Disentanglement_lib_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
+	def __init__(self, A):
+
+		in_shape = A.pull('in_shape', '<>din')
+		latent_dim = A.pull('latent_dim', '<>dout')
+
+		nonlin = A.pull('nonlin', 'relu')
+
+		C, H, W = in_shape
+
+		assert (H,W) in {(64,64), (128,128)}, f'not a valid input size: {(H,W)}'
+
+		net_type = A.pull('net_type', 'conv')
+
+		assert net_type in {'conv', 'fc'}, f'unknown type: {net_type}'
+
+		super().__init__(din=in_shape, dout=latent_dim)
+
+		if net_type == 'conv':
+
+			channels = [32,32,32,64,64]
+			kernels = [4,4,4,2,2]
+			strides = [2,2,2,2,2]
+
+			if H == 64:
+				channels = channels[1:]
+				kernels = kernels[1:]
+				strides = strides[1:]
+
+			shapes, settings = models.plan_conv(in_shape, channels=channels, kernels=kernels, strides=strides)
+
+			out_shape = shapes[-1]
+
+			self.conv = nn.Sequential(*models.build_conv_layers(settings, nonlin=nonlin, out_nonlin=nonlin,
+			                                                   pool_type=None, norm_type=None))
+
+			self.net = models.make_MLP(out_shape, latent_dim, hidden_dims=[256,], nonlin=nonlin)
+
+		else:
+
+			self.net = models.make_MLP(in_shape, latent_dim, hidden_dims=[1200, 1200], nonlin=nonlin)
+
+		self.uses_conv = net_type == 'conv'
+
+		self.set_optim(A)
+		self.set_scheduler(A)
+
+	def forward(self, x):
+		c = self.conv(x) if self.uses_conv else x
+		q = self.net(c)
+		return q
+
+	def encode(self, x):
+		return self(x)
+
+
+@fd.Component('dislib-dec')
+class Disentanglement_lib_Decoder(fd.Decodable, fd.Schedulable, fd.Model):
+	def __init__(self, A):
+
+		latent_dim = A.pull('latent_dim', '<>din')
+		out_shape = A.pull('out_shape', '<>dout')
+
+		nonlin = A.pull('nonlin', 'relu')
+
+		C, H, W = out_shape
+
+		assert (H, W) in {(64, 64), (128, 128)}, f'not a valid output size: {(H, W)}'
+
+		net_type = A.pull('net_type', 'conv')
+
+		assert net_type in {'conv', 'fc'}, f'unknown type: {net_type}'
+
+		super().__init__(din=latent_dim, dout=out_shape)
+
+		if net_type == 'conv':
+
+			channels = [64, 64, 32, 32, 32]
+			kernels = [4, 4, 4, 4, 4]
+			strides = [2, 2, 2, 2, 2]
+
+			if H == 64:
+				channels = channels[:-1]
+				kernels = kernels[:-1]
+				strides = strides[:-1]
+
+			shapes, settings = models.plan_deconv(out_shape, channels=channels, kernels=kernels, strides=strides)
+
+			in_shape = shapes[0]
+
+			self.net = models.make_MLP(latent_dim, in_shape, hidden_dims=[256], nonlin=nonlin, )
+
+			self.deconv = nn.Sequential(*models.build_deconv_layers(settings, sizes=shapes[:-1],
+			                                                        nonlin=nonlin, out_nonlin='sigmoid',
+			                                                        norm_type=None))
+
+		else:
+
+			self.net = models.make_MLP(latent_dim, out_shape, hidden_dims=[1200,1200,1200], nonlin=nonlin)
+
+		self.uses_conv = net_type == 'conv'
+
+		self.set_optim(A)
+		self.set_scheduler(A)
+
+	def forward(self, q):
+		c = self.net(q)
+		x = self.deconv(c) if self.uses_conv else c
+		return x
+
+	def decode(self, q):
+		return self(q)
 
 
 

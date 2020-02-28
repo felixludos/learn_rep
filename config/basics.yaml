@@ -1,0 +1,64 @@
+
+parents: ['base']
+
+device: cuda
+seed: 0
+num_workers: 0
+
+auto_name: True
+
+output:
+  save_freq: 5000
+
+  print_freq: 200
+
+training:
+
+  track_best: True
+
+  no_test: True
+
+  step_limit: 100000
+
+  val_freq: 5000
+
+  time_limit: 2 # hrs
+
+dataset:
+  drop_last: True
+
+model:
+    _type: 'ae'
+
+#    scheduler_type: 'step'
+#    scheduler_step: 20000
+#    scheduler_decay: .2
+#    scheduler_min_lr: 1.e-6
+#    scheduler_patience: 7
+
+#    nonlin: 'elu'
+
+#    viz_gen: True
+
+    latent_dim: 12
+
+    criterion: 'bce'
+
+    latent_reg_wt: 0
+
+    encoder:
+      _type: 'dislib-enc'
+
+    decoder:
+      _type: 'dislib-dec'
+
+    optim_type: 'adam'
+    lr: 1.e-3
+    weight_decay: 0
+    momentum: 0
+    beta1: 0.9
+    beta2: 0.999
+
+info:
+    model_type: 'ae'
+
