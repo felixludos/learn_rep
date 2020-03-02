@@ -13,6 +13,11 @@ import numpy as np
 #%matplotlib tk
 import matplotlib.pyplot as plt
 
+import umap, shap
+import umap.plot
+import gpumap
+from sklearn.decomposition import PCA
+
 import foundation as fd
 from foundation import models
 from foundation import util
@@ -23,6 +28,7 @@ MY_PATH = os.path.dirname(os.path.abspath(__file__))
 
 trn.register_config_dir(os.path.join(MY_PATH, 'config'), recursive=True)
 
+# region Algorithms
 
 @fd.Component('ae')
 class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, fd.Schedulable,
@@ -59,6 +65,11 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		self.viz_gen = viz_gen
 
 	def _visualize(self, info, logger):
+
+		if isinstance(self.enc, fd.Visualizable):
+			self.enc.visualize(info, logger)
+		if isinstance(self.dec, fd.Visualizable):
+			self.dec.visualize(info, logger)
 
 		if self._viz_counter % 2 == 0:
 			if 'latent' in info and info.latent is not None:
@@ -216,6 +227,129 @@ def get_regularization(name, p=2, dim=1, reduction='mean', **kwargs):
 
 
 
+
+# endregion
+
+
+# region Architectures
+
+
+@fd.Component('extraction-enc')
+class UMAP_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
+
+	def __init__(self, A):
+
+		in_shape = A.pull('in_shape', '<>din')
+		latent_dim = A.pull('latent_dim', '<>dout')
+		feature_dim = A.pull('feature_dim', '<>latent_dim')
+
+		transform = A.pull('transform', None)
+
+		alg = A.pull('alg', 'umap')
+
+		kwargs = {
+			'n_components': feature_dim,
+		}
+
+		if alg == 'umap':
+
+			extraction_cls = gpumap.GPUMAP
+
+			kwargs['random_state'] = A.pull('random_state', '<>seed')
+			kwargs['min_dist'] = A.pull('min_dist', 0.1)
+			kwargs['n_neighbors'] = A.pull('neighbors', 15)
+
+		elif alg == 'pca':
+			extraction_cls = PCA
+
+		else:
+			raise Exception(f'unknown alg: {alg}')
+
+		extractor = extraction_cls(**kwargs)
+
+		if 'net' in A:
+			A.net.din = feature_dim
+			A.net.dout = latent_dim
+
+		net = A.pull('net', None)
+
+		training_limit = A.pull('training_limit', None)
+
+		super().__init__(din=in_shape, dout=feature_dim if net is None else latent_dim)
+
+		self.training_limit = training_limit
+
+		self.transformer = transform
+
+		self.alg = alg
+		self.extractor = extractor
+
+		self.net = net
+
+		self.set_optim(A)
+		self.set_scheduler(A)
+
+	def _resize(self, x):
+		N, C, H, W = x.shapes
+
+		if H >= 64:
+			return x[:, :, ::2, ::2].reshape(N, -1)
+		return x.reshape(N, -1)
+
+	def prep(self, traindata, *other):
+
+		samples = traindata.get_raw_data().float()
+
+		if self.training_limit is not None:
+			samples = samples[:self.training_limit]
+
+		samples = self._reformat(samples)
+
+		print(f'Training a {self.alg} feature extractor to extract {self.extractor.n_components} '
+		      f'features from an input {samples.shape}')
+
+
+		# fit estimator
+		self.extractor.fit(samples)
+
+		print('Feature extraction complete')
+
+	def encode(self, x):
+		return self(x)
+
+	def transform(self, x):
+
+		device = x.device
+		x = self._reformat(x)
+
+		q = self.extractor.transform(x)
+		q = torch.from_numpy(q).to(device)
+
+		return q
+
+	def _reformat(self, x):
+		x = x.cpu().numpy()
+
+		if self.transformer is not None:
+			x = self.transformer(x)
+		else:
+			x = self._resize(x)
+
+		return x
+
+	def forward(self, x):
+
+		q = self.transform(x)
+
+		if self.net is None:
+			return q
+		return self.net(q)
+
+
+
+
+
+
 @fd.Component('dislib-enc')
 class Disentanglement_lib_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 	def __init__(self, A):
@@ -330,7 +464,10 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Schedulable, fd.Model):
 	def decode(self, q):
 		return self(q)
 
+# endregion
 
+
+# region Sup-Models
 
 @fd.Component('sup-model')
 class SupModel(fd.Visualizable, fd.Trainable_Model):
@@ -386,6 +523,8 @@ class SupModel(fd.Visualizable, fd.Trainable_Model):
 			self.optim.step()
 
 		return out
+
+# endregion
 
 if __name__ == '__main__':
 	sys.exit(trn.main(argv=sys.argv))
