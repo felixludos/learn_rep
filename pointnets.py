@@ -9,16 +9,10 @@ import torch.nn.functional as F
 import torch.distributions as distrib
 import torch.multiprocessing as mp
 from torch.utils.data import Dataset, DataLoader
-import configargparse
 
 import numpy as np
 #%matplotlib tk
 import matplotlib.pyplot as plt
-
-import umap, shap
-import umap.plot
-import gpumap
-from sklearn.decomposition import PCA
 
 import foundation as fd
 from foundation import models
@@ -331,7 +325,7 @@ class Point_Pool(PointTransform):
 		self.p = p
 
 	def extra_repr(self):
-		return f'fn: {self.fn}'
+		return f'{self.fn}'
 
 	def forward(self, p):
 

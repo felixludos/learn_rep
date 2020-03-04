@@ -25,6 +25,7 @@ from foundation import train as trn
 from foundation import data
 
 import pointnets
+import decoders
 
 MY_PATH = os.path.dirname(os.path.abspath(__file__))
 
