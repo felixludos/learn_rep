@@ -27,11 +27,10 @@ from foundation import train as trn
 from foundation import data
 
 
-@fd.Component('patch-enc')
+@fd.Component('point-enc')
 class PointEncoder(fd.Encodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 	def __init__(self, A):
-
 		in_shape = A.pull('in_shape', '<>din')
 		latent_dim = A.pull('latent_dim', '<>dout')
 
@@ -42,7 +41,7 @@ class PointEncoder(fd.Encodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 		assert 'pointnet' in A, 'pointnet required for this encoder'
 		A.pointnet.pin = transform.pout
-		
+
 		pointnet = A.pull('pointnet')
 
 		super().__init__(in_shape, latent_dim)
@@ -51,7 +50,7 @@ class PointEncoder(fd.Encodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		self.pointnet = pointnet
 
 		self.set_optim(A)
-		self.set_schedule(A)
+		self.set_scheduler(A)
 
 	def _visualize(self, out, logger): # TODO
 		pass
@@ -113,13 +112,13 @@ class Patch_Points(fd.Model):
 
 
 @fd.AutoComponent('1dconv-net')
-def make_pointnet(pin, pout, hidden_dims=[],
+def make_pointnet(pin, pout, hidden=[],
                   nonlin='prelu', output_nonlin=None):
-	nonlins = [nonlin] * len(hidden_dims) + [output_nonlin]
-	hidden_dims = [pin] + hidden_dims + [pout]
+	nonlins = [nonlin] * len(hidden) + [output_nonlin]
+	hidden = [pin] + list(hidden) + [pout]
 
 	layers = []
-	for in_dim, out_dim, nonlin in zip(hidden_dims, hidden_dims[1:], nonlins):
+	for in_dim, out_dim, nonlin in zip(hidden, hidden[1:], nonlins):
 		layers.append(nn.Conv1d(in_dim, out_dim, kernel_size=1))
 		if nonlin is not None:
 			layers.append(util.get_nonlinearity(nonlin))
@@ -130,7 +129,7 @@ def make_pointnet(pin, pout, hidden_dims=[],
 	return net
 
 
-@fd.Component('pointnet')
+@fd.Component('point-net')
 class PointNet(fd.Trainable_Model):
 	def __init__(self, A):
 
@@ -138,9 +137,6 @@ class PointNet(fd.Trainable_Model):
 		dout = A.pull('latent_dim', '<>dout')
 
 		create_module = A.pull('modules')
-
-		final = A.pull('final', None)
-		pool = A.pull('pool', None)
 
 		super().__init__(din=pin, dout=dout)
 
@@ -169,10 +165,20 @@ class PointNet(fd.Trainable_Model):
 		pout = module.pout
 		assert pout is not None, f'last module must have a single output: {module}'
 
-		self.modules = nn.Sequential(*modules)
-		self.pool = pool
+		self.tfms = nn.Sequential(*modules)
 
-		if final is not None:
+		if 'pool' in A:
+			A.pool.pin = pout
+		self.pool = A.pull('pool', None)
+		if self.pool is not None:
+			pout = self.pool.pout
+
+		if 'final' in A:
+			A.final.din = pout
+			A.final.dout = dout
+		final = A.pull('final', None)
+
+		if final is not None: # make sure final will produce the right output
 			assert final.din == pout and final.dout == dout, f'invalid {final.din} v {pout} and {final.dout} v {dout}'
 		elif pout != dout: # by default fix output to correctly sized output using a dense layer
 			final = nn.Linear(pout, dout)
@@ -180,7 +186,7 @@ class PointNet(fd.Trainable_Model):
 
 	def forward(self, pts):
 
-		pts = self.modules(pts)
+		pts = self.tfms(pts)
 
 		B, C, *rest = pts.size()
 		if len(rest):
@@ -248,8 +254,8 @@ class PointSplitter(PointSplit):
 		return p[:,:self.split], p[:,self.split:]
 
 
-@fd.AutoComponent('point-transform')
-class PointSelfTransform(PointTransform):
+@fd.AutoComponent('point-transform-net')
+class PointTransformNet(PointTransform):
 	def __init__(self, net):
 		super().__init__(net.pin, net.pout)
 
@@ -257,6 +263,12 @@ class PointSelfTransform(PointTransform):
 
 	def forward(self, p):
 		return self.net(p)
+
+@fd.AutoComponent('point-self')
+class PointSelfTransform(PointTransformNet):
+	def __init__(self, pin, pout, hidden=[], nonlin='prelu', output_nonlin=None):
+		super().__init__(make_pointnet(pin, pout, hidden=hidden, nonlin=nonlin,
+		                         output_nonlin=output_nonlin))
 
 
 @fd.AutoComponent('point-dual')
@@ -306,6 +318,33 @@ class PointJoiner(PointJoin):
 
 	def forward(self, p1, p2): # TODO make sure shapes work out
 		return torch.cat([p1, p2], dim=1)
+
+
+@fd.AutoComponent('point-pool')
+class Point_Pool(PointTransform):
+	def __init__(self, pin, fn='max', p=2):
+		super().__init__(pin, pin)
+
+		assert fn in {'max', 'avg', 'sum', 'std', 'norm'}, f'unknown pool type: {fn}'
+
+		self.fn = fn
+		self.p = p
+
+	def extra_repr(self):
+		return f'fn: {self.fn}'
+
+	def forward(self, p):
+
+		if self.fn == 'max':
+			return p.max(-1, keepdim=True)[0]
+		if self.fn == 'avg':
+			return p.mean(-1, keepdim=True)
+		if self.fn == 'sum':
+			return p.sum(-1, keepdim=True)
+		if self.fn == 'std':
+			return p.std(-1, keepdim=True)
+		if self.fn == 'norm':
+			return p.norm(p=self.p, dim=-1, keepdim=True)
 
 
 

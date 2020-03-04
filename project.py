@@ -24,6 +24,8 @@ from foundation import util
 from foundation import train as trn
 from foundation import data
 
+import pointnets
+
 MY_PATH = os.path.dirname(os.path.abspath(__file__))
 
 trn.register_config_dir(os.path.join(MY_PATH, 'config'), recursive=True)

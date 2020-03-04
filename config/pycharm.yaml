@@ -1,14 +1,18 @@
-parents: ['3dshapes', 'basics']
+parents: ['pointenc', '3dshapes', 'basics']
 
 inline: True
 
-training:
+#training:
 #  step_limit: 50000
-  val_freq: 1000
+#  val_freq: 1000
 #
 dataset:
   device: cpu
-  batch_size: 128
+#  batch_size: 128
+
+model:
+  nonlin: mish
+
 
 #resume = 'test-pycharm_191121-154737'
 #
