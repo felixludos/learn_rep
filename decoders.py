@@ -69,12 +69,25 @@ class Branched(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		self.root = root
 		self.root_dim = root_dim
 
+		self.splits = (latent_dim - self.root_dim) // splits
 
 
 	def _visualize(self, out, logger):
 		pass
 
 
+	def forward(self, q):
+
+		if self.root_dim > 0:
+			root, q = q[:, self.root_dim:], q[:, self.root_dim:]
+
+			root = self.root(root)
+		else:
+			root = self.root
+
+		branches = q.split(self.splits)
+
+		pass
 
 
 
