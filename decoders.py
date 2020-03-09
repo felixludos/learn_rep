@@ -23,8 +23,8 @@ from foundation import data
 
 
 
-@fd.Component('branched-dec')
-class Branched(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
+@fd.Component('branch-dec')
+class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 	def __init__(self, A):
 
@@ -34,9 +34,10 @@ class Branched(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		super().__init__(latent_dim, out_shape)
 
 		root_dim = A.pull('root_dim', 0)
-		splits = A.pull('splits')
+		branch_dim = A.pull('branch_dim')
 
 		channels = A.pull('channels')
+
 
 		factors = A.pull('factors', 2) # each conv layer
 		try:
@@ -47,8 +48,17 @@ class Branched(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 			factors = factors * len(channels)
 			factors = factors[:len(channels)]
 
-
 		total = int(np.product((factors)))
+
+		try:
+			len(branch_dim)
+		except TypeError:
+			branch_dim = [branch_dim]
+		if len(branch_dim) != len(channels):
+			branch_dim = branch_dim * len(channels)
+			branch_dim = branch_dim[:len(channels)]
+
+		assert latent_dim == root_dim + sum(branch_dim), f'not the right split: {latent_dim} vs {root_dim} {branch_dim}'
 
 		C, H, W = out_shape
 
@@ -64,12 +74,52 @@ class Branched(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 			root = A.pull('root')
 
 		else:
-			root = nn.Parameter(torch.randn(*in_shape).unsqueeze(0), requires_grad=True)
+			root = nn.Parameter(torch.randn(*in_shape), requires_grad=True)
 
 		self.root = root
 		self.root_dim = root_dim
 
-		self.splits = (latent_dim - self.root_dim) // splits
+		self.branch_dim = branch_dim
+
+		create_branch = A.pull('branches')
+		create_layer = A.pull('layers')
+
+		channels = list(channels) + [C]
+
+		bdims = iter(branch_dim)
+
+		branches = []
+		layers = []
+
+		din = in_shape
+		for i, (in_chn, out_chn, fct) in enumerate(zip(channels, channels[1:], factors)):
+
+			nxt = create_branch.current()
+			nxt.din = next(bdims)
+			nxt.dout = in_chn
+
+			branches.append(next(create_branch))
+
+			nxt = create_layer.current()
+			nxt.din = din
+			nxt.in_channels = in_chn
+			nxt.out_channels = out_chn
+			nxt.factor = fct
+
+			layer = next(create_layer)
+			layers.append(layer)
+
+			din = layer.dout
+
+		assert din == out_shape, f'error: {din} vs {out_shape}'
+
+		self.branches = nn.ModuleList(branches)
+		self.layers = nn.ModuleList(layers)
+
+		assert len(self.branches) == len(self.branch_dim) == len(self.layers)
+
+		self.set_optim(A)
+		self.set_scheduler(A)
 
 
 	def _visualize(self, out, logger):
@@ -80,14 +130,21 @@ class Branched(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 		if self.root_dim > 0:
 			root, q = q[:, self.root_dim:], q[:, self.root_dim:]
-
-			root = self.root(root)
+			c = self.root(root)
 		else:
-			root = self.root
+			B = q.size(0)
+			c = self.root
+			shape = c.shape
+			c = c.expand(B, *shape)
 
-		branches = q.split(self.splits)
+		styles = q.split(self.branch_dim, dim=1)
 
-		pass
+		for branch, style, conv in zip(self.branches, styles, self.layers):
+
+			c = branch(c, style)
+			c = conv(c)
+
+		return c
 
 
 

@@ -313,8 +313,23 @@ class PointJoiner(PointJoin):
 	def forward(self, p1, p2): # TODO make sure shapes work out
 		return torch.cat([p1, p2], dim=1)
 
+@fd.AutoComponent('point-attention')
+class PointWeightedSum(PointJoin): # basically a weighted sum
 
-@fd.AutoComponent('point-pool')
+	def __init__(self, pin1, pin2, heads=1, norm_heads):
+		super().__init__(pin1=pin1, pin2=pin2, pout=pin1*heads)
+
+		self.weights = nn.Conv1d(pin2, heads, kernel_size=1)
+
+	def forward(self, p1, p2):
+
+		w = self.weights(p2)
+
+
+	pass
+
+
+@fd.AutoComponent('pool-points')
 class Point_Pool(PointTransform):
 	def __init__(self, pin, fn='max', p=2):
 		super().__init__(pin, pin)
@@ -340,6 +355,8 @@ class Point_Pool(PointTransform):
 		if self.fn == 'norm':
 			return p.norm(p=self.p, dim=-1, keepdim=True)
 
-
+@fd.AutoComponent('concat-points')
+class Point_Concat(PointTransform):
+	def __init__(self, pin, N=):
 
 

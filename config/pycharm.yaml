@@ -1,4 +1,4 @@
-parents: ['pointenc', '3dshapes', 'basics']
+parents: ['pointenc', 'branchdec', '3dshapes', 'basics']
 
 inline: True
 

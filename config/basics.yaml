@@ -44,6 +44,8 @@ model:
 
     criterion: 'bce'
 
+    norm: 'group'
+
     encoder:
       _type: 'dislib-enc'
 

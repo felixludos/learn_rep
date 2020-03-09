@@ -21,7 +21,7 @@ model:
                       pout: 512
 
             pool:
-                _type: 'point-pool'
+                _type: 'pool-points'
                 fn: 'max'
 
             final:
