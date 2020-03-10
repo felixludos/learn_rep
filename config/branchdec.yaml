@@ -2,11 +2,12 @@ parents: ['basics']
 
 model:
 
+    branch_dim: 3
+
     decoder:
         _type: 'branch-dec'
 
         root_dim: 0
-        branch_dim: 3
 
         channels: [128, 128, 64, 64]
         factors: 2

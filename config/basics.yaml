@@ -46,6 +46,8 @@ model:
 
     norm: 'group'
 
+    nonlin: 'mish'
+
     encoder:
       _type: 'dislib-enc'
 

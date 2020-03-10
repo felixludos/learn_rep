@@ -34,7 +34,10 @@ class PointEncoder(fd.Encodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		transform = A.pull('transform') # converts the image into a point cloud
 
 		assert 'pointnet' in A, 'pointnet required for this encoder'
-		A.pointnet.pin = transform.pout
+		pout, N = transform.dout
+
+		A.pointnet.pin = pout
+		A.pointnet.n_points = N
 
 		pointnet = A.pull('pointnet')
 
@@ -130,18 +133,23 @@ class PointNet(fd.Trainable_Model):
 		pin = A.pull('pin') # should be the number of channels of the points
 		dout = A.pull('latent_dim', '<>dout')
 
+		n_points = A.pull('n_points', None)
+
 		create_module = A.pull('modules')
 
 		super().__init__(din=pin, dout=dout)
 
 		modules = []
 
-
 		nxt = create_module.current()
 		assert nxt is not None, 'no point-net modules provided'
 		nxt.pin = pin
+		nxt.N = n_points
 
 		for module in create_module:
+
+			if hasattr(module, 'nout'):
+				n_points = module.nout
 
 			modules.append(module)
 
@@ -150,6 +158,7 @@ class PointNet(fd.Trainable_Model):
 				nxt.pin = module.pout
 				nxt.pin1 = module.pout1
 				nxt.pin2 = module.pout2
+				nxt.N = n_points
 				if nxt._type == 'point-dual':
 					if 'left' in nxt:
 						nxt.left.pin = module.pout1
@@ -163,6 +172,7 @@ class PointNet(fd.Trainable_Model):
 
 		if 'pool' in A:
 			A.pool.pin = pout
+			A.pool.N = n_points
 		self.pool = A.pull('pool', None)
 		if self.pool is not None:
 			pout = self.pool.pout
@@ -182,11 +192,11 @@ class PointNet(fd.Trainable_Model):
 
 		pts = self.tfms(pts)
 
-		B, C, *rest = pts.size()
+		B, _, *rest = pts.size()
 		if len(rest):
 			if rest[0] > 1:
 				pts = self.pool(pts)
-			pts = pts.view(B,C)
+			pts = pts.view(B,-1)
 		out = pts
 
 		if self.final is not None:
@@ -247,6 +257,25 @@ class PointSplitter(PointSplit):
 	def forward(self, p):
 		return p[:,:self.split], p[:,self.split:]
 
+@fd.AutoComponent('point-buffer')
+class PointBuffer(PointSplit):
+	def __init__(self, pin, channels, N):
+		super().__init__(pin=pin, pout1=channels, pout2=pin)
+
+		self.buffer = nn.Parameter(torch.randn(channels, N), requires_grad=True)
+
+	def extra_repr(self):
+		return 'buffer: chn={}, N={}'.format(*self.buffer.size())
+
+	def forward(self, p):
+		B = p.size(0)
+
+		p1 = self.buffer.expand(B, *self.buffer.shape)
+		p2 = p
+
+		return p1, p2
+
+
 
 @fd.AutoComponent('point-transform-net')
 class PointTransformNet(PointTransform):
@@ -263,6 +292,7 @@ class PointSelfTransform(PointTransformNet):
 	def __init__(self, pin, pout, hidden=[], nonlin='prelu', output_nonlin=None):
 		super().__init__(make_pointnet(pin, pout, hidden=hidden, nonlin=nonlin,
 		                         output_nonlin=output_nonlin))
+
 
 
 @fd.AutoComponent('point-dual')
@@ -305,6 +335,7 @@ class PointSwap(PointParallel):
 		return p2, p1
 
 
+
 @fd.AutoComponent('point-cat')
 class PointJoiner(PointJoin):
 	def __init__(self, pin1, pin2):
@@ -313,24 +344,46 @@ class PointJoiner(PointJoin):
 	def forward(self, p1, p2): # TODO make sure shapes work out
 		return torch.cat([p1, p2], dim=1)
 
-@fd.AutoComponent('point-attention')
-class PointWeightedSum(PointJoin): # basically a weighted sum
+@fd.AutoComponent('point-wsum')
+class PointWeightedSum(PointJoin):
 
-	def __init__(self, pin1, pin2, heads=1, norm_heads):
-		super().__init__(pin1=pin1, pin2=pin2, pout=pin1*heads)
+	def __init__(self, pin1, pin2, groups=1, heads=1, norm_heads=False, sum_heads=True):
+		super().__init__(pin1=pin1, pin2=pin2, pout=pin1)
+		self.nout = groups if sum_heads else groups*heads
 
-		self.weights = nn.Conv1d(pin2, heads, kernel_size=1)
+		self.weights = nn.Conv1d(pin2, groups*heads, kernel_size=1)
 
-	def forward(self, p1, p2):
+		self.norm_heads = norm_heads
+		self.sum_heads = sum_heads
 
-		w = self.weights(p2)
+		self.heads = heads
+		self.groups = groups
+		self.N_out = self.heads * self.groups
 
+	def compute_weights(self, p): # optionally use gumbel softmax
+		return self.weights(p)
 
-	pass
+	def forward(self, p1, p2): # p1 (B, C, N)
+		w = self.compute_weights(p2) # (B, GK, N)
+		B, GK, N = w.shape
+		G = self.groups
+		K = self.heads
+
+		w = w.view(B, G, K*N) if self.norm_heads else w.view(B, G, K, N)
+		w = F.softmax(w).view(B, G*K, N).permute(0,2,1)
+
+		v = p1 @ w
+
+		if self.sum_heads:
+			C = p1.size(1)
+			v = v.view(B, C, G, K).sum(-1)
+
+		return v # (B, C, G*K)
+
 
 
 @fd.AutoComponent('pool-points')
-class Point_Pool(PointTransform):
+class Pool_Points(PointTransform):
 	def __init__(self, pin, fn='max', p=2):
 		super().__init__(pin, pin)
 
@@ -356,7 +409,20 @@ class Point_Pool(PointTransform):
 			return p.norm(p=self.p, dim=-1, keepdim=True)
 
 @fd.AutoComponent('concat-points')
-class Point_Concat(PointTransform):
-	def __init__(self, pin, N=):
+class Concat_Points(PointTransform):
+	def __init__(self, pin, N=None, groups=1):
+		if N is None:
+			print('WARNING: no number of points set')
+			N = 1
+
+		super().__init__(pin, N*pin//groups)
+
+		self.groups = groups
+
+	def forward(self, p):
+		B = p.size(0)
+		return p.permute(0,2,1).contiguous().view(B, self.groups, -1)
+
+
 
 

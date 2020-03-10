@@ -1,0 +1,46 @@
+parents: ['branchdec', 'basics']
+
+model:
+
+    val_dim: 32
+    keys_per_head: 2
+    num_groups: 4
+
+    branch_dim: 3
+
+    encoder:
+        _type: 'point-enc'
+
+        transform:
+            _type: 'patch-points'
+
+        pointnet:
+            _type: 'point-net'
+
+            modules:
+                _type: 'iter'
+
+                _elements:
+                    - _type: 'point-self'
+                      output_nonlin: '<>nonlin'
+                      hidden: [128, 128, 128, 128, 128]
+                      pout: 128
+
+                    - _type: 'point-buffer'
+                      channels: '<>val_dim'
+
+                    - _type: 'point-wsum'
+                      heads: '<>num_keys' # per group
+                      groups: '<>num_groups'
+                    - _type: 'point-self'
+                      output_nonlin: 'none'
+                      hidden: [128, 128]
+                      pout: '<>branch_dim'
+
+            pool:
+                _type: 'concat-points'
+
+info:
+    arch_type: 'pointenc-attn'
+
+
