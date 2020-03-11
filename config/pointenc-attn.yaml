@@ -2,6 +2,7 @@ parents: ['branchdec', 'basics']
 
 model:
 
+    key_dim: 32
     val_dim: 32
     keys_per_head: 2
     num_groups: 4
@@ -22,15 +23,15 @@ model:
 
                 _elements:
                     - _type: 'point-self'
-                      output_nonlin: '<>nonlin'
+                      #output_nonlin: '<>nonlin'
                       hidden: [128, 128, 128, 128, 128]
-                      pout: 128
+                      pout: '<>key_dim'
 
                     - _type: 'point-buffer'
                       channels: '<>val_dim'
 
                     - _type: 'point-wsum'
-                      heads: '<>num_keys' # per group
+                      heads: '<>keys_per_head' # per group
                       groups: '<>num_groups'
                     - _type: 'point-self'
                       output_nonlin: 'none'

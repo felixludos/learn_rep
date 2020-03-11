@@ -6,6 +6,7 @@ import sys, os, time, shutil#, traceback, ipdb
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision
 import torch.distributions as distrib
 import torch.multiprocessing as mp
 from torch.utils.data import Dataset, DataLoader
@@ -13,6 +14,7 @@ from torch.utils.data import Dataset, DataLoader
 import numpy as np
 #%matplotlib tk
 import matplotlib.pyplot as plt
+from matplotlib import cm
 
 import foundation as fd
 from foundation import models
@@ -50,6 +52,12 @@ class PointEncoder(fd.Encodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		self.set_scheduler(A)
 
 	def _visualize(self, out, logger): # TODO
+
+		if self._viz_counter % 2 == 0:
+			for m in self.pointnet.tfms:
+				if isinstance(m, fd.Visualizable):
+					m.visualize(out, logger)
+
 		pass
 
 	def forward(self, x): # images
@@ -219,7 +227,6 @@ class PointNetModule(fd.Model):
 		self.pout2 = pout2
 
 
-
 class PointSplit(PointNetModule):
 	def __init__(self, pin, pout1, pout2):
 		super().__init__(pin=pin, pout1=pout1, pout2=pout2)
@@ -265,7 +272,7 @@ class PointBuffer(PointSplit):
 		self.buffer = nn.Parameter(torch.randn(channels, N), requires_grad=True)
 
 	def extra_repr(self):
-		return 'buffer: chn={}, N={}'.format(*self.buffer.size())
+		return 'chn={}, N={}'.format(*self.buffer.size())
 
 	def forward(self, p):
 		B = p.size(0)
@@ -345,7 +352,7 @@ class PointJoiner(PointJoin):
 		return torch.cat([p1, p2], dim=1)
 
 @fd.AutoComponent('point-wsum')
-class PointWeightedSum(PointJoin):
+class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
 
 	def __init__(self, pin1, pin2, groups=1, heads=1, norm_heads=False, sum_heads=True):
 		super().__init__(pin1=pin1, pin2=pin2, pout=pin1)
@@ -360,8 +367,33 @@ class PointWeightedSum(PointJoin):
 		self.groups = groups
 		self.N_out = self.heads * self.groups
 
+		self.register_cache('_w')
+		self.cmap = cm.get_cmap('seismic')
+
 	def compute_weights(self, p): # optionally use gumbel softmax
 		return self.weights(p)
+
+	def _visualize(self, out, logger):
+
+		if self._w is not None:
+			w = self._w
+
+			B, G, K, N = w.shape
+
+			H, W = util.calc_tiling(N)
+
+			g = w.sum(0) / B
+			# g = w[0]
+			g = g.view(G, K, H, W)
+			out.key_selections = g
+			g = g.view(G*K, H, W)
+
+			# g = torchvision.utils.make_grid(g.unsqueeze(1), nrow=K, padding=1, pad_value=1).norm(p=1, dim=0).unsqueeze(0)
+
+			g = torch.from_numpy(self.cmap(g.numpy())).permute(0, 3, 1, 2)
+			g = torchvision.utils.make_grid(g, nrow=K, padding=1, pad_value=1)[:3]#.norm(p=1, dim=0)
+
+			logger.add('image', 'patches', g)
 
 	def forward(self, p1, p2): # p1 (B, C, N)
 		w = self.compute_weights(p2) # (B, GK, N)
@@ -370,8 +402,11 @@ class PointWeightedSum(PointJoin):
 		K = self.heads
 
 		w = w.view(B, G, K*N) if self.norm_heads else w.view(B, G, K, N)
-		w = F.softmax(w).view(B, G*K, N).permute(0,2,1)
+		w = F.softmax(w).view(B, G*K, N)
 
+		self._w = w.view(B,G,K,N).cpu().detach()
+
+		w = w.permute(0,2,1)
 		v = p1 @ w
 
 		if self.sum_heads:

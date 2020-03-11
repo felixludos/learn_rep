@@ -15,6 +15,16 @@ dataset:
 model:
   nonlin: mish
 
+  key_dim: 4
+  val_dim: 4
+  keys_per_head: 2
+
+  num_groups: 4
+  branch_dim: 3
+
+#  decoder:
+#    layer_type: 'double-deconv-layer'
+
 
 #resume = 'test-pycharm_191121-154737'
 #
