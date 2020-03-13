@@ -13,9 +13,12 @@ import numpy as np
 #%matplotlib tk
 import matplotlib.pyplot as plt
 
-import umap, shap
-import umap.plot
-import gpumap
+try:
+	import umap, shap
+	import umap.plot
+	import gpumap
+except ImportError:
+	print('WARNING: umap not found')
 from sklearn.decomposition import PCA
 
 import foundation as fd
