@@ -1,0 +1,8 @@
+parents: ['vae']
+
+model:
+  encoder:
+    _mod: 'fixed-std'
+
+info:
+  model_type: 'pvae'

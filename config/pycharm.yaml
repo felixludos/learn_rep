@@ -1,12 +1,13 @@
 #parents: ['pointenc', 'branchdec', '3dshapes', 'basics']
 
-parents: ['pointenc-attn', '3dshapes', 'basics']
+#parents: ['pointenc-attn', '3dshapes', 'basics']
+parents: ['pvae', '3dshapes']
 
 inline: True
 
-#training:
+training:
 #  step_limit: 50000
-#  val_freq: 1000
+  val_freq: 10
 #
 dataset:
   device: cpu
@@ -15,12 +16,12 @@ dataset:
 model:
   nonlin: mish
 
-  key_dim: 4
-  val_dim: 4
-  keys_per_head: 2
+#  key_dim: 4
+#  val_dim: 4
+#  keys_per_head: 2
 
-  num_groups: 4
-  branch_dim: 3
+#  num_groups: 4
+#  branch_dim: 3
 
 #  decoder:
 #    layer_type: 'double-deconv-layer'

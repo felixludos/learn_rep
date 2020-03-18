@@ -27,6 +27,8 @@ from foundation import util
 from foundation import train as trn
 from foundation import data
 
+import visualizations as viz_util
+
 import pointnets
 import decoders
 
@@ -51,10 +53,14 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 
 		viz_gen = A.pull('viz_gen', False)
 
+		hparams = {'reg_type': str(reg),}
+
 		super().__init__(encoder.din, decoder.dout)
 
 		self.enc = encoder
 		self.dec = decoder
+		
+		self.latent_dim = self.enc.dout
 
 		self.criterion = util.get_loss_type(criterion, reduction='sum')
 		self.reg_wt = reg_wt
@@ -69,6 +75,19 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		self.register_cache('_real', None)
 		self.register_cache('_rec', None)
 		self.viz_gen = viz_gen
+		
+		self._hparams = hparams
+
+	def get_hparams(self):
+		
+		h = self.enc.get_hparams()
+		h.update(self.dec.get_hparams())
+		
+		h['reg_wt'] = self.reg_wt
+		
+		h.update(self._hparams)
+		
+		return h
 
 	def _visualize(self, info, logger):
 
@@ -77,7 +96,8 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		if isinstance(self.dec, fd.Visualizable):
 			self.dec.visualize(info, logger)
 
-		if self._viz_counter % 2 == 0:
+		if self._viz_counter % 2 == 0 or not self.training:
+			q = None
 			if 'latent' in info and info.latent is not None:
 				q = info.latent.loc if isinstance(info.latent, distrib.Distribution) else info.latent
 
@@ -86,6 +106,8 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 					try:
 						logger.add('histogram', 'latent-norm', q.norm(p=2, dim=-1))
 						logger.add('histogram', 'latent-std', q.std(dim=0))
+						if isinstance(info.latent, distrib.Distribution):
+							logger.add('histogram', 'std-hist', info.latent.scale.mean(dim=0))
 					except ValueError:
 						print('\n\n\nWARNING: histogram just failed\n')
 						print(q.shape, q.norm(p=2, dim=-1).shape)
@@ -107,6 +129,57 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 			if self.viz_gen:
 				viz_gen = self.generate(2*N)
 				logger.add('images', 'gen', self._img_size_limiter(viz_gen))
+
+			if not self.training: # expensive visualizations
+				
+				n = 16
+				steps = 20
+				ntrav = 1
+				
+				if q is not None and len(q) >= n:
+					fig, (lax, iax) = plt.subplots(2, figsize=(3*min(q.size(1)//20+1,3),3))
+					
+					viz_util.viz_latent(q, figax=(fig, lax), )
+					
+					Q = q[:n]
+					
+					vecs = viz_util.get_traversal_vecs(Q, steps=steps,
+                          mnmx=(Q.min(0)[0].unsqueeze(-1), Q.max(0)[0].unsqueeze(-1))).contiguous()
+					# deltas = torch.diagonal(vecs, dim1=-3, dim2=-1)
+					
+					walks = viz_util.get_traversals(vecs, self.decode).cpu()
+					diffs = viz_util.compute_diffs(walks)
+					
+					viz_util.viz_interventions(diffs, figax=(fig, iax))
+					
+
+					# fig.tight_layout()
+					border, between = 0.02, 0.01
+					plt.subplots_adjust(wspace=between, hspace=between,
+											left=3*border, right=1 - border, bottom=border, top=1 - border)
+					
+					logger.add('figure', 'distrib', fig)
+					
+					full = walks[:ntrav]
+					del walks
+					
+					tH, tW = util.calc_tiling(full.size(1))
+					B, N, S, C, H, W = full.shape
+					
+					# if tH*H > 200: # limit total image size
+					# 	pass
+					
+					full = full.view(B, tH, tW, S, C, H, W)
+					full = full.permute(0, 3, 4, 1, 5, 2, 6).contiguous().view(B, S, C, tH * H, tW * W)
+					
+					logger.add('video', 'traversals', full, fps=12)
+				
+				
+				else:
+					print('WARNING: visualizing traversals failed')
+					
+				
+				pass
 
 			logger.flush()
 
@@ -154,7 +227,6 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 
 		return out
 
-
 	def hybridize(self, q=None):
 
 		if q is None:
@@ -193,17 +265,34 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		mag = self.reg_fn(q)
 		return mag / B
 
+class Prior_Autoencoder(AutoEncoder):
+	
+	def sample_prior(self, N=1):
+		return torch.randn(N, self.latent_dim, device=self.device)
+	
+	def generate(self, N=1):
+		q = self.sample_prior(N)
+		return self.decode(q)
+
 @fd.Component('vae')
-class VAE(AutoEncoder):
-	def __init__(self, A):
+class VAE(Prior_Autoencoder):
+	def __init__(self, A, norm_mod=None):
+		
+		if norm_mod is None:
+			norm_mod = models.Normal
 
 		assert 'reg_wt' in A and A.reg_wt > 0, 'not a vae without regularization'
 
 		A.reg = None
 
 		super().__init__(A)
+		
+		self._hparams['reg_type'] = 'KL'
+		self._hparams['enc_type'] = 'VAE'
 
-		assert isinstance(self.enc, models.Normal), 'encoder must output a normal distrib'
+		if not isinstance(self.enc, norm_mod):
+			print('WARNING: encoder apparently does not output a normal distribution')
+		# assert isinstance(self.enc, models.Normal), 'encoder must output a normal distrib'
 
 	def regularize(self, q):
 		return util.standard_kl(q).sum().div(q.loc.size(0))
@@ -213,6 +302,165 @@ class VAE(AutoEncoder):
 			q = q.rsample()
 		return super().decode(q)
 
+@fd.Component('wae')
+class WAE(Prior_Autoencoder):
+	
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self._hparams['reg_type'] = 'W'
+	
+	def regularize(self, q, p=None):
+		if p is None:
+			p = self.sample_prior(q.size(0))
+		return util.MMD(p, q)
+
+@fd.Component('swae')
+class Slice_WAE(Prior_Autoencoder):
+	def __init__(self, A):
+		slices = A.pull('slices', '<>latent_dim')
+
+		super().__init__(A)
+
+		self.slices = slices
+		
+		self._hparams['reg_type'] = 'SW'
+		self._hparams['slices'] = slices
+
+	def sample_slices(self, N=None): # sampled D dim unit vectors
+		if N is None:
+			N = self.slices
+
+		return F.normalize(torch.randn(self.latent_dim, N, device=self.device), p=2, dim=0)
+
+	def regularize(self, q, p=None):
+
+		s = self.sample_slices() # D, S
+
+		qd = q @ s
+		qd = qd.sort(0)[0]
+
+		if p is None:
+			p = self.sample_prior(q.size(0))
+		pd = p @ s
+		pd = pd.sort(0)[0]
+
+		return (qd - pd).abs().mean()
+
+
+class Cost_Aware(Prior_Autoencoder):
+	def __init__(self, A):
+		
+		reg_imp_p = A.pull('reg_imp_p', 1)
+		reg_imp_wt = A.pull('reg_imp_wt', 0.5)
+		
+		init_imp_mu = A.pull('init_imp_mu', 0)
+		init_imp_std = A.pull('init_imp_std', 1)
+		
+		weigh_distances = A.pull('weigh_distances', False)
+		
+		super().__init__(A)
+		
+		self.stats.new('reg_imp', 'reg_prior')
+		
+		self.importance = nn.Parameter(init_imp_std*torch.randn(self.latent_dim) + init_imp_mu,
+		                               requires_grad=True)
+
+		self.reg_imp_p = reg_imp_p
+		self.reg_imp_wt = reg_imp_wt
+		
+		self.weigh_distances = weigh_distances
+
+	def get_importance(self):
+		return F.sigmoid(self.importance)
+
+	def regularize(self, q):
+		
+		v = self.get_importance()
+		
+		reg_imp = v.norm(p=self.reg_imp_p)
+		self.stats.update('reg_imp', reg_imp)
+		
+		p = self.sample_prior(q.size(0))
+		if self.weigh_distances:
+			q = q * v.unsqueeze(0)
+			p = p * v.unsqueeze(0)
+		
+		reg_prior = super().regularize(q, p)
+		self.stats.update('reg_prior', reg_prior)
+		
+		return self.reg_imp_wt * reg_imp + (1 - self.reg_imp_wt) * reg_prior
+
+
+@fd.Component('cae')
+class Det_Cost_Aware(Cost_Aware):
+	def encode(self, x):
+		q = super().encode(x)
+		B, D = q.size()
+		
+		v = self.get_importance().expand(B, D)
+		p = self.sample_prior(B)
+		
+		q = v * q + (1 - v) * p
+		return q
+
+class Sto_Cost_Aware(Cost_Aware):
+	def encode(self, x):
+		q = super().encode(x)
+		return self.as_normal(q)
+	
+	def as_normal(self, q):
+		std = self.get_importance().expand(*q.size())
+		return distrib.Normal(loc=q, scale=std)
+
+@fd.Component('cwae')
+class Cost_Aware_WAE(Det_Cost_Aware, WAE):
+	pass
+
+@fd.Component('scwae')
+class Cost_Aware_SWAE(Det_Cost_Aware, Slice_WAE):
+	pass
+
+@fd.Component('cvae')
+class Cost_VAE(Sto_Cost_Aware, VAE):
+	pass
+
+
+@fd.AutoModifier('fixed-std')
+class Fixed_Std(fd.Visualizable, fd.Model):
+	def __init__(self, A, latent_dim=None):
+		
+		if latent_dim is None:
+			latent_dim = A.pull('latent_dim', '<>dout')
+		
+		min_log_std = A.pull('min_log_std', None)
+		
+		super().__init__(A)
+		
+		self.log_std = nn.Parameter(torch.randn(latent_dim), requires_grad=True)
+		
+		self.min_log_std = min_log_std
+		self.latent_dim = latent_dim
+		
+	def _visualize(self, info, logger):
+
+		try:
+			super()._visualize(info, logger)
+		except NotImplementedError:
+			pass
+
+
+		pass
+	
+	def forward(self, *args, **kwargs):
+		
+		mu = super().forward(*args, **kwargs)
+		logsigma = self.log_std
+		
+		if self.min_log_std is not None:
+			logsigma = logsigma.clamp(min=self.min_log_std)
+
+		return distrib.Normal(loc=mu, scale=logsigma.exp())
+		
 
 @fd.AutoComponent('regularization')
 def get_regularization(name, p=2, dim=1, reduction='mean', **kwargs):

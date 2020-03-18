@@ -1,0 +1,11 @@
+parents: ['basics']
+
+model:
+  _type: 'cae'
+
+  init_imp_std: 0.1
+
+  slices: 16
+
+info:
+  model_type: 'cwae'
