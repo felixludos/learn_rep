@@ -428,8 +428,8 @@ class Det_Cost_Aware(Cost_Aware):
 		v = self.get_importance(noisy=True).expand(B, D)
 		p = self.sample_prior(B)
 		
-		# q = v * q + (1 - v) * p
-		q = q + (1 - v) * p
+		q = v * q + (1 - v) * p
+		# q = q + (1 - v) * p
 		return q
 
 class Sto_Cost_Aware(Cost_Aware):
