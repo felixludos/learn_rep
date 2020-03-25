@@ -67,9 +67,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		self.reg_fn = get_regularization(reg, reduction='sum')
 		if self.reg_wt > 0:
 			self.stats.new('reg')
-
-		self.set_optim()
-		self.set_scheduler()
+		self.stats.new('rec_loss')
 
 		self.register_buffer('_q', None)
 		self.register_cache('_real', None)
@@ -107,7 +105,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 						logger.add('histogram', 'latent-norm', q.norm(p=2, dim=-1))
 						logger.add('histogram', 'latent-std', q.std(dim=0))
 						if isinstance(info.latent, distrib.Distribution):
-							logger.add('histogram', 'std-hist', info.latent.scale.mean(dim=0))
+							logger.add('histogram', 'logstd-hist', info.latent.scale.add(1e-5).log().mean(dim=0))
 					except ValueError:
 						print('\n\n\nWARNING: histogram just failed\n')
 						print(q.shape, q.norm(p=2, dim=-1).shape)
@@ -137,7 +135,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 				ntrav = 1
 				
 				if q is not None and len(q) >= n:
-					fig, (lax, iax) = plt.subplots(2, figsize=(3*min(q.size(1)//20+1,3),3))
+					fig, (lax, iax) = plt.subplots(2, figsize=(2*min(q.size(1)//20+1,3)+2,3))
 					
 					viz_util.viz_latent(q, figax=(fig, lax), )
 					
@@ -156,11 +154,11 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 					# fig.tight_layout()
 					border, between = 0.02, 0.01
 					plt.subplots_adjust(wspace=between, hspace=between,
-											left=3*border, right=1 - border, bottom=border, top=1 - border)
+											left=5*border, right=1 - border, bottom=border, top=1 - border)
 					
 					logger.add('figure', 'distrib', fig)
 					
-					full = walks[:ntrav]
+					full = walks[1:1+ntrav]
 					del walks
 					
 					tH, tW = util.calc_tiling(full.size(1))
@@ -209,6 +207,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 
 		loss = self.criterion(rec, x) / B
 		out.rec_loss = loss
+		self.stats.update('rec_loss', loss)
 
 		if self.reg_wt > 0:
 			reg_loss = self.regularize(q)
@@ -260,7 +259,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 			return rec, q
 		return rec
 
-	def regularize(self, q):
+	def regularize(self, q, p=None):
 		B = q.size(0)
 		mag = self.reg_fn(q)
 		return mag / B
@@ -351,44 +350,71 @@ class Cost_Aware(Prior_Autoencoder):
 	def __init__(self, A):
 		
 		reg_imp_p = A.pull('reg_imp_p', 1)
+		
 		reg_imp_wt = A.pull('reg_imp_wt', 0.5)
+		reg_prior_wt = A.pull('reg_prior_wt', 1)
 		
 		init_imp_mu = A.pull('init_imp_mu', 0)
 		init_imp_std = A.pull('init_imp_std', 1)
 		
 		weigh_distances = A.pull('weigh_distances', False)
 		
+		imp_noise = A.pull('imp_noise', 0)
+		
 		super().__init__(A)
 		
-		self.stats.new('reg_imp', 'reg_prior')
+		self.register_cache('_rew_q')
+		
+		self.stats.new('imp', 'reg_imp', 'reg_prior')
 		
 		self.importance = nn.Parameter(init_imp_std*torch.randn(self.latent_dim) + init_imp_mu,
 		                               requires_grad=True)
 
 		self.reg_imp_p = reg_imp_p
+		
 		self.reg_imp_wt = reg_imp_wt
+		self.reg_prior_wt = reg_prior_wt
 		
 		self.weigh_distances = weigh_distances
+		self.imp_noise = imp_noise
 
-	def get_importance(self):
-		return F.sigmoid(self.importance)
+	def get_importance(self, noisy=False):
+		imp = self.importance
+		if noisy and self.imp_noise > 0:
+			imp = imp + torch.randn_like(imp).mul(self.imp_noise)
+		return F.sigmoid(imp)
+
+	def _visualize(self, info, logger):
+
+		if self._viz_counter % 2 == 0 or not self.training:
+			logger.add('histogram', 'imp_hist', self.importance.clamp(min=-5, max=5))
+			logger.add('text', 'imp_str', '[{}]'.format(', '.join('{:2.3f}'.format(i.item()) for i in self.importance)))
+
+		super()._visualize(info, logger)
 
 	def regularize(self, q):
 		
 		v = self.get_importance()
+		self.stats.update('imp', v.sum())
 		
-		reg_imp = v.norm(p=self.reg_imp_p)
+		# reg_imp = v.norm(p=self.reg_imp_p)
+		# reg_imp = F.elu(self.importance).sum()
+		reg_imp = v.pow(self.reg_imp_p).sum()
 		self.stats.update('reg_imp', reg_imp)
+		
+		if self._raw_q is not None:
+			q = self._raw_q
+			self._raw_q = None
 		
 		p = self.sample_prior(q.size(0))
 		if self.weigh_distances:
-			q = q * v.unsqueeze(0)
-			p = p * v.unsqueeze(0)
+			q = q * v.unsqueeze(0).detach()
+			p = p * v.unsqueeze(0).detach()
 		
 		reg_prior = super().regularize(q, p)
 		self.stats.update('reg_prior', reg_prior)
 		
-		return self.reg_imp_wt * reg_imp + (1 - self.reg_imp_wt) * reg_prior
+		return self.reg_imp_wt * reg_imp + self.reg_prior_wt * reg_prior
 
 
 @fd.Component('cae')
@@ -397,10 +423,13 @@ class Det_Cost_Aware(Cost_Aware):
 		q = super().encode(x)
 		B, D = q.size()
 		
-		v = self.get_importance().expand(B, D)
+		self._raw_q = q
+		
+		v = self.get_importance(noisy=True).expand(B, D)
 		p = self.sample_prior(B)
 		
-		q = v * q + (1 - v) * p
+		# q = v * q + (1 - v) * p
+		q = q + (1 - v) * p
 		return q
 
 class Sto_Cost_Aware(Cost_Aware):
@@ -409,14 +438,14 @@ class Sto_Cost_Aware(Cost_Aware):
 		return self.as_normal(q)
 	
 	def as_normal(self, q):
-		std = self.get_importance().expand(*q.size())
+		std = self.get_importance(noisy=True).expand(*q.size())
 		return distrib.Normal(loc=q, scale=std)
 
 @fd.Component('cwae')
 class Cost_Aware_WAE(Det_Cost_Aware, WAE):
 	pass
 
-@fd.Component('scwae')
+@fd.Component('cswae')
 class Cost_Aware_SWAE(Det_Cost_Aware, Slice_WAE):
 	pass
 
@@ -436,10 +465,13 @@ class Fixed_Std(fd.Visualizable, fd.Model):
 		
 		super().__init__(A)
 		
-		self.log_std = nn.Parameter(torch.randn(latent_dim), requires_grad=True)
+		self.log_std = nn.Parameter(torch.randn(latent_dim)*0.1, requires_grad=True)
 		
 		self.min_log_std = min_log_std
 		self.latent_dim = latent_dim
+		
+	def get_hparams(self):
+		return {'std_type': 'fixed'}
 		
 	def _visualize(self, info, logger):
 
@@ -474,6 +506,8 @@ def get_regularization(name, p=2, dim=1, reduction='mean', **kwargs):
 		return util.Lp_Norm(p=1, dim=dim, reduction=reduction)
 	elif name == 'Lp':
 		return util.Lp_Norm(p=p, dim=dim, reduction=reduction)
+	elif name == 'pow2':
+		return lambda q: q.pow(2).sum()
 	else:
 		print(f'Unknown reg: {name}')
 		# raise Exception(f'unknown: {name}')
@@ -540,8 +574,8 @@ class UMAP_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 
 		self.net = net
 
-		self.set_optim(A)
-		self.set_scheduler(A)
+		# self.set_optim(A)
+		# self.set_scheduler(A)
 
 	def _resize(self, x):
 		N, C, H, W = x.shapes
@@ -649,8 +683,8 @@ class Disentanglement_lib_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 
 		self.uses_conv = net_type == 'conv'
 
-		self.set_optim(A)
-		self.set_scheduler(A)
+		# self.set_optim(A)
+		# self.set_scheduler(A)
 
 	def forward(self, x):
 		c = self.conv(x) if self.uses_conv else x
@@ -707,8 +741,8 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Schedulable, fd.Model):
 
 		self.uses_conv = net_type == 'conv'
 
-		self.set_optim(A)
-		self.set_scheduler(A)
+		# self.set_optim(A)
+		# self.set_scheduler(A)
 
 	def forward(self, q):
 		c = self.net(q)
@@ -737,7 +771,7 @@ class SupModel(fd.Visualizable, fd.Trainable_Model):
 
 		self.stats.new('error', 'confidence')
 
-		self.set_optim(A)
+		# self.set_optim(A)
 
 
 	def forward(self, x):
@@ -780,8 +814,35 @@ class SupModel(fd.Visualizable, fd.Trainable_Model):
 
 # endregion
 
+def get_name(A):
+	if 'name' not in A:
+		model, data = None, None
+		arch = None
+		if 'info' in A:
+			if 'model_type' in A.info:
+				model = A.info.model_type
+			if 'dataset_type' in A.info:
+				data = A.info.dataset_type
+			if 'arch' in A.info:
+				arch = A.info.arch
+		if model is None:
+			model = A.model._type
+		if data is None:
+			if 'name' in A.dataset:
+				data = A.dataset.name
+			else:
+				data = A.dataset._type.split('-')[-1]
+		name = '{}_{}'.format(model,data)
+		if arch is not None:
+			name = '{}_{}'.format(name, arch)
+	
+	if 'info' in A and 'extra' in A.info:
+		name = '{}_{}'.format(name, A.info.extra)
+	
+	return name
+
 if __name__ == '__main__':
-	sys.exit(trn.main(argv=sys.argv))
+	sys.exit(trn.main(argv=sys.argv, get_name=get_name))
 
 
 

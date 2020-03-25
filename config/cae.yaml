@@ -5,7 +5,11 @@ model:
 
   init_imp_std: 0.1
 
-  slices: 16
+  reg_imp_wt: 0.5
+
+  reg_imp_p: 1
+
+  weigh_distances: False
 
 info:
-  model_type: 'cwae'
+  model_type: 'cae'

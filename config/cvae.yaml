@@ -1,0 +1,7 @@
+parents: ['cae', 'vae']
+
+model:
+  _type: 'cvae'
+
+info:
+  model_type: 'cvae'

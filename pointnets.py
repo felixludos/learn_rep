@@ -48,8 +48,8 @@ class PointEncoder(fd.Encodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		self.transform = transform
 		self.pointnet = pointnet
 
-		self.set_optim(A)
-		self.set_scheduler(A)
+		# self.set_optim(A)
+		# self.set_scheduler(A)
 
 	def _visualize(self, out, logger): # TODO
 

@@ -118,8 +118,8 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 		assert len(self.branches) == len(self.branch_dim) == len(self.layers)
 
-		self.set_optim(A)
-		self.set_scheduler(A)
+		# self.set_optim(A)
+		# self.set_scheduler(A)
 
 
 	def _visualize(self, out, logger):

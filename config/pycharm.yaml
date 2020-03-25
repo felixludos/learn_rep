@@ -1,20 +1,52 @@
 #parents: ['pointenc', 'branchdec', '3dshapes', 'basics']
 
 #parents: ['pointenc-attn', '3dshapes', 'basics']
-parents: ['pvae', '3dshapes']
+parents: ['cae', '3dshapes']
 
 inline: True
 
-training:
+#test_mode: 0
+
+#training:
 #  step_limit: 50000
-  val_freq: 10
+#  val_freq: 1000
 #
-dataset:
-  device: cpu
+#dataset:
+#  device: cpu
 #  batch_size: 128
 
+#resume: vae_3ds_elu_d24_200320-040612\checkpoint_75000.pth.tar
+#override:
+#  inline: False
+#  device: cuda:0
+#  model:
+#    min_log_std: -5
+
 model:
-  nonlin: mish
+#  nonlin: relu
+
+#  scheduler_type: 'cos'
+#  scheduler_max_steps: 40
+#  scheduler_min_lr: 1.e-5
+
+#  optim_type: adamw
+#  beta1: 0.90
+
+#  min_log_std: -4
+
+  init_imp_mu: 1
+
+  reg_imp_p: 1
+
+  reg: pow2
+  reg_wt: 1
+
+  reg_imp_wt: 100
+  reg_prior_wt: 1
+
+  weigh_distances: False
+
+  imp_noise: 0.5
 
 #  key_dim: 4
 #  val_dim: 4

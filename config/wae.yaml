@@ -3,7 +3,7 @@ parents: ['basics']
 model:
   _type: 'wae'
 
-  reg_wt: 100
+  reg_wt: 10
 
 info:
   model_type: 'wae'
