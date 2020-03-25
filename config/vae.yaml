@@ -5,7 +5,7 @@ model:
 
   reg_wt: 1
 
-  min_log_std: -5
+  min_log_std: -12
 
   encoder:
     _mod: 'normal'
