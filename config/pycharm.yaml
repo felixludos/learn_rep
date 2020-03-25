@@ -34,7 +34,9 @@ model:
 
 #  min_log_std: -4
 
-  reg_wt: 1
+  init_imp_mu: 1
+
+  imp_noise: 0.5
 
 #  key_dim: 4
 #  val_dim: 4

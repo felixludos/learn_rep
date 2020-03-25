@@ -8,6 +8,8 @@ model:
 
   reg_imp_p: 1
 
+  reg_wt: 1
+
   reg_imp_wt: 100
   reg_prior_wt: 1
 
