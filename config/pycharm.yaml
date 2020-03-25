@@ -34,19 +34,7 @@ model:
 
 #  min_log_std: -4
 
-  init_imp_mu: 1
-
-  reg_imp_p: 1
-
-  reg: pow2
   reg_wt: 1
-
-  reg_imp_wt: 100
-  reg_prior_wt: 1
-
-  weigh_distances: False
-
-  imp_noise: 0.5
 
 #  key_dim: 4
 #  val_dim: 4

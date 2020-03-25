@@ -4,12 +4,17 @@ model:
   _type: 'cae'
 
   init_imp_std: 0.1
-
-  reg_imp_wt: 0.5
+  init_imp_mu: 1
 
   reg_imp_p: 1
 
+  reg_imp_wt: 100
+  reg_prior_wt: 1
+
   weigh_distances: False
+
+  imp_noise: 0.5
+
 
 info:
   model_type: 'cae'

@@ -42,11 +42,13 @@ model:
 
     latent_dim: 12
 
+    reg: pow2
+
     criterion: 'bce'
 
     norm: 'group'
 
-    nonlin: 'mish'
+    nonlin: 'elu'
 
     encoder:
       _type: 'dislib-enc'
