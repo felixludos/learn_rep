@@ -10,7 +10,7 @@ model:
 
         root_dim: 0
 
-        channels: [128, 128, 64, 64]
+        channels: [64, 64, 64, 64]
         factors: 2
 
 #        root:
@@ -29,7 +29,7 @@ model:
                 - _type: '<>branch_type'
                 - _type: '<>branch_type'
 
-            output_nonlin: '<>nonlin'
+#            output_nonlin: '<>nonlin'
 
             net:
                 _type: 'mlp'

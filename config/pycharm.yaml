@@ -1,9 +1,11 @@
 #parents: ['pointenc', 'branchdec', '3dshapes', 'basics']
 
-#parents: ['pointenc-attn', '3dshapes', 'basics']
-parents: ['cae', '3dshapes']
+parents: ['pointenc-attn', '3dshapes', 'basics']
+#parents: ['cae', '3dshapes']
 
 inline: True
+
+#device: "cuda:1"
 
 #test_mode: 0
 
@@ -11,8 +13,8 @@ inline: True
 #  step_limit: 50000
 #  val_freq: 1000
 #
-#dataset:
-#  device: cpu
+dataset:
+  device: cpu
 #  batch_size: 128
 
 #resume: vae_3ds_elu_d24_200320-040612\checkpoint_75000.pth.tar
@@ -34,9 +36,16 @@ model:
 
 #  min_log_std: -4
 
-  init_imp_mu: 1
+#  init_imp_mu: 1
 
-  imp_noise: 0.5
+#  imp_noise: 0.5
+
+
+  key_dim: 3
+  val_dim: 8
+  keys_per_head: 8
+  weight_keys: True
+  gumbel: 0
 
 #  key_dim: 4
 #  val_dim: 4

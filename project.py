@@ -161,7 +161,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 					full = walks[1:1+ntrav]
 					del walks
 					
-					tH, tW = util.calc_tiling(full.size(1))
+					tH, tW = util.calc_tiling(full.size(1), prefer_tall=True)
 					B, N, S, C, H, W = full.shape
 					
 					# if tH*H > 200: # limit total image size

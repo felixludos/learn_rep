@@ -74,7 +74,8 @@ class Patch_Points(fd.Model):
 	Converts an image into a set of unordered points where each point is a concat of the pixels of
 	a unique patch of the image.
 	'''
-	def __init__(self, in_shape, patch_size=4, stride=2, dilation=1, padding=0):
+	def __init__(self, in_shape, include_coords=False,
+	             patch_size=4, stride=2, dilation=1, padding=0):
 
 		C, H, W = in_shape
 
@@ -104,6 +105,9 @@ class Patch_Points(fd.Model):
 		Nw = (W + 2 * padding[1] - dilation[1] * (patch_size[1] - 1) - 1) // stride[1] + 1
 		N = Nh * Nw
 
+		if include_coords:
+			pout += 2
+
 		super().__init__(in_shape, (pout, N))
 
 		self.pout = pout
@@ -111,8 +115,17 @@ class Patch_Points(fd.Model):
 		self.transform = nn.Unfold(kernel_size=patch_size, stride=stride,
 		                           dilation=dilation, padding=padding)
 
+		if include_coords:
+			self.register_buffer('coords', torch.from_numpy(np.mgrid[:1:1j*Nh,:1:1j*Nw]).view(2, -1).float())
+		else:
+			self.coords = None
+
 	def forward(self, x):
-		return self.transform(x)
+		p = self.transform(x)
+		if self.coords is not None:
+			B = p.size(0)
+			p = torch.cat([p, self.coords.expand(B,*self.coords.size())],1)
+		return p
 
 
 
@@ -354,7 +367,8 @@ class PointJoiner(PointJoin):
 @fd.AutoComponent('point-wsum')
 class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
 
-	def __init__(self, pin1, pin2, groups=1, heads=1, norm_heads=False, sum_heads=True):
+	def __init__(self, pin1, pin2, groups=1, heads=1, norm_heads=False, sum_heads=True,
+	             gumbel=None, gumbel_min=0.1, gumbel_delta=2e-4):
 		super().__init__(pin1=pin1, pin2=pin2, pout=pin1)
 		self.nout = groups if sum_heads else groups*heads
 
@@ -366,6 +380,13 @@ class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
 		self.heads = heads
 		self.groups = groups
 		self.N_out = self.heads * self.groups
+		
+		if gumbel is not None and gumbel <= 0:
+			gumbel = None
+		self.gumbel = gumbel
+		self.gumbel_delta = gumbel_delta
+		self.gumbel_start = gumbel
+		self.gumbel_min = gumbel_min
 
 		self.register_cache('_w')
 		self.cmap = cm.get_cmap('seismic')
@@ -377,23 +398,36 @@ class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
 
 		if self._w is not None:
 			w = self._w
+			
+			brightness = 100*10**(self.gumbel is None)
 
 			B, G, K, N = w.shape
 
 			H, W = util.calc_tiling(N)
 
-			g = w.sum(0) / B
-			# g = w[0]
+			g = w[0]
 			g = g.view(G, K, H, W)
 			out.key_selections = g
 			g = g.view(G*K, H, W)
 
-			# g = torchvision.utils.make_grid(g.unsqueeze(1), nrow=K, padding=1, pad_value=1).norm(p=1, dim=0).unsqueeze(0)
+			g = torchvision.utils.make_grid(g.unsqueeze(1).mul(brightness).clamp(max=1), nrow=K, padding=1, pad_value=1)[:1]#.mean(dim=0).unsqueeze(0)
 
-			g = torch.from_numpy(self.cmap(g.numpy())).permute(0, 3, 1, 2)
-			g = torchvision.utils.make_grid(g, nrow=K, padding=1, pad_value=1)[:3]#.norm(p=1, dim=0)
+			# g = torch.from_numpy(self.cmap(g.numpy())).permute(0, 3, 1, 2)[:,:3]
+			# g = torchvision.utils.make_grid(g, nrow=K, padding=1, pad_value=1)#.norm(p=1, dim=0)
 
-			logger.add('image', 'patches', g)
+			logger.add('image', 'patches-1', g)
+			
+			g = w.sum(0) / B
+			g = g.view(G, K, H, W)
+			out.key_selections = g
+			g = g.view(G * K, H, W)
+			
+			g = torchvision.utils.make_grid(g.unsqueeze(1).mul(brightness).clamp(max=1), nrow=K, padding=1, pad_value=1)[:1]  # .mean(dim=0).unsqueeze(0)
+			
+			# g = torch.from_numpy(self.cmap(g.numpy())).permute(0, 3, 1, 2)[:,:3]
+			# g = torchvision.utils.make_grid(g, nrow=K, padding=1, pad_value=1)#.norm(p=1, dim=0)
+			
+			logger.add('image', 'patches-avg', g)
 
 	def forward(self, p1, p2): # p1 (B, C, N)
 		w = self.compute_weights(p2) # (B, GK, N)
@@ -401,8 +435,14 @@ class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
 		G = self.groups
 		K = self.heads
 
+		if self.gumbel is not None:
+			if self.training:
+				self.gumbel = max(self.gumbel - self.gumbel_delta, self.gumbel_min)
+			w += torch.rand_like(w).log().mul(-1).log().mul(-1)
+			w /= self.gumbel
+
 		w = w.view(B, G, K*N) if self.norm_heads else w.view(B, G, K, N)
-		w = F.softmax(w).view(B, G*K, N)
+		w = F.softmax(w, dim=-1).view(B, G*K, N)
 
 		self._w = w.view(B,G,K,N).cpu().detach()
 

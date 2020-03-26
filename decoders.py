@@ -96,7 +96,7 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 			nxt = create_branch.current()
 			nxt.din = next(bdims)
-			nxt.dout = in_chn
+			nxt.features = in_chn
 
 			branches.append(next(create_branch))
 
