@@ -3,15 +3,15 @@ parents: ['basics']
 model:
 
     key_dim: 32
-    branch_dim: 3
+    branch_dim: 2
 
     decoder:
         _type: 'branch-dec'
 
         root_dim: 0
 
-        channels: [64, 64, 64, 64]
-        factors: 2
+        channels: [64, 64, 64, 64, 64, 64]
+        factors: [1,2,1,2,2,2]
 
 #        root:
 #            _type: 'mlp'
@@ -28,6 +28,8 @@ model:
                 - _type: '<>branch_type'
                 - _type: '<>branch_type'
                 - _type: '<>branch_type'
+                - _type: '<>branch_type'
+                - _type: '<>branch_type'
 
             output_nonlin: None
 
@@ -40,6 +42,10 @@ model:
             _type: 'iter'
 
             _elements:
+                - _type: '<>layer_type'
+                  output_nonlin: '<>nonlin'
+                - _type: '<>layer_type'
+                  output_nonlin: '<>nonlin'
                 - _type: '<>layer_type'
                   output_nonlin: '<>nonlin'
                 - _type: '<>layer_type'

@@ -1,20 +1,21 @@
 #parents: ['pointenc', 'branchdec', '3dshapes', 'basics']
 
 #parents: ['pointenc-attn', '3dshapes', 'basics']
-#parents: ['pvae', 'conv', 'vtrans-3ds']
+
+parents: ['ae', 'conv', '3dshapes']
+#parents: ['pvae', 'branchdec-deep', 'conv', '3dshapes']
 #parents: ['sup-3ds']
-parents: ['mtrans-3ds']
 
-load: 'test-cmd_200412-140222'
+#load: 'test-cmd_200412-140222'
 
-override:
-  training:
-    step_limit: 25000
-  eval:
-    identifier: test
-  dataset:
-    name: 3dshapes
-    _mod: __x__
+#override:
+#  training:
+#    step_limit: 25000
+#  eval:
+#    identifier: test
+#  dataset:
+#    name: 3dshapes
+#    _mod: __x__
 
 inline: True
 
