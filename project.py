@@ -74,7 +74,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 			self.stats.new('reg')
 		self.stats.new('rec_loss')
 
-		self.register_buffer('_q', None)
+		self.register_buffer('_q', None, save=True)
 		self.register_cache('_real', None)
 		self.register_cache('_rec', None)
 		self.viz_gen = viz_gen
