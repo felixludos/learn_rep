@@ -1,0 +1,34 @@
+
+model:
+
+    fc: [256, 128]
+
+
+    kernels: 3
+    factors: 1
+    strides: 2
+
+    norm_type: 'group'
+
+    downsampling: 'max'
+
+    decoder:
+        _type: 'deconv'
+        fc: [128, 256]
+
+        channels: [128, 64, 64, 32, 32]
+        factors: 2
+        strides: 1
+
+        upsampling: 'bilinear'
+
+        output_nonlin: sigmoid
+
+    encoder:
+        _type: 'conv'
+
+        channels: [32, 32, 64, 64, 128]
+
+        fc: [256, 128]
+
+

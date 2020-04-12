@@ -1,7 +1,10 @@
 #parents: ['pointenc', 'branchdec', '3dshapes', 'basics']
 
-parents: ['pointenc-attn', '3dshapes', 'basics']
-#parents: ['cae', '3dshapes']
+#parents: ['pointenc-attn', '3dshapes', 'basics']
+parents: ['pvae', 'conv', 'vtrans-3ds']
+#parents: ['sup-3ds']
+
+load: 'test-pycharm_200411-194047'
 
 inline: True
 
@@ -9,9 +12,12 @@ inline: True
 
 #test_mode: 0
 
+#eval:
+#  n_samples: 500
+
 #training:
-#  step_limit: 50000
-#  val_freq: 1000
+#  step_limit: 1000
+#  val_freq: 500
 #
 dataset:
   device: cpu
@@ -24,7 +30,7 @@ dataset:
 #  model:
 #    min_log_std: -5
 
-model:
+#model:
 #  nonlin: relu
 
 #  scheduler_type: 'cos'
@@ -41,11 +47,12 @@ model:
 #  imp_noise: 0.5
 
 
-  key_dim: 3
-  val_dim: 8
-  keys_per_head: 8
-  weight_keys: True
-  gumbel: 0
+
+#  key_dim: 3
+#  val_dim: 8
+#  keys_per_head: 8
+#  weight_keys: True
+#  gumbel: 0
 
 #  key_dim: 4
 #  val_dim: 4

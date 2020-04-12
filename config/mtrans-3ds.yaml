@@ -1,0 +1,33 @@
+
+parents: ['3dshapes']
+
+dataset:
+  _mod: 'mtrans-3ds'
+
+#  setting: update
+
+  mechanisms: # ['object_hue', 'floor_hue', 'wall_hue', 'scale', 'orientation', 'shape']
+    train:
+      - floor_hue
+      - wall_hue
+#      - object_hue
+      - scale
+#      - shape
+      - orientation
+    update:
+      - floor_hue
+      - wall_hue
+#      - object_hue
+#      - scale
+      - shape
+      - orientation
+    eval:
+      - floor_hue
+      - wall_hue
+      - object_hue
+      - scale
+      - shape
+      - orientation
+
+
+

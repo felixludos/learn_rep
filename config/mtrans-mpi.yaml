@@ -1,0 +1,36 @@
+
+parents: ['mpi3d']
+
+dataset:
+  _mod: 'mtrans-mpi'
+
+#  setting: update
+
+  mechanisms: # ['object_color', 'object_shape', 'object_size', 'camera_height', 'background_color', 'horizonal_axis', 'vertical_axis']
+    train:
+#      - object_color
+#      - object_shape
+      - object_size
+      - camera_height
+      - background_color
+      - horizonal_axis
+      - vertical_axis
+    update:
+#      - object_color
+      - object_shape
+#      - object_size
+      - camera_height
+      - background_color
+      - horizonal_axis
+      - vertical_axis
+    test:
+      - object_color
+      - object_shape
+      - object_size
+      - camera_height
+      - background_color
+      - horizonal_axis
+      - vertical_axis
+
+
+

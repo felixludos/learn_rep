@@ -1,0 +1,10 @@
+parents: ['basics']
+
+dataset:
+    _mod: 'subset'
+
+    num: 100000
+
+#    shuffle: True
+
+

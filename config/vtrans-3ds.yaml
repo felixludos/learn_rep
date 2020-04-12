@@ -1,0 +1,25 @@
+
+parents: ['3dshapes']
+
+dataset:
+  _mod: 'vtrans-3ds'
+
+#  setting: update
+  nums:
+    - 10 #floor_hue 10
+    - 10 #wall_hue 10
+    - 10 #object_hue 10
+    - 8 #scale 8
+    - 0 #shape 4
+    - 15 #orientation 15
+
+  valid:
+    - None #[0, 1, 2]
+    - None #[0, 1, 2]
+    - None #[0]
+    - None #[0]
+    - [2, 3]
+    - None #[0]
+
+
+

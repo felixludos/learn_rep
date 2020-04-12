@@ -27,6 +27,11 @@ from foundation import util
 from foundation import train as trn
 from foundation import data
 
+if 'FOUNDATION_RUN_MODE' in os.environ and os.environ['FOUNDATION_RUN_MODE'] == 'jupyter':
+	from tqdm import tqdm_notebook as tqdm
+else:
+	from tqdm import tqdm
+
 import visualizations as viz_util
 
 import pointnets
@@ -40,7 +45,7 @@ trn.register_config_dir(os.path.join(MY_PATH, 'config'), recursive=True)
 
 @fd.Component('ae')
 class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, fd.Schedulable,
-                  fd.Cacheable, fd.Visualizable, fd.Trainable_Model):
+                  fd.Cacheable, fd.Visualizable, fd.Evaluatable, fd.Trainable_Model):
 	def __init__(self, A):
 
 		encoder = A.pull('encoder')
@@ -87,6 +92,114 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		
 		return h
 
+	def _evaluate(self, info):
+		
+		# region Prep
+		
+		results = {}
+		
+		A = info['A']
+		
+		valdata = info['datasets'][-1]
+		if 'testset' not in info or info['testset'] is None:
+			testdata = valdata
+			print('Using validation dataset')
+		else:
+			testdata = info['testset']
+		
+		logger = info['logger']
+		
+		device = A.pull('device', 'cpu')
+		batch_size = A.dataset.pull('batch_size', 50)
+		n_samples = A.eval.pull('n_samples', 50000)
+		
+		valloader, testloader = trn.get_loaders(valdata, testdata,
+		                                        batch_size=batch_size, shuffle=True, drop_last=True)
+		# valloader is not shuffled, but testloader is not.
+		
+		# endregion
+		
+		# region Default output
+		
+		self.stats.reset()
+		loader = iter(testloader)
+		total = 0
+		
+		batch = next(loader)
+		batch = util.to(batch, device)
+		total += batch.size(0)
+		
+		with torch.no_grad():
+			out = self.test(batch)
+		
+		if isinstance(self, fd.Visualizable):
+			self.visualize(out, logger)
+		
+		results['out'] = out
+		
+		for batch in loader:  # complete loader for stats
+			batch = util.to(batch, device)
+			total += batch.size(0)
+			with torch.no_grad():
+				self.test(batch)
+		
+		results['stats'] = self.stats.export()
+		display = self.stats.avgs()  # if smooths else stats.avgs()
+		for k, v in display.items():
+			logger.add('scalar', k, v)
+		results['stats_num'] = total
+		
+		# endregion
+		
+		# region FID
+		if 'inception_model' not in self.volatile:
+			self.volatile.inception_model = fd.eval.fid.load_inception_model(dim=2048, device=device)
+		inception_model = self.volatile.inception_model
+	
+		ds_stats = testdata.fid_stats if hasattr(testdata, 'fid_stats') else None
+	
+		# rec fid
+		def make_gen_fn():
+			loader = util.make_infinite(valloader)
+		
+			def gen_fn(N):
+				# assert N == batch_size, '{} vs {}'.format(N, batch_size)
+				x = util.to(next(loader), device)[0]
+				rec = self(x[:N])
+				return rec
+			
+			return gen_fn
+		
+		m, s = fd.eval.fid.compute_inception_stat(make_gen_fn(), inception=inception_model,
+		                                          batch_size=batch_size, n_samples=n_samples,
+		                                          pbar=tqdm if 'inline' in A and A.inline else None)
+		results['rec_fid_stats'] = [m, s]
+	
+		if ds_stats is not None:
+			score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
+			results['rec_fid'] = score
+			
+			logger.add('scalar', 'fid-rec', score)
+	
+		# hyb fid
+		gen_fn = self.generate_hybrid
+		m, s = fd.eval.fid.compute_inception_stat(gen_fn, inception=inception_model,
+		                                   batch_size=batch_size, n_samples=n_samples,
+		                                   pbar=tqdm if 'inline' in A and A.inline else None)
+		results['hyb_fid_stats'] = [m, s]
+		
+		if ds_stats is not None:
+			score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
+			results['hyb_fid'] = score
+			
+			logger.add('scalar', 'fid-hyb', score)
+		
+		# endregion
+		
+		
+
+		return results
+
 	def _visualize(self, info, logger):
 
 		if isinstance(self.enc, fd.Visualizable):
@@ -124,9 +237,9 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 				recs = torch.cat([viz_x, viz_rec], 0)
 				logger.add('images', 'rec', self._img_size_limiter(recs))
 
-			if self.viz_gen:
-				viz_gen = self.generate(2*N)
-				logger.add('images', 'gen', self._img_size_limiter(viz_gen))
+			if self.viz_gen or not self.training:
+				viz_gen = self.generate_hybrid(2*N)
+				logger.add('images', 'gen-hyb', self._img_size_limiter(viz_gen))
 
 			if not self.training: # expensive visualizations
 				
@@ -147,6 +260,8 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 					
 					walks = viz_util.get_traversals(vecs, self.decode).cpu()
 					diffs = viz_util.compute_diffs(walks)
+					
+					info.diffs = diffs
 					
 					viz_util.viz_interventions(diffs, figax=(fig, iax))
 					
@@ -234,6 +349,9 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		return util.shuffle_dim(q)
 
 	def generate(self, N=1):
+		return self.generate(N)
+
+	def generate_hybrid(self, N=1):
 
 		if self._q is None:
 			raise NotImplementedError
@@ -270,8 +388,76 @@ class Prior_Autoencoder(AutoEncoder):
 		return torch.randn(N, self.latent_dim, device=self.device)
 	
 	def generate(self, N=1):
+		return self.generate_prior(N)
+		
+	def generate_prior(self, N=1):
 		q = self.sample_prior(N)
 		return self.decode(q)
+	
+	def _visualize(self, info, logger):
+		super()._visualize(info, logger)
+		
+		if self._viz_counter % 2 == 0 or not self.training:
+			# q = None
+			# if 'latent' in info and info.latent is not None:
+			# 	q = info.latent.loc if isinstance(info.latent, distrib.Distribution) else info.latent
+			#
+			# 	shape = q.size()
+			# 	if len(shape) > 1 and np.product(shape) > 0:
+			# 		try:
+			# 			logger.add('histogram', 'latent-norm', q.norm(p=2, dim=-1))
+			# 			logger.add('histogram', 'latent-std', q.std(dim=0))
+			# 			if isinstance(info.latent, distrib.Distribution):
+			# 				logger.add('histogram', 'logstd-hist', info.latent.scale.add(1e-5).log().mean(dim=0))
+			# 		except ValueError:
+			# 			print('\n\n\nWARNING: histogram just failed\n')
+			# 			print(q.shape, q.norm(p=2, dim=-1).shape)
+			#
+			B, C, H, W = info.original.shape
+			N = min(B, 8)
+			
+			if self.viz_gen or not self.training:
+				viz_gen = self.generate_prior(2 * N)
+				logger.add('images', 'gen-prior', self._img_size_limiter(viz_gen))
+		
+		
+	def _evaluate(self, info):
+		
+		results = super()._evaluate(info)
+		
+		A = info['A']
+		
+		valdata = info['datasets'][-1]
+		if 'testset' not in info or info['testset'] is None:
+			testdata = valdata
+			print('Using validation dataset')
+		else:
+			testdata = info['testset']
+		
+		logger = info['logger']
+		
+		device = A.pull('device', 'cpu')
+		batch_size = A.dataset.pull('batch_size', 50)
+		n_samples = A.eval.pull('n_samples', 50000)
+		
+		ds_stats = testdata.fid_stats if hasattr(testdata, 'fid_stats') else None
+		
+		
+		inception_model = self.volatile.inception_model
+		
+		gen_fn = self.generate_prior
+		m, s = fd.eval.fid.compute_inception_stat(gen_fn, inception=inception_model,
+		                                          batch_size=batch_size, n_samples=n_samples,
+		                                          pbar=tqdm if 'inline' in A and A.inline else None)
+		results['prior_fid_stats'] = [m, s]
+		
+		if ds_stats is not None:
+			score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
+			results['prior_fid'] = score
+			
+			logger.add('scalar', 'fid-prior', score)
+		
+		return results
 
 @fd.Component('vae')
 class VAE(Prior_Autoencoder):
@@ -755,24 +941,191 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Schedulable, fd.Model):
 # endregion
 
 
+# region Datasets
+
+class Mechanism_Transfer(data.Subset_Dataset):
+	def __init__(self, dataset, info):
+		
+		setting = info.pull('setting', 'train')
+		# assert setting in {'train', 'test', 'update'}
+		
+		mechanisms = info.pull('mechanisms', {})
+		if 'train' not in mechanisms:
+			mechanisms['train'] = dataset.factor_order.copy()
+		if 'update' not in mechanisms:
+			mechanisms['update'] = mechanisms['train'].copy()
+		if 'eval' not in mechanisms:
+			mechanisms['eval'] = mechanisms['update'].copy()
+		print('Mechanisms: (current mode: {}): {}'.format(setting, mechanisms[setting]))
+		
+		default_values = info.pull('default_class', 'middle')
+		if not isinstance(default_values, list):
+			default_values = [default_values] * len(dataset.factor_order)
+		
+		super().__init__(dataset)
+		
+		self.mechanisms = mechanisms
+		self.default_views = default_values
+		
+		self.set_setting(setting)
+		
+	def set_setting(self, setting):
+		assert setting in self.mechanisms, f'{setting} not found'
+		
+		default_values = iter(self.default_views)
+		
+		fixed = [(None if m in self.mechanisms[setting] else next(default_values)) for m in self.dataset.factor_order]
+		
+		sel = self._filter(self.dataset, fixed)
+		
+		if sel is not None:
+			sel = np.arange(len(self.dataset))[sel]
+			
+		
+		self.indices = sel
+		try:
+			device = self.dataset.get_device()
+			if self.indices is not None:
+				self.indices = self.indices.to(device)
+		except AttributeError:
+			pass
+		
+		self.setting = setting
+		print(f'Transfer dataset set to setting: {setting}')
+		
+		
+	def _filter(self, dataset, fixed):
+		raise NotImplementedError
+
+@trn.Modification('mtrans-3ds')
+class Shapes3D_Mech_Transfer(Mechanism_Transfer):
+
+	def _filter(self, dataset, fixed):
+		
+		lbls = dataset.labels
+		
+		sel = None
+		for i, val in enumerate(fixed):
+			if val is not None:
+				if val == 'middle':
+					vals = sorted(list(set(lbls[:, i].tolist())))
+					val = vals[len(vals) // 2]
+				valid = lbls[:, i] == val
+				if sel is None:
+					sel = valid
+				else:
+					sel *= valid
+		
+		return sel
+
+@trn.Modification('mtrans-mpi')
+class MPI_Mech_Transfer(Mechanism_Transfer):
+
+	def _filter(self, dataset, fixed):
+		
+		inds = dataset.indices
+		div = dataset._flr
+		
+		sel = None
+		for d, val in zip(div, fixed):
+			if val is not None:
+				if val == 'middle':
+					val = 0
+				valid = inds % d == val
+				if sel is None:
+					sel = valid
+				else:
+					sel *= valid
+		
+		return sel
+
+class Value_Transfer(data.Subset_Dataset):
+	
+	def __init__(self, dataset, info):
+		
+		nums = info.pull('nums', None)
+		fractions = info.pull('fractions', None)
+		
+		valid = info.pull('valid', None)
+		
+		sizes = np.array(dataset.factor_sizes)
+		
+		if nums is None:
+			if fractions is not None:
+				fractions = np.array(fractions)
+				nums = fractions * sizes
+				nums = nums.astype(int)
+		else:
+			nums = np.array(nums)
+		
+		if nums is not None:
+			nums = nums.clip(min=1)
+		else:
+			nums = [None]*len(sizes)
+		
+		if valid is None and nums is None:
+			assert False
+			valid = [None]*len(sizes)
+		else:
+			valid = [torch.arange(n).int() if v is None or v == 'None' else torch.tensor(v).int() for v, n in zip(valid, nums)]
+		
+		super().__init__(dataset)
+		
+		sel = self._filter(dataset, valid)
+		
+		if sel is not None:
+			sel = np.arange(len(self.dataset))[sel.numpy().astype(bool)]
+		
+		self.indices = sel
+		try:
+			device = self.dataset.get_device()
+			if self.indices is not None:
+				self.indices = self.indices.to(device)
+		except AttributeError:
+			pass
+	
+	def _filter(self, dataset, valid):
+		raise NotImplementedError
+	
+	pass
+	
+@trn.Modification('vtrans-3ds')
+class Shapes3d_Value_Transfer(Value_Transfer):
+	def _filter(self, dataset, valid):
+		
+		sel = 1
+		
+		lbls = dataset.labels.clone()
+		
+		for c, v in zip(lbls.t(), valid):
+			v = v.view(1,-1)
+			c = c.view(-1,1)
+			s = c.sub(v).eq(0).sum(-1)
+			sel *= s
+		
+		return sel
+	
+# endregion
+
 # region Sup-Models
 
 @fd.Component('sup-model')
 class SupModel(fd.Visualizable, fd.Trainable_Model):
 	def __init__(self, A):
-
-		net = A.pull('net')
+		
 		criterion = A.pull('criterion', 'cross-entropy')
+		
+		A.dout = criterion.din
+		net = A.pull('net')
 
-		super().__init__(net.din, net.dout)
+		super().__init__(net.din, criterion.dout)
 
 		self.net = net
 		self.criterion = util.get_loss_type(criterion)
 
-		self.stats.new('error', 'confidence')
+		self.stats.new('confidence', 'error', *[f'error{i}' for i in range(len(self.criterion))])
 
 		# self.set_optim(A)
-
 
 	def forward(self, x):
 		return self.net(x)
@@ -781,14 +1134,18 @@ class SupModel(fd.Visualizable, fd.Trainable_Model):
 		# if self._viz_counter % 5 == 0:
 		# 	pass
 
-		conf, pick = info.pred.max(-1)
+		conf, pick = self.criterion.get_info(info.pred)
 
 		confidence = conf.detach()
 		correct = pick.sub(info.y).eq(0).float().detach()
 
 		self.stats.update('confidence', confidence.mean())
-		self.stats.update('error', 1 - correct.mean())
-
+		
+		full_correct = 1
+		for i, acc in enumerate(correct.t()):
+			self.stats.update(f'error{i}', 1 - acc.mean())
+			full_correct *= acc
+		self.stats.update('error', 1 - full_correct.mean())
 
 	def _step(self, batch, out=None):
 		if out is None:
@@ -811,6 +1168,9 @@ class SupModel(fd.Visualizable, fd.Trainable_Model):
 			self.optim.step()
 
 		return out
+
+	def classify(self, x):
+		return self.criterion.get_picks(self(x))
 
 # endregion
 
