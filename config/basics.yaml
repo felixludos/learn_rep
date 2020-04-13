@@ -48,7 +48,7 @@ model:
 
     norm: 'group'
 
-    nonlin: 'elu'
+    nonlin: 'relu'
 
     encoder:
       _type: 'dislib-enc'

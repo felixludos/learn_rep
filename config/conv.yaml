@@ -1,6 +1,8 @@
 
 model:
 
+    nonlin: 'elu'
+
     kernels: 3
 
     encoder:

@@ -2,7 +2,7 @@
 
 #parents: ['pointenc-attn', '3dshapes', 'basics']
 
-parents: ['ae', 'conv', '3dshapes']
+parents: ['vae', 'conv', '3dshapes']
 #parents: ['pvae', 'branchdec-deep', 'conv', '3dshapes']
 #parents: ['sup-3ds']
 
