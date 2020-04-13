@@ -191,12 +191,13 @@ class PointNet(fd.Trainable_Model):
 
 		self.tfms = nn.Sequential(*modules)
 
-		if 'pool' in A:
-			A.pool.pin = pout
-			A.pool.N = n_points
+		if 'pool' in A and '_type' in A.pool:
+			A.pool.din = (pout, n_points)
+			# A.pool.pin = pout
+			# A.pool.N = n_points
 		self.pool = A.pull('pool', None)
 		if self.pool is not None:
-			pout = self.pool.pout
+			pout = self.pool.dout
 
 		if 'final' in A:
 			A.final.din = pout

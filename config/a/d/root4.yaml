@@ -1,0 +1,24 @@
+parents: ['a/d/branch4']
+
+model:
+
+    branch_dim: 2
+
+    root_hidden: [128, 256, 512]
+
+    decoder:
+
+        root_dim: 4
+
+        root:
+            _type: 'mlp'
+
+            hidden_dims: '<>root_hidden'
+            output_nonlin: '<>nonlin'
+
+
+
+info:
+    arch_type: 'root4'
+
+

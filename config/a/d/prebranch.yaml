@@ -1,0 +1,50 @@
+parents: ['basics']
+
+model:
+
+    branch_dim: 1
+
+    branch_hidden: [64, 128]
+
+    decoder:
+        _type: 'branch-dec'
+
+        root_dim: 0
+
+#        channels: [64,64,64, 64,64,64, 64,64]
+#        factors: [1,2, 1,2, 1,2, 1,2]
+
+#        root:
+#            _type: 'mlp'
+#
+#            hidden_dims: [128, 256, 512]
+#            output_nonlin: '<>nonlin'
+
+        branch_type: 'norm-ada-in'
+        branches:
+            _type: 'iter'
+
+#            _elements:
+
+            output_nonlin: None
+
+            net:
+                _type: 'mlp'
+                hidden_dims: '<>branch_hidden'
+
+        layer_type: 'deconv-layer'
+        layers:
+            _type: 'iter'
+
+#            _elements:
+
+            up_type: bilinear
+
+            output_nonlin: 'sigmoid'
+
+
+
+info:
+    arch_type: 'branch'
+
+

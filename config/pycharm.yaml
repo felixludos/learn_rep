@@ -1,10 +1,14 @@
-#parents: ['pointenc', 'branchdec', '3dshapes', 'basics']
 
-#parents: ['pointenc-attn', '3dshapes', 'basics']
+#parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
-parents: ['vae', 'conv', '3dshapes']
-#parents: ['pvae', 'branchdec-deep', 'conv', '3dshapes']
+parents: ['a/d/root6', 'a/e/conv', 'm/ae', '3dshapes']
+#parents: ['a/d/branch12', 'a/e/conv', 'm/ae', '3dshapes']
+
+#parents: ['m/ae', 'a/e/attn', 'a/conv', '3dshapes']
+
 #parents: ['sup-3ds']
+
+
 
 #load: 'test-cmd_200412-140222'
 
@@ -41,7 +45,8 @@ dataset:
 #  model:
 #    min_log_std: -5
 
-#model:
+model:
+  viz_gen: True
 #  nonlin: relu
 
 #  scheduler_type: 'cos'

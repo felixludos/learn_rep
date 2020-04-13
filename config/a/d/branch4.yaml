@@ -1,0 +1,40 @@
+parents: ['a/d/prebranch']
+
+model:
+
+    branch_dim: 3
+
+    decoder:
+        _type: 'branch-dec'
+
+        channels: [64, 64, 64, 64]
+        factors: 2
+
+        branches:
+            _type: 'iter'
+
+            _elements:
+                - _type: '<>branch_type'
+                - _type: '<>branch_type'
+                - _type: '<>branch_type'
+                - _type: '<>branch_type'
+
+
+        layers:
+            _type: 'iter'
+
+            _elements:
+                - _type: '<>layer_type'
+                  output_nonlin: '<>nonlin'
+                - _type: '<>layer_type'
+                  output_nonlin: '<>nonlin'
+                - _type: '<>layer_type'
+                  output_nonlin: '<>nonlin'
+                - _type: '<>layer_type'
+                  norm: none
+
+
+info:
+    arch_type: 'branch4'
+
+

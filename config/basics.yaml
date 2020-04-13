@@ -48,13 +48,13 @@ model:
 
     norm: 'group'
 
-    nonlin: 'relu'
+    nonlin: 'elu'
 
-    encoder:
-      _type: 'dislib-enc'
-
-    decoder:
-      _type: 'dislib-dec'
+#    encoder:
+#      _type: 'dislib-enc'
+#
+#    decoder:
+#      _type: 'dislib-dec'
 
     optim_type: 'adam'
     lr: 1.e-3

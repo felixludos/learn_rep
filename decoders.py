@@ -118,9 +118,6 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 		assert len(self.branches) == len(self.branch_dim) == len(self.layers)
 
-		# self.set_optim(A)
-		# self.set_scheduler(A)
-
 
 	def _visualize(self, out, logger):
 		pass
@@ -129,7 +126,7 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 	def forward(self, q):
 
 		if self.root_dim > 0:
-			root, q = q[:, self.root_dim:], q[:, self.root_dim:]
+			root, q = q[:, :self.root_dim], q[:, self.root_dim:]
 			c = self.root(root)
 		else:
 			B = q.size(0)

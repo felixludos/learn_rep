@@ -1,4 +1,4 @@
-parents: ['branchdec', 'basics']
+parents: ['basics']
 
 model:
 
@@ -39,13 +39,27 @@ model:
                       groups: '<>num_groups'
 #                      gumbel: 10
                       norm_heads: '<>weight_keys'
-                    - _type: 'point-self'
-                      output_nonlin: 'none'
-                      hidden: [128, 128]
-                      pout: '<>branch_dim'
+#                    - _type: 'point-self'
+#                      output_nonlin: 'none'
+#                      hidden: [128, 128]
+#                      pout: '<>branch_dim'
 
             pool:
-                _type: 'concat-points'
+#                _type: 'concat-points'
+                _type: 'multihead'
+
+                head_douts: '<>branch_dim'
+
+                heads:
+                  _type: iter
+
+                  hidden_dims: [128, 128]
+
+                  _elements:
+                    - _type: mlp
+                    - _type: mlp
+                    - _type: mlp
+                    - _type: mlp
 
 info:
     arch_type: 'pointenc-attn'
