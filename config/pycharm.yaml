@@ -10,7 +10,14 @@ parents: ['a/d/branch12', 'a/e/conv', 'm/pvae', '3dshapes']
 
 #parents: ['sup-3ds']
 
+resume: 3ds-ae-12b1-deep_0010-6241682-08_200414-021349
 
+det_grad: True
+
+override:
+  det_grad: True
+  dataset:
+    device: cpu
 
 #load: 'test-cmd_200412-140222'
 
