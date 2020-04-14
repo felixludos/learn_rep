@@ -275,6 +275,9 @@ class PointSplitter(PointSplit):
 		assert pin > split, f'not enough dimensions to split: {pin} vs {split}'
 		self.split = split
 
+	def extra_repr(self):
+		return f'split={self.split}'
+
 	def forward(self, p):
 		return p[:,:self.split], p[:,self.split:]
 
@@ -368,19 +371,19 @@ class PointJoiner(PointJoin):
 @fd.AutoComponent('point-wsum')
 class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
 
-	def __init__(self, pin1, pin2, groups=1, heads=1, norm_heads=False, sum_heads=True,
+	def __init__(self, pin1, pin2, heads=1, keys=1, norm_heads=False, sum_heads=True,
 	             gumbel=None, gumbel_min=0.1, gumbel_delta=2e-4):
 		super().__init__(pin1=pin1, pin2=pin2, pout=pin1)
-		self.nout = groups if sum_heads else groups*heads
+		self.nout = heads if sum_heads else heads*keys
 
-		self.weights = nn.Conv1d(pin2, groups*heads, kernel_size=1)
+		self.weights = nn.Conv1d(pin2, heads*keys, kernel_size=1)
 
 		self.norm_heads = norm_heads
 		self.sum_heads = sum_heads
 
+		self.keys = keys
 		self.heads = heads
-		self.groups = groups
-		self.N_out = self.heads * self.groups
+		self.N_out = self.keys * self.heads
 		
 		if gumbel is not None and gumbel <= 0:
 			gumbel = None
@@ -394,6 +397,9 @@ class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
 
 	def compute_weights(self, p): # optionally use gumbel softmax
 		return self.weights(p)
+
+	def extra_repr(self):
+		return f'heads={self.heads}, keys={self.keys}'
 
 	def _visualize(self, out, logger):
 
@@ -433,8 +439,8 @@ class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
 	def forward(self, p1, p2): # p1 (B, C, N)
 		w = self.compute_weights(p2) # (B, GK, N)
 		B, GK, N = w.shape
-		G = self.groups
-		K = self.heads
+		G = self.heads
+		K = self.keys
 
 		if self.gumbel is not None:
 			if self.training:
@@ -456,6 +462,10 @@ class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
 
 		return v # (B, C, G*K)
 
+# @fd.AutoComponent('point-wsum')
+# class PointWeightedSum(fd.Cacheable, fd.Visualizable, PointJoin):
+#
+# 	pass
 
 
 @fd.AutoComponent('pool-points')

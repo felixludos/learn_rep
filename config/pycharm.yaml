@@ -4,20 +4,17 @@
 #parents: ['a/dislib', 'm/ae', '3dshapes']
 
 #parents: ['a/d/root6', 'a/e/conv', 'm/ae', '3dshapes']
-parents: ['a/d/branch12', 'a/e/conv', 'm/pvae', '3dshapes']
+parents: ['a/d/branch12', 'a/e/conv', 'm/pvae', 'mpi3d']
 
-#parents: ['m/ae', 'a/e/attn', 'a/conv', '3dshapes']
+#parents: ['a/e/attn12', 'a/d/deconv', 'm/ae', '3dshapes']
 
 #parents: ['sup-3ds']
 
-resume: 3ds-ae-12b1-deep_0010-6241682-08_200414-021349
+#resume: 3ds-ae-12b1-deep_0010-6241682-08_200414-021349
 
-det_grad: True
-
-override:
-  det_grad: True
-  dataset:
-    device: cpu
+#override:
+#  dataset:
+#    device: cpu
 
 #load: 'test-cmd_200412-140222'
 
@@ -46,6 +43,7 @@ inline: True
 dataset:
   device: cpu
 #  batch_size: 128
+  category: real
 
 #resume: vae_3ds_elu_d24_200320-040612\checkpoint_75000.pth.tar
 #override:
@@ -57,6 +55,8 @@ dataset:
 model:
   viz_gen: True
 #  nonlin: relu
+
+  keys_per_head: 4
 
 #  scheduler_type: 'cos'
 #  scheduler_max_steps: 40

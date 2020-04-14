@@ -1,0 +1,26 @@
+parents: ['a/e/attn']
+
+model:
+
+    num_groups: 4
+
+    branch_dim: 3
+
+    encoder:
+        pointnet:
+            pool:
+                _type: 'multihead'
+
+                heads:
+                  _type: iter
+
+                  _elements:
+                    - _type: mlp
+                    - _type: mlp
+                    - _type: mlp
+                    - _type: mlp
+
+info:
+    arch_type: 'attn4'
+
+

@@ -2,16 +2,18 @@ parents: ['basics']
 
 model:
 
-    key_dim: 32
+#    key_dim: 32
     val_dim: 64
+    key_val_dim: 96
+
     keys_per_head: 3
     weight_keys: False
+
     gumbel: 0
 
+#    num_groups: 4
 
-    num_groups: 4
-
-    branch_dim: 3
+#    branch_dim: 3
 
     encoder:
         _type: 'point-enc'
@@ -30,13 +32,17 @@ model:
                     - _type: 'point-self'
                       #output_nonlin: '<>nonlin'
                       hidden: [128, 128, 128, 128, 128]
-                      pout: '<>key_dim'
+                      pout: '<>key_val_dim' # '<>key_dim'
 
-                    - _type: 'point-buffer'
-                      channels: '<>val_dim'
+#                    - _type: 'point-buffer'
+#                      channels: '<>val_dim'
+
+                    - _type: point-split
+                      split: '<>val_dim'
+
                     - _type: 'point-wsum'
-                      heads: '<>keys_per_head' # per group
-                      groups: '<>num_groups'
+                      keys: '<>keys_per_head' # per group
+                      heads: '<>num_groups'
 #                      gumbel: 10
                       norm_heads: '<>weight_keys'
 #                    - _type: 'point-self'
@@ -55,11 +61,7 @@ model:
 
                   hidden_dims: [128, 128]
 
-                  _elements:
-                    - _type: mlp
-                    - _type: mlp
-                    - _type: mlp
-                    - _type: mlp
+#                  _elements: # missing
 
 info:
     arch_type: 'pointenc-attn'
