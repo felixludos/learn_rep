@@ -1,4 +1,4 @@
-parents: ['vae']
+parents: ['m/vae']
 
 model:
   encoder:

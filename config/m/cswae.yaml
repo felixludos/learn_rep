@@ -1,4 +1,4 @@
-parents: ['cae', 'wae']
+parents: ['m/cae', 'm/wae']
 
 model:
   _type: 'cswae'
