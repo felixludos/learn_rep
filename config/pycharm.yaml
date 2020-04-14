@@ -4,9 +4,12 @@
 #parents: ['a/dislib', 'm/ae', '3dshapes']
 
 #parents: ['a/d/root6', 'a/e/conv', 'm/ae', '3dshapes']
-parents: ['a/d/branch12', 'a/e/conv', 'm/pvae', 'mpi3d']
+#parents: ['a/d/branch12', 'a/e/conv', 'm/pvae', 'mpi3d']
 
 #parents: ['a/e/attn12', 'a/d/deconv', 'm/ae', '3dshapes']
+
+parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
+
 
 #parents: ['sup-3ds']
 
