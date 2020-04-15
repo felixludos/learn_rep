@@ -4,7 +4,7 @@ model:
 
     num_groups: 12
 
-    branch_dim: 1
+    head_dim: 1
 
     encoder:
         pointnet:
