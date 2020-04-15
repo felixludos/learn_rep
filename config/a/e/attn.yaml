@@ -7,6 +7,7 @@ model:
     key_val_dim: 128
 
     keys_per_head: 4
+    coord_patches: True
     weight_keys: False
 
     point_tfm_hidden: [128, 128, 128]
@@ -23,7 +24,7 @@ model:
 
         transform:
             _type: 'patch-points'
-            include_coords: True
+            include_coords: '<>coord_patches'
 
         pointnet:
             _type: 'point-net'
