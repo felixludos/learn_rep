@@ -6,9 +6,9 @@
 #parents: ['a/d/root6', 'a/e/conv', 'm/ae', '3dshapes']
 #parents: ['a/d/branch12', 'a/e/conv', 'm/pvae', 'mpi3d']
 
-#parents: ['a/e/attn12', 'a/d/deconv', 'm/ae', '3dshapes']
+parents: ['a/e/attn12', 'a/d/deconv', 'm/ae', '3dshapes']
 
-parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
+#parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
 
 
 #parents: ['sup-3ds']
@@ -60,6 +60,8 @@ model:
 #  nonlin: relu
 
   keys_per_head: 4
+
+  coord_patches: 0
 
 #  scheduler_type: 'cos'
 #  scheduler_max_steps: 40
