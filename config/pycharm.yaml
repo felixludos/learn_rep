@@ -2,11 +2,12 @@
 #parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', '3dshapes']
+#parents: ['a/d/deconv-deep', 'a/conv', 'm/ae', '3dshapes']
 
 #parents: ['a/d/root6', 'a/e/conv', 'm/ae', '3dshapes']
-#parents: ['a/d/branch12', 'a/e/conv', 'm/pvae', 'mpi3d']
+parents: ['a/d/branch12', 'a/e/conv', 'm/ae', '3dshapes']
 
-parents: ['a/e/attn12', 'a/d/deconv', 'm/ae', '3dshapes']
+#parents: ['a/e/attn12', 'a/d/deconv', 'm/ae', '3dshapes']
 
 #parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
 
@@ -59,9 +60,13 @@ model:
   viz_gen: True
 #  nonlin: relu
 
-  keys_per_head: 4
+#  norm: 'instance'
+  residual: True
+  norm: None
 
-  coord_patches: 0
+#  keys_per_head: 4
+
+#  coord_patches: 0
 
 #  scheduler_type: 'cos'
 #  scheduler_max_steps: 40
