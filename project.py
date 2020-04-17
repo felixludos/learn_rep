@@ -349,7 +349,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		return util.shuffle_dim(q)
 
 	def generate(self, N=1):
-		return self.generate(N)
+		return self.generate_hybrid(N)
 
 	def generate_hybrid(self, N=1):
 

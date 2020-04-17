@@ -1,0 +1,22 @@
+parents: ['basics']
+
+model:
+
+
+
+  decoder:
+    _type: 'deconv'
+
+    out_shape: '<>dout'
+
+    channels: [128, 128, 128, 128, 128]
+    kernels: 3
+    factors: 2
+    strides: 1
+
+    up: 'bilinear'
+
+    fc_hidden: [128, 128, 256, 256]
+
+    output_nonlin: sigmoid
+

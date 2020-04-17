@@ -1,0 +1,19 @@
+
+model:
+
+    encoder:
+        _type: 'conv'
+
+        in_shape: '<>din'
+
+        channels: [128, 128, 128, 128, 128]
+        kernels: 3
+        factors: 1
+        strides: 2
+
+        down: 'max'
+
+        fc_hidden: [256, 256, 128, 128]
+
+
+
