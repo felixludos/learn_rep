@@ -12,6 +12,9 @@ output:
 
   print_freq: 200
 
+eval:
+  compute_gt_fid: True
+
 training:
 
   track_best: True

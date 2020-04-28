@@ -25,7 +25,7 @@ import foundation as fd
 from foundation import models
 from foundation import util
 from foundation import train as trn
-from foundation import data
+from foundation import data as datautils
 
 if 'FOUNDATION_RUN_MODE' in os.environ and os.environ['FOUNDATION_RUN_MODE'] == 'jupyter':
 	from tqdm import tqdm_notebook as tqdm
@@ -36,6 +36,7 @@ import visualizations as viz_util
 
 import pointnets
 import decoders
+import transfer
 
 MY_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -44,8 +45,7 @@ trn.register_config_dir(os.path.join(MY_PATH, 'config'), recursive=True)
 # region Algorithms
 
 @fd.Component('ae')
-class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, fd.Schedulable,
-                  fd.Cacheable, fd.Visualizable, fd.Evaluatable, fd.Trainable_Model):
+class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, fd.Full_Model):
 	def __init__(self, A):
 
 		encoder = A.pull('encoder')
@@ -111,10 +111,12 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		
 		device = A.pull('device', 'cpu')
 		batch_size = A.dataset.pull('batch_size', 50)
-		n_samples = A.eval.pull('n_samples', 50000)
+		
+		n_samples = max(min(50000,len(testdata)),10000)
+		n_samples = A.eval.pull('n_samples', n_samples)
 		
 		valloader, testloader = trn.get_loaders(valdata, testdata,
-		                                        batch_size=batch_size, shuffle=True, drop_last=True)
+		                                        batch_size=batch_size, shuffle=True, drop_last=False)
 		# valloader is not shuffled, but testloader is not.
 		
 		# endregion
@@ -152,11 +154,28 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		# endregion
 		
 		# region FID
+		
+		fid_dim = A.pull('fid_dim', 2048) # full dim is 2048 (but for testing 192 is fine)
 		if 'inception_model' not in self.volatile:
-			self.volatile.inception_model = fd.eval.fid.load_inception_model(dim=2048, device=device)
+			self.volatile.inception_model = fd.eval.fid.load_inception_model(dim=fid_dim, device=device)
 		inception_model = self.volatile.inception_model
 	
 		ds_stats = testdata.fid_stats if hasattr(testdata, 'fid_stats') else None
+		
+		if ds_stats is None:
+			compute_gt_fid = A.pull('compute_gt_fid', False)
+			if compute_gt_fid:
+				print('Will compute the true fid directly from testset')
+				
+				true_loader = util.make_infinite(testloader)
+				def true_fn(N):
+					return util.to(true_loader.demand(N), device)[0]
+				
+				ds_stats = fd.eval.fid.compute_inception_stat(true_fn, inception=inception_model,
+				                                   batch_size=batch_size, n_samples=n_samples,
+				                                   pbar=tqdm if 'inline' in A and A.inline else None)
+				
+				results['gt_fid_stats'] = list(ds_stats)
 	
 		# rec fid
 		def make_gen_fn():
@@ -164,9 +183,8 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		
 			def gen_fn(N):
 				# assert N == batch_size, '{} vs {}'.format(N, batch_size)
-				x = util.to(next(loader), device)[0]
-				rec = self(x[:N])
-				return rec
+				x = util.to(loader.demand(N), device)[0]
+				return self(x)
 			
 			return gen_fn
 		
@@ -381,6 +399,52 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		B = q.size(0)
 		mag = self.reg_fn(q)
 		return mag / B
+
+@trn.AutoModifier('teval')
+class Transfer_Eval(fd.Full_Model):
+	
+	def prep(self, *datasets):
+		dataset = datasets[0]
+		assert isinstance(dataset, transfer.Multi_Dataset), f'not transfer setting: {dataset}'
+		super().prep(*datasets)
+	
+	def _evaluate(self, info):
+		
+		A = info['A']
+		
+		valdata = info['datasets'][-1]
+		testdata = None
+		if 'testset' in info:
+			testdata = info['testset']
+		
+		groups = {name: [name] for name in valdata.folds}
+		full = '_full' if 'full' in groups else 'full'
+		groups[full] = list(groups)
+		groups = A.pull('groups', groups)
+		
+		print('Will run the full evaluation {} times (once per group)'.format(len(groups)))
+		
+		logger = info['logger']
+		logger_id = info['identifier']
+		
+		results = {}
+		
+		for name, folds in groups.items():
+			
+			print('Evaluation for group {}: {}'.format(name, ', '.join(folds)))
+			
+			if logger is not None:
+				logger.set_tag_format('{}-{}/{}'.format(logger_id, name, '{}'))
+		
+			valdata.set_full(*folds)
+			if testdata is not None:
+				testdata.set_full(*folds)
+			
+			results[name] = super()._evaluate(info)
+			
+		return results
+
+
 
 class Prior_Autoencoder(AutoEncoder):
 	
@@ -943,168 +1007,7 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Schedulable, fd.Model):
 
 # region Datasets
 
-class Mechanism_Transfer(data.Subset_Dataset):
-	def __init__(self, dataset, info):
-		
-		setting = info.pull('setting', 'train')
-		# assert setting in {'train', 'test', 'update'}
-		
-		mechanisms = info.pull('mechanisms', {})
-		if 'train' not in mechanisms:
-			mechanisms['train'] = dataset.factor_order.copy()
-		if 'update' not in mechanisms:
-			mechanisms['update'] = mechanisms['train'].copy()
-		if 'eval' not in mechanisms:
-			mechanisms['eval'] = mechanisms['update'].copy()
-		print('Mechanisms: (current mode: {}): {}'.format(setting, mechanisms[setting]))
-		
-		default_values = info.pull('default_class', 'middle')
-		if not isinstance(default_values, list):
-			default_values = [default_values] * len(dataset.factor_order)
-		
-		super().__init__(dataset)
-		
-		self.mechanisms = mechanisms
-		self.default_views = default_values
-		
-		self.set_setting(setting)
-		
-	def set_setting(self, setting):
-		assert setting in self.mechanisms, f'{setting} not found'
-		
-		default_values = iter(self.default_views)
-		
-		fixed = [(None if m in self.mechanisms[setting] else next(default_values)) for m in self.dataset.factor_order]
-		
-		sel = self._filter(self.dataset, fixed)
-		
-		if sel is not None:
-			sel = np.arange(len(self.dataset))[sel]
-			
-		
-		self.indices = sel
-		try:
-			device = self.dataset.get_device()
-			if self.indices is not None:
-				self.indices = self.indices.to(device)
-		except AttributeError:
-			pass
-		
-		self.setting = setting
-		print(f'Transfer dataset set to setting: {setting}')
-		
-		
-	def _filter(self, dataset, fixed):
-		raise NotImplementedError
 
-@trn.Modification('mtrans-3ds')
-class Shapes3D_Mech_Transfer(Mechanism_Transfer):
-
-	def _filter(self, dataset, fixed):
-		
-		lbls = dataset.labels
-		
-		sel = None
-		for i, val in enumerate(fixed):
-			if val is not None:
-				if val == 'middle':
-					vals = sorted(list(set(lbls[:, i].tolist())))
-					val = vals[len(vals) // 2]
-				valid = lbls[:, i] == val
-				if sel is None:
-					sel = valid
-				else:
-					sel *= valid
-		
-		return sel
-
-@trn.Modification('mtrans-mpi')
-class MPI_Mech_Transfer(Mechanism_Transfer):
-
-	def _filter(self, dataset, fixed):
-		
-		inds = dataset.indices
-		div = dataset._flr
-		
-		sel = None
-		for d, val in zip(div, fixed):
-			if val is not None:
-				if val == 'middle':
-					val = 0
-				valid = inds % d == val
-				if sel is None:
-					sel = valid
-				else:
-					sel *= valid
-		
-		return sel
-
-class Value_Transfer(data.Subset_Dataset):
-	
-	def __init__(self, dataset, info):
-		
-		nums = info.pull('nums', None)
-		fractions = info.pull('fractions', None)
-		
-		valid = info.pull('valid', None)
-		
-		sizes = np.array(dataset.factor_sizes)
-		
-		if nums is None:
-			if fractions is not None:
-				fractions = np.array(fractions)
-				nums = fractions * sizes
-				nums = nums.astype(int)
-		else:
-			nums = np.array(nums)
-		
-		if nums is not None:
-			nums = nums.clip(min=1)
-		else:
-			nums = [None]*len(sizes)
-		
-		if valid is None and nums is None:
-			assert False
-			valid = [None]*len(sizes)
-		else:
-			valid = [torch.arange(n).int() if v is None or v == 'None' else torch.tensor(v).int() for v, n in zip(valid, nums)]
-		
-		super().__init__(dataset)
-		
-		sel = self._filter(dataset, valid)
-		
-		if sel is not None:
-			sel = np.arange(len(self.dataset))[sel.numpy().astype(bool)]
-		
-		self.indices = sel
-		try:
-			device = self.dataset.get_device()
-			if self.indices is not None:
-				self.indices = self.indices.to(device)
-		except AttributeError:
-			pass
-	
-	def _filter(self, dataset, valid):
-		raise NotImplementedError
-	
-	pass
-	
-@trn.Modification('vtrans-3ds')
-class Shapes3d_Value_Transfer(Value_Transfer):
-	def _filter(self, dataset, valid):
-		
-		sel = 1
-		
-		lbls = dataset.labels.clone()
-		
-		for c, v in zip(lbls.t(), valid):
-			v = v.view(1,-1)
-			c = c.view(-1,1)
-			s = c.sub(v).eq(0).sum(-1)
-			sel *= s
-		
-		return sel
-	
 # endregion
 
 # region Sup-Models

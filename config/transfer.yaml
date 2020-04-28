@@ -1,0 +1,15 @@
+
+parents: ['basics']
+
+dataset:
+  _mod: 'trans'
+
+#eval:
+#  groups: default
+
+model:
+  _mod: ['teval']
+
+
+
+
