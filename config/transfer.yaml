@@ -7,9 +7,14 @@ dataset:
 #eval:
 #  groups: default
 
+training:
+  step_limit: 80000
+
 model:
   _mod: ['teval']
 
 
+info:
+  dataset_type: 'trans'
 
 

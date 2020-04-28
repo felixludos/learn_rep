@@ -20,4 +20,6 @@ dataset:
     train: 1
 
 
+info:
+  dataset_type: 't3ds-shapes'
 
