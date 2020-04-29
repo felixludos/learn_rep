@@ -2,5 +2,5 @@
 
 inline: True
 
-#dataset:
-#  device: cpu
+dataset:
+  device: cpu

@@ -2,10 +2,10 @@
 #parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', '3dshapes']
-parents: ['a/double', 'm/ae', '3dshapes']
+#parents: ['a/double', 'm/ae', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
-#parents: ['t/upd']
+parents: ['t/upd']
 
 #parents: ['a/d/deconv-deep', 'a/conv', 'm/ae', '3dshapes']
 
@@ -26,7 +26,7 @@ parents: ['a/double', 'm/ae', '3dshapes']
 #    device: cpu
 
 #load: 't3ds-shapes-ae-b1_0050-6286118-06_200428-171928'
-
+load: t3ds-shapes-ae-12b1-conv_0053-6286540-10_200429-041524
 
 inline: True
 
