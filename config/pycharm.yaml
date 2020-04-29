@@ -2,8 +2,9 @@
 #parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', '3dshapes']
+parents: ['a/double', 'm/ae', '3dshapes']
 
-parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
+#parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
 #parents: ['t/upd']
 
 #parents: ['a/d/deconv-deep', 'a/conv', 'm/ae', '3dshapes']
@@ -66,7 +67,7 @@ model:
 #  nonlin: relu
 
 #  norm: 'instance'
-#  residual: True
+  residual: True
 #  norm: None
 
 #  keys_per_head: 4

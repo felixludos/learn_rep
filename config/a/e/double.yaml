@@ -1,0 +1,17 @@
+parents: ['basics']
+
+model:
+
+  encoder:
+    _type: 'double-enc'
+
+    in_shape: '<>din'
+
+    channels: [64, 64, 64, 128, 128]
+    factors: 2
+
+    up: 'bilinear'
+
+    tail:
+      _type: 'mlp'
+      hidden_dims: [256, 128]
