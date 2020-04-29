@@ -1,0 +1,18 @@
+
+
+#floor_hue 10
+#wall_hue 10
+#object_hue 10
+#scale 8
+#shape 4
+#orientation 15
+
+training:
+  step_limit: 100000
+
+dataset:
+
+  mix:
+    train: 1
+    upd: 1
+

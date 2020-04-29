@@ -31,7 +31,7 @@ class Multi_Dataset(datautils.Info_Dataset, datautils.Device_Dataset, datautils.
 	dataset.get_labels() should return full labels tensor
 	
 	'''
-	def __init__(self, dataset, A=None, folds=None, mix=None):
+	def __init__(self, dataset, A=None, folds=None, mix=None, limits=None):
 		
 		if A is not None:
 			folds = A.pull('folds')
@@ -39,6 +39,8 @@ class Multi_Dataset(datautils.Info_Dataset, datautils.Device_Dataset, datautils.
 			fold_by = A.pull('fold_by', 'index')
 			
 			mix = A.pull('mix', {default_fold:1})
+			
+			limits = A.pull('limits', None)
 		
 		super().__init__(dataset.din, dataset.dout)
 		
@@ -54,6 +56,10 @@ class Multi_Dataset(datautils.Info_Dataset, datautils.Device_Dataset, datautils.
 		self.folds = folds
 		
 		self.fid_stats = None
+		
+		self.limits = limits
+		self._limited_folds = {name:(inds[torch.randperm(len(inds))[:limits[name]]] if name in limits else inds)
+		                       for name,inds in folds.items()} if limits is not None else folds
 		
 		self.register_buffer('dataset', dataset)
 
@@ -81,8 +87,8 @@ class Multi_Dataset(datautils.Info_Dataset, datautils.Device_Dataset, datautils.
 				train[name] = inds[:-N]
 				val[name] = inds[-N:]
 
-		return Multi_Dataset(self.dataset, folds=train, mix=self.mix), \
-		       Multi_Dataset(self.dataset, folds=val, mix=self.mix)
+		return Multi_Dataset(self.dataset, folds=train, mix=self.mix, limits=self.limits), \
+		       Multi_Dataset(self.dataset, folds=val, mix=self.mix, limits=None) # validation set has not limits
 
 	def _compute_sels(self, lbls, folds):
 		
@@ -106,23 +112,25 @@ class Multi_Dataset(datautils.Info_Dataset, datautils.Device_Dataset, datautils.
 
 	def resample_mix(self): # remember to move to self.device
 		
+		folds = self._limited_folds
+		
 		if len(self.mix) == 1:
-			self.inds = self.folds[next(iter(self.mix))].to(self.device)
+			self.inds = folds[next(iter(self.mix))].to(self.device)
 			
 		inds = []
 		
 		for name, N in self.mix.items():
 			
-			L = len(self.folds[name])
+			L = len(folds[name])
 			
 			if N < L:
-				inds.append(self.folds[name][torch.randperm(L)[:N]])
+				inds.append(folds[name][torch.randperm(L)[:N]])
 			else:
 				rem = L % N
 				mul = L // N
-				inds.extend(mul*[self.folds[name]])
+				inds.extend(mul*[folds[name]])
 				if rem > 0:
-					inds.append(self.folds[name][torch.randperm(L)[:rem]])
+					inds.append(folds[name][torch.randperm(L)[:rem]])
 		
 		self.inds = torch.cat(inds).to(self.device)
 
@@ -135,29 +143,34 @@ class Multi_Dataset(datautils.Info_Dataset, datautils.Device_Dataset, datautils.
 	def set_mix(self, **mix):
 		assert len(mix)
 		
+		folds = self._limited_folds # use limited
+		
 		if len(mix) == 1:
-			mix = {k:len(self.folds[k]) for k in mix}
+			mix = {k:len(folds[k]) for k in mix}
 		else:
 			atom = min(mix.values())
-			base, prop = min(mix.items(), key=lambda x: len(self.folds[x[0]]) / x[1])
-			weight = len(self.folds[base]) / prop
+			base, prop = min(mix.items(), key=lambda x: len(folds[x[0]]) / x[1])
+			weight = len(folds[base]) / prop
 			
 			mix = {k: max(int(weight * v), 1) for k, v in mix.items()}
 		
 		self.mix = mix
 		self.absolute = False
 		self.resample_mix()
+		print('Set mix: {}'.format(self.mix))
 		return
 	
 	def set_full(self, *names):
+		
+		folds = self.folds
 		
 		inds = []
 		mix = {}
 		
 		for name in names:
-			assert name in self.folds, f'not found {name}'
-			mix[name] = len(self.folds[name])
-			inds.append(self.folds[name])
+			assert name in folds, f'not found {name}'
+			mix[name] = len(folds[name])
+			inds.append(folds[name])
 		
 		self.inds = torch.cat(inds)
 		self.mix = mix

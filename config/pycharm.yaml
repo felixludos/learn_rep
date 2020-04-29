@@ -3,7 +3,8 @@
 
 #parents: ['a/dislib', 'm/ae', '3dshapes']
 
-parents: ['a/dislib', 'm/ae', 't/3ds']
+parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
+#parents: ['t/upd']
 
 #parents: ['a/d/deconv-deep', 'a/conv', 'm/ae', '3dshapes']
 
@@ -23,16 +24,8 @@ parents: ['a/dislib', 'm/ae', 't/3ds']
 #  dataset:
 #    device: cpu
 
-#load: 'test-cmd_200412-140222'
+#load: 't3ds-shapes-ae-b1_0050-6286118-06_200428-171928'
 
-#override:
-#  training:
-#    step_limit: 25000
-#  eval:
-#    identifier: test
-#  dataset:
-#    name: 3dshapes
-#    _mod: __x__
 
 inline: True
 
@@ -40,18 +33,26 @@ inline: True
 
 #test_mode: 0
 
-eval:
-  n_samples: 10
-  fid_dim: 192
+#eval:
+#  n_samples: 10
+#  fid_dim: 192
 
-training:
-  step_limit: 10
+#training:
+#  step_limit: 10
 #  val_freq: 500
 #
 dataset:
   device: cpu
 #  batch_size: 128
   category: real
+
+#  limits:
+#    train: 128
+#    upd: 128
+#
+#  mix:
+#    train: 1
+#    upd: 1
 
 #resume: vae_3ds_elu_d24_200320-040612\checkpoint_75000.pth.tar
 #override:
@@ -65,8 +66,8 @@ model:
 #  nonlin: relu
 
 #  norm: 'instance'
-  residual: True
-  norm: None
+#  residual: True
+#  norm: None
 
 #  keys_per_head: 4
 

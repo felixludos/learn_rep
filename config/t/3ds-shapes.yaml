@@ -15,6 +15,8 @@ dataset:
       4: [0, 1]
     upd:
       4: [2]
+    test:
+      4: [3]
 
   mix:
     train: 1
