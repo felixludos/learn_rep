@@ -8,6 +8,9 @@ parents: ['t/3ds']
 #shape 4
 #orientation 15
 
+train_limit: 10000
+update_limit: 10000
+
 dataset:
 
   folds:
@@ -20,6 +23,10 @@ dataset:
 
   mix:
     train: 1
+
+  limits:
+    train: '<>train_limit'
+    upd: '<>update_limit'
 
 
 info:
