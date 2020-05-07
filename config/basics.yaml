@@ -60,7 +60,7 @@ model:
 #      _type: 'dislib-dec'
 
     optim_type: 'adam'
-    lr: 1.e-3
+    lr: 5.e-4
     weight_decay: 0
     momentum: 0
     beta1: 0.9
