@@ -2,5 +2,7 @@
 
 inline: True
 
+no_debug: True
+
 dataset:
   device: cpu
