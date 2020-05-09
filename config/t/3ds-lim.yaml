@@ -1,0 +1,13 @@
+
+parents: ['3dshapes', 'transfer']
+
+#floor_hue 10
+#wall_hue 10
+#object_hue 10
+#scale 8
+#shape 4
+#orientation 15
+
+
+
+
