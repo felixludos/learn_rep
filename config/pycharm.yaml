@@ -2,7 +2,7 @@
 #parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', '3dshapes']
-parents: ['a/double', 'm/ae', '3dshapes']
+#parents: ['a/double', 'm/ae', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
 #parents: ['t/upd']
@@ -16,6 +16,7 @@ parents: ['a/double', 'm/ae', '3dshapes']
 
 #parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
 
+parents: ['a/conv', 't/mpi-shapes', 'm/ae']
 
 #parents: ['sup-3ds']
 

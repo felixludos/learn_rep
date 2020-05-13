@@ -84,15 +84,15 @@
 #unbuffer python project.py a/e/attn4 a/d/branch12 3dshapes m/ae --info.extra 12b1-4h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
 #unbuffer python project.py a/e/attn6 a/d/branch12 3dshapes m/ae --info.extra 12b1-6h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
 
-#unbuffer python project.py a/conv 3dshapes m/ae --info.extra conv
-#unbuffer python project.py a/conv 3dshapes m/ae --info.extra b1-conv --model.reg_wt 1
-#unbuffer python project.py a/conv 3dshapes m/wae --info.extra conv
-#unbuffer python project.py a/conv 3dshapes m/vae --info.extra b1-conv --model.reg_wt 1
-#unbuffer python project.py a/conv 3dshapes m/vae --info.extra b2-conv --model.reg_wt 2
-#unbuffer python project.py a/conv 3dshapes m/vae --info.extra b4-conv --model.reg_wt 4
-#unbuffer python project.py a/conv 3dshapes m/vae --info.extra b8-conv --model.reg_wt 8
-#unbuffer python project.py a/conv 3dshapes m/vae --info.extra b16-conv --model.reg_wt 16
-#unbuffer python project.py a/conv 3dshapes m/vae --info.extra b32-conv --model.reg_wt 32
+unbuffer python project.py a/conv 3dshapes m/ae --info.extra conv
+unbuffer python project.py a/conv 3dshapes m/ae --info.extra b1-conv --model.reg_wt 1
+unbuffer python project.py a/conv 3dshapes m/wae --info.extra conv
+unbuffer python project.py a/conv 3dshapes m/vae --info.extra b1-conv --model.reg_wt 1
+unbuffer python project.py a/conv 3dshapes m/vae --info.extra b2-conv --model.reg_wt 2
+unbuffer python project.py a/conv 3dshapes m/vae --info.extra b4-conv --model.reg_wt 4
+unbuffer python project.py a/conv 3dshapes m/vae --info.extra b8-conv --model.reg_wt 8
+unbuffer python project.py a/conv 3dshapes m/vae --info.extra b16-conv --model.reg_wt 16
+unbuffer python project.py a/conv 3dshapes m/vae --info.extra b32-conv --model.reg_wt 32
 
 unbuffer python project.py a/dislib 3dshapes m/ae --info.extra dislib
 unbuffer python project.py a/dislib 3dshapes m/ae --info.extra b1-dislib --model.reg_wt 1
@@ -114,16 +114,130 @@ unbuffer python project.py a/double 3dshapes m/vae --info.extra b8-dbl --model.r
 unbuffer python project.py a/double 3dshapes m/vae --info.extra b16-dbl --model.reg_wt 16
 unbuffer python project.py a/double 3dshapes m/vae --info.extra b32-dbl --model.reg_wt 32
 
-unbuffer python project.py a/d/branch12 a/e/lim-conv 3dshapes m/ae --info.extra 12b1-dislib
+###
+
+unbuffer python project.py a/d/branch12 a/e/lib-conv 3dshapes m/ae --info.extra 12b1-dislib
 unbuffer python project.py a/d/branch12 a/e/conv 3dshapes m/ae --info.extra 12b1-conv
 unbuffer python project.py a/d/branch12 a/e/double 3dshapes m/ae --info.extra 12b1-dbl
 
-unbuffer python project.py a/d/branch12 a/e/lim-conv 3dshapes m/ae --info.extra 12b1-dislib
-unbuffer python project.py a/d/branch12 a/e/conv 3dshapes m/ae --info.extra 12b1-conv
-unbuffer python project.py a/d/branch12 a/e/double 3dshapes m/ae --info.extra 12b1-dbl
+###
+
+unbuffer python project.py a/dislib t/3ds-shapes m/ae --info.extra dislib
+unbuffer python project.py a/dislib t/3ds-shapes m/vae --info.extra b1-dislib --model.reg_wt 1
+unbuffer python project.py a/dislib t/3ds-shapes m/vae --info.extra b16-dislib --model.reg_wt 16
+
+unbuffer python project.py a/conv t/3ds-shapes m/ae --info.extra conv
+unbuffer python project.py a/conv t/3ds-shapes m/vae --info.extra b1-conv --model.reg_wt 1
+unbuffer python project.py a/conv t/3ds-shapes m/vae --info.extra b16-conv --model.reg_wt 16
+
+unbuffer python project.py a/double t/3ds-shapes m/ae --info.extra dbl
+unbuffer python project.py a/double t/3ds-shapes m/vae --info.extra b1-dbl --model.reg_wt 1
+unbuffer python project.py a/double t/3ds-shapes m/vae --info.extra b16-dbl --model.reg_wt 16
+
+unbuffer python project.py a/d/branch12 a/e/lib-conv t/3ds-shapes m/ae --info.extra 12b1-dislib
+unbuffer python project.py a/d/branch12 a/e/conv t/3ds-shapes m/ae --info.extra 12b1-conv
+unbuffer python project.py a/d/branch12 a/e/double t/3ds-shapes m/ae --info.extra 12b1-dbl
+
+###
+
+unbuffer python project.py a/d/branch4 a/e/lib-conv 3dshapes m/ae --info.extra 4b3-dislib
+unbuffer python project.py a/d/branch4 a/e/conv 3dshapes m/ae --info.extra 4b3-conv
+unbuffer python project.py a/d/branch4 a/e/double 3dshapes m/ae --info.extra 4b3-dbl
+
+unbuffer python project.py a/d/branch6 a/e/lib-conv 3dshapes m/ae --info.extra 6b2-dislib
+unbuffer python project.py a/d/branch6 a/e/conv 3dshapes m/ae --info.extra 6b2-conv
+unbuffer python project.py a/d/branch6 a/e/double 3dshapes m/ae --info.extra 6b2-dbl
+
+###
+
+unbuffer python project.py t/upd --load t3ds-shapes-ae-12b1-conv_0008-6337836-10_200509-130720
+unbuffer python project.py t/upd --load t3ds-shapes-vae-b16-dbl_0008-6337836-08_200509-130723
+unbuffer python project.py t/upd --load t3ds-shapes-ae-dbl_0008-6337836-06_200509-130725
+unbuffer python project.py t/upd --load t3ds-shapes-ae-conv_0008-6337836-03_200509-130726
+unbuffer python project.py t/upd --load t3ds-shapes-vae-b16-conv_0008-6337836-05_200509-130729
+unbuffer python project.py t/upd --load t3ds-shapes-vae-b1-dislib_0008-6337836-01_200509-130731
+unbuffer python project.py t/upd --load t3ds-shapes-vae-b1-conv_0008-6337836-04_200509-130733
+unbuffer python project.py t/upd --load t3ds-shapes-ae-dislib_0008-6337836-00_200509-130737
+unbuffer python project.py t/upd --load t3ds-shapes-vae-b16-dislib_0008-6337836-02_200509-130744
+unbuffer python project.py t/upd --load t3ds-shapes-ae-12b1-dislib_0008-6337836-09_200509-130759
+
+###
+
+unbuffer python project.py a/conv mpi3d m/ae --dataset.category toy --info.extra conv
+unbuffer python project.py a/conv mpi3d m/ae --dataset.category toy --info.extra b1-conv --model.reg_wt 1
+unbuffer python project.py a/conv mpi3d m/wae --dataset.category toy --info.extra conv
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category toy --info.extra b1-conv --model.reg_wt 1
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category toy --info.extra b2-conv --model.reg_wt 2
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category toy --info.extra b4-conv --model.reg_wt 4
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category toy --info.extra b8-conv --model.reg_wt 8
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category toy --info.extra b16-conv --model.reg_wt 16
+
+unbuffer python project.py a/d/branch12 a/e/lib-conv mpi3d m/ae --dataset.category toy --info.extra 12b1-dislib
+unbuffer python project.py a/d/branch12 a/e/conv mpi3d m/ae --dataset.category toy --info.extra 12b1-conv
+unbuffer python project.py a/d/branch12 a/e/double mpi3d m/ae --dataset.category toy --info.extra 12b1-dbl
+
+
+unbuffer python project.py a/conv mpi3d m/ae --dataset.category real --info.extra conv
+unbuffer python project.py a/conv mpi3d m/ae --dataset.category real --info.extra b1-conv --model.reg_wt 1
+unbuffer python project.py a/conv mpi3d m/wae --dataset.category real --info.extra conv
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category real --info.extra b1-conv --model.reg_wt 1
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category real --info.extra b2-conv --model.reg_wt 2
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category real --info.extra b4-conv --model.reg_wt 4
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category real --info.extra b8-conv --model.reg_wt 8
+unbuffer python project.py a/conv mpi3d m/vae --dataset.category real --info.extra b16-conv --model.reg_wt 16
+
+unbuffer python project.py a/d/branch12 a/e/lib-conv mpi3d m/ae --dataset.category real --info.extra 12b1-dislib
+unbuffer python project.py a/d/branch12 a/e/conv mpi3d m/ae --dataset.category real --info.extra 12b1-conv
+unbuffer python project.py a/d/branch12 a/e/double mpi3d m/ae --dataset.category real --info.extra 12b1-dbl
+
+
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category toy --info.extra 12b1-12h1k64v64 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category toy --info.extra 12b1-12h2k64v64 --model.keys_per_head 2 --model.key_val_dim 64 --model.val_dim 32
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category toy --info.extra 12b1-12h4k64v64 --model.keys_per_head 4 --model.key_val_dim 64 --model.val_dim 32
+
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category toy --info.extra 12b1-12h1k64v64 --model.keys_per_head 1 --model.key_val_dim 128 --model.val_dim 64
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category toy --info.extra 12b1-12h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category toy --info.extra 12b1-12h1k16v16 --model.keys_per_head 1 --model.key_val_dim 32 --model.val_dim 16
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category toy --info.extra 12b1-12h1k8v8 --model.keys_per_head 1 --model.key_val_dim 16 --model.val_dim 8
+
+unbuffer python project.py a/e/attn4 a/d/branch12 mpi3d m/ae --dataset.category toy --info.extra 12b1-4h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
+unbuffer python project.py a/e/attn6 a/d/branch12 mpi3d m/ae --dataset.category toy --info.extra 12b1-6h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
+
+###
+
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-12h1k64v64 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-12h2k64v64 --model.keys_per_head 2 --model.key_val_dim 64 --model.val_dim 32
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-12h4k64v64 --model.keys_per_head 4 --model.key_val_dim 64 --model.val_dim 32
+
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-12h1k64v64 --model.keys_per_head 1 --model.key_val_dim 128 --model.val_dim 64
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-12h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-12h1k16v16 --model.keys_per_head 1 --model.key_val_dim 32 --model.val_dim 16
+unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-12h1k8v8 --model.keys_per_head 1 --model.key_val_dim 16 --model.val_dim 8
+
+unbuffer python project.py a/e/attn4 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-4h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
+unbuffer python project.py a/e/attn6 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-6h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
+
+###
+
+unbuffer python project.py a/dislib t/mpi-shapes m/ae --info.extra dislib
+unbuffer python project.py a/dislib t/mpi-shapes m/vae --info.extra b1-dislib --model.reg_wt 1
+unbuffer python project.py a/dislib t/mpi-shapes m/vae --info.extra b16-dislib --model.reg_wt 16
+
+unbuffer python project.py a/conv t/mpi-shapes m/ae --info.extra conv
+unbuffer python project.py a/conv t/mpi-shapes m/vae --info.extra b1-conv --model.reg_wt 1
+unbuffer python project.py a/conv t/mpi-shapes m/vae --info.extra b16-conv --model.reg_wt 16
+
+unbuffer python project.py a/double t/mpi-shapes m/ae --info.extra dbl
+unbuffer python project.py a/double t/mpi-shapes m/vae --info.extra b1-dbl --model.reg_wt 1
+unbuffer python project.py a/double t/mpi-shapes m/vae --info.extra b16-dbl --model.reg_wt 16
+
+unbuffer python project.py a/d/branch12 a/e/lib-conv t/mpi-shapes m/ae --info.extra 12b1-dislib
+unbuffer python project.py a/d/branch12 a/e/conv t/mpi-shapes m/ae --info.extra 12b1-conv
+unbuffer python project.py a/d/branch12 a/e/double t/mpi-shapes m/ae --info.extra 12b1-dbl
 
 
 
+#####################
 
 #unbuffer python project.py a/d/branch12 a/e/dislib t/3ds-shapes m/ae --info.extra 12b1-dislib
 #unbuffer python project.py a/e/attn12 a/d/branch12 m/ae 3dshapes --info.extra 12b1-12h4k64v64-seed9 --model.keys_per_head 4 --model.key_val_dim 128 --model.val_dim 64 --seed 9

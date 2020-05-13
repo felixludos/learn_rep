@@ -1,0 +1,14 @@
+
+parents: ['mpi3d', 'transfer']
+
+#object_color 6
+#object_shape 6
+#object_size 2
+#camera_height 3
+#background_color 4
+#horizontal_axis 40
+#vertical_axis 40
+
+
+
+

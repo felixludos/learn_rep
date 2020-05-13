@@ -1,0 +1,35 @@
+
+parents: ['t/mpi']
+
+#object_color 6
+#object_shape 6
+#object_size 2
+#camera_height 3
+#background_color 4
+#horizontal_axis 40
+#vertical_axis 40
+
+#train_limit: 10000
+#update_limit: 10000
+
+dataset:
+
+  folds:
+    train:
+      1: [0, 1, 2, 3]
+    upd:
+      1: [4]
+    test:
+      1: [5]
+
+  mix:
+    train: 1
+
+#  limits:
+#    train: '<>train_limit'
+#    upd: '<>update_limit'
+
+
+info:
+  dataset_type: 'tmpi-shapes'
+
