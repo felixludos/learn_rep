@@ -217,23 +217,76 @@ unbuffer python project.py a/e/attn12 a/d/branch12 mpi3d m/ae --dataset.category
 unbuffer python project.py a/e/attn4 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-4h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
 unbuffer python project.py a/e/attn6 a/d/branch12 mpi3d m/ae --dataset.category real --info.extra 12b1-6h1k32v32 --model.keys_per_head 1 --model.key_val_dim 64 --model.val_dim 32
 
+#unbuffer python project.py a/double t/mpi-shapes m/ae --dataset.category toy --info.extra toy-dbl
+#unbuffer python project.py a/double t/mpi-shapes m/vae --dataset.category toy --info.extra toy-b1-dbl --model.reg_wt 1
+#unbuffer python project.py a/double t/mpi-shapes m/vae --dataset.category toy --info.extra toy-b2-dbl --model.reg_wt 2
+#
+#unbuffer python project.py a/d/branch12 a/e/lib-conv t/mpi-shapes m/ae --info.extra toy-12b1-dislib
+#unbuffer python project.py a/d/branch12 a/e/double t/mpi-shapes m/ae --info.extra toy-12b1-dbl
+
+############################################# MPI transfer
+
+unbuffer python project.py a/d/branch12 a/e/conv t/mpi-sizes m/ae --info.extra toy-12b1-conv
+unbuffer python project.py a/conv t/mpi-sizes m/vae --dataset.category toy --info.extra toy-b2-conv --model.reg_wt 2
+unbuffer python project.py a/dislib t/mpi-sizes m/vae --dataset.category toy --info.extra toy-b2-dislib --model.reg_wt 2
+
+unbuffer python project.py a/dislib t/mpi-sizes m/ae --dataset.category toy --info.extra toy-dislib
+unbuffer python project.py a/dislib t/mpi-sizes m/vae --dataset.category toy --info.extra toy-b1-dislib --model.reg_wt 1
+
+unbuffer python project.py a/conv t/mpi-sizes m/ae --dataset.category toy --info.extra toy-conv
+unbuffer python project.py a/conv t/mpi-sizes m/vae --dataset.category toy --info.extra toy-b1-conv --model.reg_wt 1
+
+unbuffer python project.py a/d/branch12 a/e/conv t/mpi-sizes m/ae --info.extra toy-12b1-conv-s2 --seed 2
+unbuffer python project.py a/conv t/mpi-sizes m/vae --dataset.category toy --info.extra toy-b2-conv-s2 --model.reg_wt 2 --seed 2
+unbuffer python project.py a/dislib t/mpi-sizes m/vae --dataset.category toy --info.extra toy-b2-dislib-s2 --model.reg_wt 2 --seed 2
+
 ###
 
-unbuffer python project.py a/dislib t/mpi-shapes m/ae --info.extra dislib
-unbuffer python project.py a/dislib t/mpi-shapes m/vae --info.extra b1-dislib --model.reg_wt 1
-unbuffer python project.py a/dislib t/mpi-shapes m/vae --info.extra b16-dislib --model.reg_wt 16
+unbuffer python project.py a/d/branch12 a/e/conv t/mpi-shapes m/ae --info.extra toy-12b1-conv
+unbuffer python project.py a/conv t/mpi-shapes m/vae --dataset.category toy --info.extra toy-b2-conv --model.reg_wt 2
+unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category toy --info.extra toy-b2-dislib --model.reg_wt 2
 
-unbuffer python project.py a/conv t/mpi-shapes m/ae --info.extra conv
-unbuffer python project.py a/conv t/mpi-shapes m/vae --info.extra b1-conv --model.reg_wt 1
-unbuffer python project.py a/conv t/mpi-shapes m/vae --info.extra b16-conv --model.reg_wt 16
+unbuffer python project.py a/dislib t/mpi-shapes m/ae --dataset.category toy --info.extra toy-dislib
+unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category toy --info.extra toy-b1-dislib --model.reg_wt 1
 
-unbuffer python project.py a/double t/mpi-shapes m/ae --info.extra dbl
-unbuffer python project.py a/double t/mpi-shapes m/vae --info.extra b1-dbl --model.reg_wt 1
-unbuffer python project.py a/double t/mpi-shapes m/vae --info.extra b16-dbl --model.reg_wt 16
+unbuffer python project.py a/conv t/mpi-shapes m/ae --dataset.category toy --info.extra toy-conv
+unbuffer python project.py a/conv t/mpi-shapes m/vae --dataset.category toy --info.extra toy-b1-conv --model.reg_wt 1
 
-unbuffer python project.py a/d/branch12 a/e/lib-conv t/mpi-shapes m/ae --info.extra 12b1-dislib
-unbuffer python project.py a/d/branch12 a/e/conv t/mpi-shapes m/ae --info.extra 12b1-conv
-unbuffer python project.py a/d/branch12 a/e/double t/mpi-shapes m/ae --info.extra 12b1-dbl
+unbuffer python project.py a/d/branch12 a/e/conv t/mpi-shapes m/ae --info.extra toy-12b1-conv-s2 --seed 2
+unbuffer python project.py a/conv t/mpi-shapes m/vae --dataset.category toy --info.extra toy-b2-conv-s2 --model.reg_wt 2 --seed 2
+unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category toy --info.extra toy-b2-dislib-s2 --model.reg_wt 2 --seed 2
+
+###
+
+unbuffer python project.py a/d/branch12 a/e/conv t/mpi-sizes m/ae --dataset.category real --info.extra real-12b1-conv
+unbuffer python project.py a/conv t/mpi-sizes m/vae --dataset.category real --info.extra real-b2-conv --model.reg_wt 2
+unbuffer python project.py a/dislib t/mpi-sizes m/vae --dataset.category real --info.extra real-b2-dislib --model.reg_wt 2
+
+unbuffer python project.py a/dislib t/mpi-sizes m/ae --dataset.category real --info.extra real-dislib
+unbuffer python project.py a/dislib t/mpi-sizes m/vae --dataset.category real --info.extra real-b1-dislib --model.reg_wt 1
+
+unbuffer python project.py a/conv t/mpi-sizes m/ae --dataset.category real --info.extra real-conv
+unbuffer python project.py a/conv t/mpi-sizes m/vae --dataset.category real --info.extra real-b1-conv --model.reg_wt 1
+
+unbuffer python project.py a/d/branch12 a/e/conv t/mpi-sizes m/ae --info.extra real-12b1-conv-s2 --seed 2
+unbuffer python project.py a/conv t/mpi-sizes m/vae --dataset.category real --info.extra real-b2-conv-s2 --model.reg_wt 2 --seed 2
+unbuffer python project.py a/dislib t/mpi-sizes m/vae --dataset.category real --info.extra real-b2-dislib-s2 --model.reg_wt 2 --seed 2
+
+###
+
+unbuffer python project.py a/d/branch12 a/e/conv t/mpi-shapes m/ae --dataset.category real --info.extra real-12b1-conv
+unbuffer python project.py a/conv t/mpi-shapes m/vae --dataset.category real --info.extra real-b2-conv --model.reg_wt 2
+unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category real --info.extra real-b2-dislib --model.reg_wt 2
+
+unbuffer python project.py a/dislib t/mpi-shapes m/ae --dataset.category real --info.extra real-dislib
+unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category real --info.extra real-b1-dislib --model.reg_wt 1
+
+unbuffer python project.py a/conv t/mpi-shapes m/ae --dataset.category real --info.extra real-conv
+unbuffer python project.py a/conv t/mpi-shapes m/vae --dataset.category real --info.extra real-b1-conv --model.reg_wt 1
+
+unbuffer python project.py a/d/branch12 a/e/conv t/mpi-shapes m/ae --info.extra real-12b1-conv-s2 --seed 2
+unbuffer python project.py a/conv t/mpi-shapes m/vae --dataset.category real --info.extra real-b2-conv-s2 --model.reg_wt 2 --seed 2
+unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category real --info.extra real-b2-dislib-s2 --model.reg_wt 2 --seed 2
 
 
 
@@ -241,7 +294,7 @@ unbuffer python project.py a/d/branch12 a/e/double t/mpi-shapes m/ae --info.extr
 
 #unbuffer python project.py a/d/branch12 a/e/dislib t/3ds-shapes m/ae --info.extra 12b1-dislib
 #unbuffer python project.py a/e/attn12 a/d/branch12 m/ae 3dshapes --info.extra 12b1-12h4k64v64-seed9 --model.keys_per_head 4 --model.key_val_dim 128 --model.val_dim 64 --seed 9
-#unbuffer python project.py a/d/branch12 a/e/conv m/ae mpi3d --dataset.category toy --info.extra 12b1-seed5 --seed 9
+#unbuffer python project.py a/d/branch12 a/e/conv m/ae mpi3d --dataset.category real --info.extra 12b1-seed5 --seed 9
 
 
 
