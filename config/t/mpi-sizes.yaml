@@ -16,11 +16,9 @@ dataset:
 
   folds:
     train:
-      1: [1, 2, 3, 5]
+      2: [0]
     upd:
-      1: [4]
-    test:
-      1: [0]
+      2: [1]
 
   mix:
     train: 1

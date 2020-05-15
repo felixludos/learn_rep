@@ -16,7 +16,7 @@
 
 #parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
 
-parents: ['a/conv', 't/mpi-shapes', 'm/ae']
+parents: ['a/d/branch12', 'a/e/lib-conv', 't/mpi-shapes', 'm/ae']
 
 #parents: ['sup-3ds']
 
@@ -65,18 +65,18 @@ dataset:
 #  model:
 #    min_log_std: -5
 
-output:
-  save_freq: 500
-
-training:
-  step_limit: 1000
+#output:
+#  save_freq: 500
+#
+#training:
+#  step_limit: 1000
 
 model:
   viz_gen: True
 #  nonlin: relu
 
 #  norm: 'instance'
-  residual: True
+#  residual: True
 #  norm: None
 
 #  keys_per_head: 4
