@@ -29,6 +29,7 @@ training:
 
 dataset:
   drop_last: True
+  device: cpu
 
 model:
     _type: 'ae'
