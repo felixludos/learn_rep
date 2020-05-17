@@ -1,6 +1,8 @@
-parents: ['basics']
+#parents: ['basics']
 
 output:
   save_freq: 10000
+  print_freq: 400
+
 training:
   step_limit: 200000

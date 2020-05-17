@@ -290,6 +290,15 @@ unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category real -
 
 ###
 
+unbuffer python project.py long a/d/lbranch12 a/e/conv mpi3d m/ae --info.extra l-toy-12b1-conv
+unbuffer python project.py long a/lconv mpi3d m/vae --dataset.category toy --info.extra l-toy-b2-conv --model.reg_wt 2
+
+unbuffer python project.py long a/lconv mpi3d m/ae --dataset.category toy --info.extra l-toy-conv
+unbuffer python project.py long a/lconv mpi3d m/vae --dataset.category toy --info.extra l-toy-b1-conv --model.reg_wt 1
+unbuffer python project.py long a/lconv mpi3d m/vae --dataset.category toy --info.extra l-toy-b4-conv --model.reg_wt 4
+
+unbuffer python project.py long a/d/lbranch12 a/e/lconv mpi3d m/ae --info.extra l-toy-12b1-conv-s2 --seed 2
+unbuffer python project.py long a/lconv mpi3d m/vae --dataset.category toy --info.extra l-toy-b2-conv-s2 --model.reg_wt 2 --seed 2
 
 
 
