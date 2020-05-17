@@ -6,14 +6,16 @@ model:
 
         in_shape: '<>din'
 
-        channels: [128, 128, 128, 128, 128]
+        channels: [64, 64, 128, 128, 128, 128, 128, 128, 256, 256]
         kernels: 3
         factors: 1
-        strides: 2
+        strides: [1,2, 1,2, 1,2, 1,2, 1,2]
+
+        residual: True
 
         down: 'max'
 
-        fc_hidden: [256, 256, 128, 128]
+        fc_hidden: [512, 256, 256, 128]
 
 
 
