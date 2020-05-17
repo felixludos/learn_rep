@@ -13,6 +13,9 @@ dataset:
 
     val_split: 0.1
 
+model:
+    latent_dim: 48
+
 info:
     dataset_type: 'celeba'
 
