@@ -2,13 +2,13 @@ parents: ['a/d/prebranch']
 
 model:
 
-    branch_dim: 1
+    branch_dim: 2
 
     decoder:
         _type: 'branch-dec'
 
-        channels: [128,128,128, 128,128,128, 128,128,128, 128,128,128]
-        factors: [1,1,2, 1,2,1, 2,1,2, 1,2,1]
+        channels: [128,128,128, 128,128,128, 128,128,128, 128,128,128, 128,128,128, 128]
+        factors: [1,1,2, 1,1,2, 1,1,2, 1,1,2, 1,1,2, 1]
 
         branches:
             _type: 'iter'
@@ -28,6 +28,13 @@ model:
 
                 - _type: '<>branch_type'
                 - _type: '<>branch_type'
+                - _type: '<>branch_type'
+
+                - _type: '<>branch_type'
+                - _type: '<>branch_type'
+                - _type: '<>branch_type'
+
+
                 - _type: '<>branch_type'
 
         layers:
@@ -52,6 +59,17 @@ model:
                   output_nonlin: '<>nonlin'
                 - _type: '<>layer_type'
                   output_nonlin: '<>nonlin'
+                - _type: '<>layer_type'
+                  output_nonlin: '<>nonlin'
+
+
+                - _type: '<>layer_type'
+                  output_nonlin: '<>nonlin'
+                - _type: '<>layer_type'
+                  output_nonlin: '<>nonlin'
+                - _type: '<>layer_type'
+                  output_nonlin: '<>nonlin'
+
                 - _type: '<>layer_type'
                   output_nonlin: '<>nonlin'
 

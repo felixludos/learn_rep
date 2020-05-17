@@ -1,7 +1,7 @@
 parents: ['basics']
 
 output:
-    print_freq: 200
+    print_freq: 400
     save_freq: 10000
 
 training:
@@ -15,7 +15,7 @@ dataset:
     val_split: 0.1
 
 model:
-    latent_dim: 48
+    latent_dim: 32
 
 info:
     dataset_type: 'celeba'
