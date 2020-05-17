@@ -288,6 +288,9 @@ unbuffer python project.py a/d/branch12 a/e/conv t/mpi-shapes m/ae --info.extra 
 unbuffer python project.py a/conv t/mpi-shapes m/vae --dataset.category real --info.extra real-b2-conv-s2 --model.reg_wt 2 --seed 2
 unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category real --info.extra real-b2-dislib-s2 --model.reg_wt 2 --seed 2
 
+###
+
+
 
 
 #####################
