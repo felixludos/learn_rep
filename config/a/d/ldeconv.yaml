@@ -1,5 +1,6 @@
 parents: ['basics']
 
+
 model:
 
 
@@ -11,8 +12,8 @@ model:
 
     channels: [256, 256, 128, 128, 128, 128, 128, 128, 64, 64]
     kernels: 3
-    factors: 2
-    strides: [2,1, 2,1, 2,1, 2,1, 2,1]
+    factors: [2,1, 2,1, 2,1, 2,1, 2,1]
+    strides: 1
 
     residual: True
 

@@ -2,6 +2,7 @@ parents: ['basics']
 
 output:
     print_freq: 200
+    save_freq: 10000
 
 training:
     step_limit: 200000

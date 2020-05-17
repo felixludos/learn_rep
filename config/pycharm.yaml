@@ -16,7 +16,9 @@
 
 #parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
 
-parents: ['a/d/branch12', 'a/e/lib-conv', 't/mpi-shapes', 'm/ae']
+#parents: ['a/d/branch12', 'a/e/lib-conv', 't/mpi-shapes', 'm/ae']
+
+parents: ['a/lconv', 'mpi3d', 'long', 'm/ae']
 
 #parents: ['sup-3ds']
 
@@ -47,7 +49,6 @@ inline: True
 #
 dataset:
   device: cpu
-#  batch_size: 128
   category: real
 
 #  limits:
