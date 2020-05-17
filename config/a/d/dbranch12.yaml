@@ -4,6 +4,8 @@ model:
 
     branch_dim: 2
 
+    branch_hidden: [64, 128, 256]
+
     decoder:
         _type: 'branch-dec'
 
