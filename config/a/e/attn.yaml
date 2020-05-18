@@ -3,10 +3,10 @@ parents: ['basics']
 model:
 
 #    key_dim: 32
-    val_dim: 64
-    key_val_dim: 128
+    val_dim: 32
+    key_val_dim: 64
 
-    keys_per_head: 4
+    keys_per_head: 1
     coord_patches: True
     weight_keys: False
 

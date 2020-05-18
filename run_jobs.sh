@@ -314,7 +314,19 @@ unbuffer python project.py a/deep celeba m/vae --info.extra b16-conv --model.reg
 unbuffer python project.py a/d/dbranch12 a/e/dconv celeba m/ae --info.extra 12b1-conv-s2 --seed 2
 unbuffer python project.py a/deep celeba m/vae --info.extra b2-conv-s2 --model.reg_wt 2 --seed 2
 
+###
 
+unbuffer python project.py a/d/dbranch12 a/e/dconv celeba m/ae --info.extra 12b1-conv
+unbuffer python project.py a/deep celeba m/vae --info.extra b2-conv --model.reg_wt 2
+
+unbuffer python project.py a/deep celeba m/ae --info.extra conv
+unbuffer python project.py a/deep celeba m/wae --info.extra conv
+unbuffer python project.py a/deep celeba m/vae --info.extra b1-conv --model.reg_wt 1
+unbuffer python project.py a/deep celeba m/vae --info.extra b4-conv --model.reg_wt 4
+unbuffer python project.py a/deep celeba m/vae --info.extra b16-conv --model.reg_wt 16
+
+unbuffer python project.py a/d/dbranch12 a/e/dconv celeba m/ae --info.extra 12b1-conv-s2 --seed 2
+unbuffer python project.py a/deep celeba m/vae --info.extra b2-conv-s2 --model.reg_wt 2 --seed 2
 
 #####################
 
