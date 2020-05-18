@@ -328,6 +328,34 @@ unbuffer python project.py a/deep celeba m/vae --info.extra b16-conv --model.reg
 unbuffer python project.py a/d/dbranch12 a/e/dconv celeba m/ae --info.extra 12b1-conv-s2 --seed 2
 unbuffer python project.py a/deep celeba m/vae --info.extra b2-conv-s2 --model.reg_wt 2 --seed 2
 
+###
+
+unbuffer python project.py a/d/branch12 a/e/conv 3dshapes m/ae --info.extra 12b1-conv --seed 10
+
+
+unbuffer python project.py a/d/branch12 a/e/conv 3dshapes m/ae --info.extra 12b1-conv --seed 10
+unbuffer python project.py a/conv 3dshapes m/ae --info.extra conv --seed 10
+unbuffer python project.py a/conv 3dshapes m/wae --info.extra conv --seed 10
+unbuffer python project.py a/conv 3dshapes m/vae --info.extra b1-conv --model.reg_wt 1 --seed 10
+unbuffer python project.py a/conv 3dshapes m/vae --info.extra b16-conv --model.reg_wt 16 --seed 10
+
+
+###
+
+unbuffer python project.py a/e/attn12 a/d/branch12 3dshapes m/ae --info.extra 12b1-12h1k32v32 --seed 10
+unbuffer python project.py a/e/attn4 a/d/branch12 3dshapes m/ae --info.extra 12b1-4h1k32v32 --seed 10
+unbuffer python project.py a/e/attn6 a/d/branch12 3dshapes m/ae --info.extra 12b1-6h1k32v32 --seed 10
+
+unbuffer python project.py a/e/attn12 a/d/deconv 3dshapes m/vae --info.extra b16-conv-12h1k32v32 --model.reg_wt 16 --seed 10
+unbuffer python project.py a/e/attn6 a/d/deconv 3dshapes m/vae --info.extra b16-conv-6h1k32v32 --model.reg_wt 16 --seed 10
+unbuffer python project.py a/e/attn12 a/d/deconv 3dshapes m/vae --info.extra b1-conv-12h1k32v32 --model.reg_wt 1 --seed 10
+unbuffer python project.py a/e/attn6 a/d/deconv 3dshapes m/vae --info.extra b1-conv-6h1k32v32 --model.reg_wt 1 --seed 10
+
+unbuffer python project.py a/e/attn12 a/d/deconv 3dshapes m/ae --info.extra conv-12h1k32v32 --seed 10
+unbuffer python project.py a/e/attn4 a/d/deconv 3dshapes m/ae --info.extra conv-4h1k32v32 --seed 10
+unbuffer python project.py a/e/attn6 a/d/deconv 3dshapes m/ae --info.extra conv-6h1k32v32 --seed 10
+
+
 #####################
 
 #unbuffer python project.py a/d/branch12 a/e/dislib t/3ds-shapes m/ae --info.extra 12b1-dislib
