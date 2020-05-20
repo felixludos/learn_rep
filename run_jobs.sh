@@ -355,6 +355,10 @@ unbuffer python project.py a/e/attn12 a/d/deconv 3dshapes m/ae --info.extra conv
 unbuffer python project.py a/e/attn4 a/d/deconv 3dshapes m/ae --info.extra conv-4h1k32v32 --seed 10
 unbuffer python project.py a/e/attn6 a/d/deconv 3dshapes m/ae --info.extra conv-6h1k32v32 --seed 10
 
+###
+
+
+
 
 #####################
 
