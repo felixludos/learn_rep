@@ -358,7 +358,40 @@ unbuffer python project.py a/e/attn6 a/d/deconv 3dshapes m/ae --info.extra conv-
 ###
 
 
+unbuffer python project.py a/d/branch4 a/e/conv t/mpi-shapes m/ae --dataset.category real --info.extra real-4b3-conv
+unbuffer python project.py a/d/branch6 a/e/conv t/mpi-shapes m/ae --dataset.category real --info.extra real-6b2-conv
+#unbuffer python project.py a/d/branch12 a/e/conv t/mpi-shapes m/ae --dataset.category real --info.extra real-12b1-conv
 
+#unbuffer python project.py a/conv t/mpi-shapes m/vae --dataset.category real --info.extra real-b2-conv --model.reg_wt 2
+#unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category real --info.extra real-b2-dislib --model.reg_wt 2
+
+unbuffer python project.py a/dislib t/mpi-shapes m/wae --dataset.category real --info.extra real-dislib
+#unbuffer python project.py a/dislib t/mpi-shapes m/ae --dataset.category real --info.extra real-dislib
+#unbuffer python project.py a/dislib t/mpi-shapes m/vae --dataset.category real --info.extra real-b1-dislib --model.reg_wt 1
+
+unbuffer python project.py a/conv t/mpi-shapes m/wae --dataset.category real --info.extra real-conv
+#unbuffer python project.py a/conv t/mpi-shapes m/ae --dataset.category real --info.extra real-conv
+#unbuffer python project.py a/conv t/mpi-shapes m/vae --dataset.category real --info.extra real-b1-conv --model.reg_wt 1
+
+
+###
+
+unbuffer python project.py a/d/branch4 a/e/conv t/mpi-shapes m/ae --dataset.category real --info.extra real-4b3-conv
+unbuffer python project.py a/d/branch6 a/e/conv t/mpi-shapes m/ae --dataset.category real --info.extra real-6b2-conv
+unbuffer python project.py a/dislib t/mpi-shapes m/wae --dataset.category real --info.extra real-dislib
+unbuffer python project.py a/conv t/mpi-shapes m/wae --dataset.category real --info.extra real-conv
+
+unbuffer python project.py a/d/branch4 a/e/conv t/mpi-shapes m/ae --dataset.category toy --info.extra toy-4b3-conv
+unbuffer python project.py a/d/branch6 a/e/conv t/mpi-shapes m/ae --dataset.category toy --info.extra toy-6b2-conv
+unbuffer python project.py a/dislib t/mpi-shapes m/wae --dataset.category toy --info.extra toy-dislib
+unbuffer python project.py a/conv t/mpi-shapes m/wae --dataset.category toy --info.extra toy-conv
+
+unbuffer python project.py a/d/branch4 a/e/conv t/3ds-shapes m/ae --info.extra 4b3-conv
+unbuffer python project.py a/d/branch6 a/e/conv t/3ds-shapes m/ae --info.extra 6b2-conv
+unbuffer python project.py a/dislib t/3ds-shapes m/wae --info.extra dislib
+unbuffer python project.py a/conv t/3ds-shapes m/wae --info.extra conv
+
+#unbuffer python project.py a/d/branch12 a/e/conv t/3ds-shapes m/ae --info.extra 12b1-conv-t10k --train_limit 10000
 
 #####################
 

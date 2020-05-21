@@ -4,7 +4,7 @@
 #parents: ['a/dislib', 'm/ae', '3dshapes']
 #parents: ['a/double', 'm/ae', '3dshapes']
 
-parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
+#parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
 #parents: ['t/upd']
 
 #parents: ['a/d/deconv-deep', 'a/conv', 'm/ae', '3dshapes']
@@ -16,7 +16,7 @@ parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
 
 #parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
 
-#parents: ['a/d/branch12', 'a/e/lib-conv', 't/mpi-shapes', 'm/ae']
+parents: ['resbranch', 'a/d/branch12', 'a/e/conv', '3dshapes', 'm/ae']
 
 #parents: ['a/lconv', 'mpi3d', 'long', 'm/ae']
 
