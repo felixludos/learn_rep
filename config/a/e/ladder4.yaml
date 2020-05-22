@@ -30,7 +30,7 @@ model:
         layers:
 
             channels: [32, 64, 64, 128]
-            strides: 2
+            factors: 2
 
 
 info:

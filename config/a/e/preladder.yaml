@@ -15,11 +15,14 @@ model:
     rung_type: 'conv'
 
     kernels: 3
-    factors: 1
-    strides: 2
+    factors: 2
+    strides: 1
+
+    down: 'max'
 
     rungs:
       _type: 'iter'
+
 
       channels: [64]
 
@@ -30,6 +33,3 @@ model:
 
       in_shape: '<>din'
       residual: '<>residual_core'
-
-
-      down: 'max'
