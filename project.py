@@ -895,6 +895,8 @@ class Ladder_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 		din = layers.din
 		rung_dims = A.pull('rung_dims')
 		
+		reverse_order = A.pull('reverse_order', False)
+		
 		layer_key = A.pull('layer_key', None)
 		if layer_key is not None:
 			layers = getattr(layers, layer_key, layers)
@@ -937,6 +939,7 @@ class Ladder_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 		self.rung_dims = rung_dims
 		self.layers = nn.ModuleList(layers)
 		self.rungs = nn.ModuleList(rungs)
+		self.reverse_order = reverse_order
 	
 	def forward(self, x):
 		
@@ -950,6 +953,9 @@ class Ladder_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 			if r is not None:
 				q = r(c)
 				qs.append(q.view(B,2,-1) if self.ret_distrib else q)
+		
+		if self.reverse_order:
+			qs = reversed(qs)
 		
 		q = torch.cat(qs,-1)
 		if self.ret_distrib:

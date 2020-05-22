@@ -427,25 +427,29 @@ unbuffer python project.py a/d/branch12 a/e/attn4 t/mpi-shapes m/ae --dataset.ca
 
 ###
 
-unbuffer python project.py a/ladder4 3dshapes m/ae --info.extra lddr4
-unbuffer python project.py a/ladder6 3dshapes m/ae --info.extra lddr6
-unbuffer python project.py a/ladder12 3dshapes m/ae --info.extra lddr12
+unbuffer python project.py a/ladder4 3dshapes m/ae --info.extra lddrev4
+unbuffer python project.py a/ladder6 3dshapes m/ae --info.extra lddrev6
+unbuffer python project.py a/ladder12 3dshapes m/ae --info.extra lddrev12
 
-unbuffer python project.py a/ladder4 3dshapes m/vae --info.extra lddr4
-unbuffer python project.py a/ladder6 3dshapes m/vae --info.extra lddr6
-unbuffer python project.py a/ladder12 3dshapes m/vae --info.extra lddr12
+unbuffer python project.py a/ladder4 3dshapes m/vae --info.extra lddrev4
+unbuffer python project.py a/ladder6 3dshapes m/vae --info.extra lddrev6
+unbuffer python project.py a/ladder12 3dshapes m/vae --info.extra lddrev12
 
-unbuffer python project.py a/ladder4 mpi3d m/ae --dataset.category toy --info.extra lddr4
-unbuffer python project.py a/ladder6 mpi3d m/ae --dataset.category toy --info.extra lddr6
-unbuffer python project.py a/ladder12 mpi3d m/ae --dataset.category toy --info.extra lddr12
+unbuffer python project.py a/ladder4 mpi3d m/ae --dataset.category toy --info.extra lddrev4
+unbuffer python project.py a/ladder6 mpi3d m/ae --dataset.category toy --info.extra lddrev6
+unbuffer python project.py a/ladder12 mpi3d m/ae --dataset.category toy --info.extra lddrev12
 
-unbuffer python project.py a/ladder4 mpi3d m/vae --dataset.category toy --info.extra lddr4
-unbuffer python project.py a/ladder6 mpi3d m/vae --dataset.category toy --info.extra lddr6
-unbuffer python project.py a/ladder12 mpi3d m/vae --dataset.category toy --info.extra lddr12
+unbuffer python project.py a/ladder4 mpi3d m/vae --dataset.category toy --info.extra lddrev4
+unbuffer python project.py a/ladder6 mpi3d m/vae --dataset.category toy --info.extra lddrev6
+unbuffer python project.py a/ladder12 mpi3d m/vae --dataset.category toy --info.extra lddrev12
 
-#unbuffer python project.py a/ladder4 mpi3d m/vae --dataset.category real --info.extra lddr4
-#unbuffer python project.py a/ladder6 mpi3d m/vae --dataset.category real --info.extra lddr6
-#unbuffer python project.py a/ladder12 mpi3d m/vae --dataset.category real --info.extra lddr12
+#unbuffer python project.py a/ladder4 mpi3d m/vae --dataset.category real --info.extra lddrev4
+#unbuffer python project.py a/ladder6 mpi3d m/vae --dataset.category real --info.extra lddrev6
+#unbuffer python project.py a/ladder12 mpi3d m/vae --dataset.category real --info.extra lddrev12
+
+###
+
+
 
 
 #####################
