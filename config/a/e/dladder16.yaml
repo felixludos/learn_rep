@@ -38,7 +38,7 @@ model:
                 - _type: '<>rung_type'
                   in_shape: '<>din'
                   latent_dim: '<>dout'
-                  channels: [64, 32]
+                  channels: [128, 64]
                 - _type: '<>rung_type'
                   in_shape: '<>din'
                   latent_dim: '<>dout'

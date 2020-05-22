@@ -1,5 +1,8 @@
 
 parents: ['a/e/dladder16', 'a/d/preladder', 'a/d/dbranch12']
 
+model:
+    noise_dim: 128
+
 info:
     arch_type: 'ladder16'
