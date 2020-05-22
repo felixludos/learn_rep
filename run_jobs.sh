@@ -450,7 +450,7 @@ unbuffer python project.py a/ladder12 mpi3d m/vae --dataset.category toy --info.
 #unbuffer python project.py a/ladder6 mpi3d m/vae --dataset.category real --info.extra lddrev6
 #unbuffer python project.py a/ladder12 mpi3d m/vae --dataset.category real --info.extra lddrev12
 
-unbuffer python project.py a/dladder16 celeba m/vae --info.extra lddrev12
+unbuffer python project.py a/ladder16 celeba m/vae --info.extra lddrev12
 
 ###
 

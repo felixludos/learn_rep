@@ -1,0 +1,11 @@
+
+
+training:
+  step_limit: 120000
+
+dataset:
+
+  mix:
+    train: 1
+    upd: 1
+    test: 1
