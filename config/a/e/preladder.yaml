@@ -7,12 +7,14 @@ model:
   residual_core: False
 
 
-  layer_key: 'conv'
+
 
   encoder:
     _type: 'ladder-enc'
 
     rung_type: 'conv'
+
+    layer_key: 'conv'
 
     kernels: 3
     factors: 2
