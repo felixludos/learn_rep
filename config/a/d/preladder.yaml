@@ -1,0 +1,14 @@
+parents: ['a/d/prebranch']
+
+model:
+
+    branch_hidden: [64, 128]
+    noise_dim: 64
+
+    decoder:
+        branch_type: 'ladder'
+
+info:
+    arch_type: 'ldec'
+
+

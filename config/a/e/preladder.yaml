@@ -1,0 +1,35 @@
+
+
+
+model:
+
+  rung_dims: 3
+  residual_core: False
+
+
+  layer_key: 'conv'
+
+  encoder:
+    _type: 'ladder-enc'
+
+    rung_type: 'conv'
+
+    kernels: 3
+    factors: 1
+    strides: 2
+
+    rungs:
+      _type: 'iter'
+
+      channels: [64]
+
+      fc_hidden: [64, 32]
+
+    layers:
+      _type: 'conv'
+
+      in_shape: '<>din'
+      residual: '<>residual_core'
+
+
+      down: 'max'

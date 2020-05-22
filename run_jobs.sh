@@ -393,6 +393,61 @@ unbuffer python project.py a/conv t/3ds-shapes m/wae --info.extra conv
 
 #unbuffer python project.py a/d/branch12 a/e/conv t/3ds-shapes m/ae --info.extra 12b1-conv-t10k --train_limit 10000
 
+###
+
+unbuffer python project.py resbranch a/d/dbranch12 a/e/dconv celeba m/ae --info.extra r12b1-conv
+
+unbuffer python project.py resbranch a/d/branch12 a/e/dconv 3dshapes m/ae --info.extra r12b1-conv
+unbuffer python project.py resbranch a/d/branch6 a/e/dconv 3dshapes m/ae --info.extra r6b2-conv
+unbuffer python project.py resbranch a/d/branch4 a/e/dconv 3dshapes m/ae --info.extra r4b3-conv
+
+unbuffer python project.py resbranch a/d/branch12 a/e/dconv mpi3d m/ae --dataset.category toy --info.extra toy-r12b1-conv
+unbuffer python project.py resbranch a/d/branch6 a/e/dconv mpi3d m/ae --dataset.category toy --info.extra toy-r6b2-conv
+unbuffer python project.py resbranch a/d/branch4 a/e/dconv mpi3d m/ae --dataset.category toy --info.extra toy-r4b3-conv
+
+unbuffer python project.py resbranch a/d/branch12 a/e/dconv mpi3d m/ae --dataset.category real --info.extra real-r12b1-conv
+unbuffer python project.py resbranch a/d/branch6 a/e/dconv mpi3d m/ae --dataset.category real --info.extra real-r6b2-conv
+unbuffer python project.py resbranch a/d/branch4 a/e/dconv mpi3d m/ae --dataset.category real --info.extra real-r4b3-conv
+
+
+###
+
+
+unbuffer python project.py a/d/branch12 a/e/attn12 t/3ds-shapes m/ae --info.extra 12b1-12h-conv
+unbuffer python project.py a/d/branch12 a/e/attn6 t/3ds-shapes m/ae --info.extra 12b1-6h-conv
+unbuffer python project.py a/d/branch12 a/e/attn4 t/3ds-shapes m/ae --info.extra 12b1-4h-conv
+
+unbuffer python project.py a/d/branch12 a/e/attn12 t/mpi-shapes m/ae --dataset.category toy --info.extra toy-12b1-12h-conv
+unbuffer python project.py a/d/branch12 a/e/attn6 t/mpi-shapes m/ae --dataset.category toy --info.extra toy-12b1-6h-conv
+unbuffer python project.py a/d/branch12 a/e/attn4 t/mpi-shapes m/ae --dataset.category toy --info.extra toy-12b1-4h-conv
+
+unbuffer python project.py a/d/branch12 a/e/attn12 t/mpi-shapes m/ae --dataset.category real --info.extra real-12b1-12h-conv
+unbuffer python project.py a/d/branch12 a/e/attn6 t/mpi-shapes m/ae --dataset.category real --info.extra real-12b1-6h-conv
+unbuffer python project.py a/d/branch12 a/e/attn4 t/mpi-shapes m/ae --dataset.category real --info.extra real-12b1-4h-conv
+
+###
+
+unbuffer python project.py a/ladder4 3dshapes m/ae --info.extra lddr4
+unbuffer python project.py a/ladder6 3dshapes m/ae --info.extra lddr6
+unbuffer python project.py a/ladder12 3dshapes m/ae --info.extra lddr12
+
+unbuffer python project.py a/ladder4 3dshapes m/vae --info.extra lddr4
+unbuffer python project.py a/ladder6 3dshapes m/vae --info.extra lddr6
+unbuffer python project.py a/ladder12 3dshapes m/vae --info.extra lddr12
+
+unbuffer python project.py a/ladder4 mpi3d m/ae --dataset.category toy --info.extra lddr4
+unbuffer python project.py a/ladder6 mpi3d m/ae --dataset.category toy --info.extra lddr6
+unbuffer python project.py a/ladder12 mpi3d m/ae --dataset.category toy --info.extra lddr12
+
+unbuffer python project.py a/ladder4 mpi3d m/vae --dataset.category toy --info.extra lddr4
+unbuffer python project.py a/ladder6 mpi3d m/vae --dataset.category toy --info.extra lddr6
+unbuffer python project.py a/ladder12 mpi3d m/vae --dataset.category toy --info.extra lddr12
+
+#unbuffer python project.py a/ladder4 mpi3d m/vae --dataset.category real --info.extra lddr4
+#unbuffer python project.py a/ladder6 mpi3d m/vae --dataset.category real --info.extra lddr6
+#unbuffer python project.py a/ladder12 mpi3d m/vae --dataset.category real --info.extra lddr12
+
+
 #####################
 
 #unbuffer python project.py a/d/branch12 a/e/dislib t/3ds-shapes m/ae --info.extra 12b1-dislib

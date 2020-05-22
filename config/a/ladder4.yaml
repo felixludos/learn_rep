@@ -1,0 +1,5 @@
+
+parents: ['a/e/ladder4', 'a/d/preladder', 'a/d/branch4']
+
+info:
+    arch_type: 'ladder4'

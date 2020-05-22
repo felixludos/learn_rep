@@ -19,7 +19,7 @@ from foundation import models
 from foundation import util
 from foundation import train as trn
 from foundation import data
-
+from foundation import legacy as lgcy
 
 
 
@@ -58,7 +58,8 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 			branch_dim = branch_dim * len(channels)
 			branch_dim = branch_dim[:len(channels)]
 
-		assert latent_dim == root_dim + sum(branch_dim), f'not the right split: {latent_dim} vs {root_dim} {branch_dim}'
+		assert latent_dim == root_dim + sum(br for br in branch_dim if br is not None), \
+			f'not the right split: {latent_dim} vs {root_dim} {branch_dim}'
 
 		C, H, W = out_shape
 
@@ -79,7 +80,7 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		self.root = root
 		self.root_dim = root_dim
 
-		self.branch_dim = branch_dim
+		self.branch_dim = [br for br in branch_dim if br is not None]
 
 		create_branch = A.pull('branches')
 		create_layer = A.pull('layers')
@@ -94,15 +95,21 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		din = in_shape
 		for i, (in_chn, out_chn, fct) in enumerate(zip(channels, channels[1:], factors)):
 
-			nxt = create_branch.current()
-			nxt.din = next(bdims)
-			nxt.features = in_chn
-
-			branches.append(next(create_branch))
+			bdim = next(bdims)
+			if bdim is None:
+				branches.append(None)
+			else:
+				nxt = create_branch.current()
+				nxt.din = bdim
+				nxt.features = in_chn
+	
+				branch = next(create_branch)
+				branches.append(branch)
+				din = branch.dout, *din[1:]
 
 			nxt = create_layer.current()
 			nxt.din = din
-			nxt.in_channels = in_chn
+			nxt.in_channels = din[0]
 			nxt.out_channels = out_chn
 			nxt.factor = fct
 
@@ -135,14 +142,40 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 			c = c.expand(B, *shape)
 
 		styles = q.split(self.branch_dim, dim=1)
+		styles = iter(styles)
 
-		for branch, style, conv in zip(self.branches, styles, self.layers):
-
-			c = branch(c, style)
+		for branch, conv in zip(self.branches, self.layers):
+			
+			if branch is not None:
+				style = next(styles)
+				c = branch(c, style)
 			c = conv(c)
 
 		return c
 
 
-
-
+@fd.Component('ladder')
+class Ladder_Branch(lgcy.adain.AdaIN):
+	def __init__(self, A):
+		
+		super().__init__(A)
+		
+		din = self.din
+		qdim = self.style_dim
+		ndim = self.noise_dim
+		
+		extra = qdim if ndim is None else ndim
+		if isinstance(din, (tuple, list)):
+			dout = extra + din[0], *din[1:]
+		else:
+			dout = din + extra
+		self.dout = dout
+	
+	def include_noise(self, x, q):
+		
+		B = q.size(0)
+		
+		q = q.unsqueeze(-1).unsqueeze(-1).expand(B, self.noise_dim, *x.shape[2:])
+		
+		return torch.cat([x,q], 1) # concatenates the noise
+		
