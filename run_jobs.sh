@@ -454,7 +454,59 @@ unbuffer python project.py a/ladder16 celeba m/vae --info.extra lddrev12
 
 ###
 
+unbuffer python project.py t/upd --load t3ds-shapes-ae-12b1-12h-conv_0039-6425005-00_200521-150816
+unbuffer python project.py t/upd --load t3ds-shapes-ae-12b1-6h-conv_0039-6425005-01_200521-150812
+unbuffer python project.py t/upd --load t3ds-shapes-ae-12b1-4h-conv_0039-6425005-02_200521-150810
 
+unbuffer python project.py t/upd --load tmpi-shapes-ae-toy-12b1-12h-conv_0039-6425005-03_200521-150814
+unbuffer python project.py t/upd --load tmpi-shapes-ae-toy-12b1-4h-conv_0039-6425005-05_200521-165857
+
+unbuffer python project.py t/upd --load tmpi-shapes-ae-real-12b1-12h-conv_0039-6425005-06_200521-165855
+unbuffer python project.py t/upd --load tmpi-shapes-ae-real-12b1-6h-conv_0039-6425005-07_200521-181623
+unbuffer python project.py t/upd --load tmpi-shapes-ae-real-12b1-4h-conv_0039-6425005-08_200521-181701
+
+###
+
+unbuffer python project.py t/test --load t3ds-shapes-ae-12b1-conv_0010-6339705-00_200509-233443
+unbuffer python project.py t/test --load t3ds-shapes-ae-conv_0010-6339705-03_200509-233342
+unbuffer python project.py t/test --load t3ds-shapes-vae-b1-conv_0010-6339705-06_200509-233330
+unbuffer python project.py t/test --load t3ds-shapes-vae-b16-conv_0010-6339705-04_200509-233331
+unbuffer python project.py t/test --load t3ds-shapes-ae-6b2-conv_0040-6457811-09_200521-192043
+unbuffer python project.py t/test --load t3ds-shapes-ae-4b3-conv_0040-6457811-08_200521-190411
+
+unbuffer python project.py t/test --load t3ds-shapes-ae-dislib_0010-6339705-07_200509-233331
+unbuffer python project.py t/test --load t3ds-shapes-vae-b1-dislib_0010-6339705-05_200509-233352
+unbuffer python project.py t/test --load t3ds-shapes-vae-b16-dislib_0010-6339705-08_200509-233335
+unbuffer python project.py t/test --load t3ds-shapes-wae-dislib_0040-6457811-10_200521-192058
+unbuffer python project.py t/test --load t3ds-shapes-wae-conv_0040-6457811-11_200521-192112
+
+
+unbuffer python project.py t/test --load tmpi-shapes-ae-toy-conv_0029-6357652-05_200517-020945
+unbuffer python project.py t/test --load tmpi-shapes-vae-toy-b1-conv_0029-6357652-06_200517-021252
+unbuffer python project.py t/test --load tmpi-shapes-vae-toy-b2-conv_0029-6357652-01_200517-015851
+unbuffer python project.py t/test --load tmpi-shapes-ae-toy-12b1-conv_0029-6357652-00_200517-021120
+unbuffer python project.py t/test --load tmpi-shapes-ae-toy-6b2-conv_0040-6457811-06_200521-185626
+unbuffer python project.py t/test --load tmpi-shapes-ae-toy-4b3-conv_0040-6457811-07_200521-190415
+
+unbuffer python project.py t/test --load tmpi-shapes-ae-toy-dislib_0029-6357652-03_200517-020655
+unbuffer python project.py t/test --load tmpi-shapes-vae-toy-b1-dislib_0029-6357652-04_200517-020750
+unbuffer python project.py t/test --load tmpi-shapes-vae-toy-b2-dislib_0029-6357652-02_200517-020148
+unbuffer python project.py t/test --load tmpi-shapes-wae-toy-dislib_0040-6457811-05_200521-183531
+unbuffer python project.py t/test --load tmpi-shapes-wae-toy-conv_0040-6457811-04_200521-182820
+
+
+unbuffer python project.py t/test --load tmpi-shapes-ae-real-conv_0028-6357651-05_200517-013845
+unbuffer python project.py t/test --load tmpi-shapes-vae-real-b1-conv_0028-6357651-06_200517-014147
+unbuffer python project.py t/test --load tmpi-shapes-vae-real-b2-conv_0028-6357651-01_200517-013344
+unbuffer python project.py t/test --load tmpi-shapes-ae-real-12b1-conv_0028-6357651-00_200517-013342
+unbuffer python project.py t/test --load tmpi-shapes-ae-real-6b2-conv_0040-6457811-01_200521-181822
+unbuffer python project.py t/test --load tmpi-shapes-ae-real-4b3-conv_0040-6457811-00_200521-181732
+
+unbuffer python project.py t/test --load tmpi-shapes-ae-real-dislib_0028-6357651-02_200517-013348
+unbuffer python project.py t/test --load tmpi-shapes-vae-real-b1-dislib_0028-6357651-03_200517-013344
+unbuffer python project.py t/test --load tmpi-shapes-vae-real-b2-dislib_0028-6357651-04_200517-013349
+unbuffer python project.py t/test --load tmpi-shapes-wae-real-dislib_0040-6457811-03_200521-182624
+unbuffer python project.py t/test --load tmpi-shapes-wae-real-conv_0040-6457811-02_200521-181826
 
 
 #####################
