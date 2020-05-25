@@ -119,6 +119,8 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		                                        batch_size=batch_size, shuffle=True, drop_last=False)
 		# valloader is not shuffled, but testloader is not.
 		
+		print(f'data: {len(testdata)}, loader: {testloader}')
+		
 		# endregion
 		
 		# region Default output
@@ -155,65 +157,71 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		
 		# region FID
 		
-		fid_dim = A.pull('fid_dim', 2048) # full dim is 2048 (but for testing 192 is fine)
-		if 'inception_model' not in self.volatile:
-			self.volatile.inception_model = fd.eval.fid.load_inception_model(dim=fid_dim, device=device)
-		inception_model = self.volatile.inception_model
-	
-		ds_stats = testdata.fid_stats if hasattr(testdata, 'fid_stats') else None
+		skip_fid = A.pull('skip_fid', False)
 		
-		if ds_stats is None:
-			compute_gt_fid = A.pull('compute_gt_fid', False)
-			if compute_gt_fid:
-				print('Will compute the true fid directly from testset')
-				
-				true_loader = util.make_infinite(testloader)
-				def true_fn(N):
-					return util.to(true_loader.demand(N), device)[0]
-				
-				ds_stats = fd.eval.fid.compute_inception_stat(true_fn, inception=inception_model,
-				                                   batch_size=batch_size, n_samples=n_samples,
-				                                   pbar=tqdm if 'inline' in A and A.inline else None)
-				
-				results['gt_fid_stats'] = list(ds_stats)
-	
-		# rec fid
-		def make_gen_fn():
-			loader = util.make_infinite(valloader)
+		if not skip_fid:
 		
-			def gen_fn(N):
-				# assert N == batch_size, '{} vs {}'.format(N, batch_size)
-				x = util.to(loader.demand(N), device)[0]
-				return self(x)
+			fid_dim = A.pull('fid_dim', 2048) # full dim is 2048 (but for testing 192 is fine)
+			if 'inception_model' not in self.volatile:
+				self.volatile.inception_model = fd.eval.fid.load_inception_model(dim=fid_dim, device=device)
+			inception_model = self.volatile.inception_model
+		
+			ds_stats = testdata.fid_stats if hasattr(testdata, 'fid_stats') else None
 			
-			return gen_fn
+			if ds_stats is None:
+				compute_gt_fid = A.pull('compute_gt_fid', False)
+				if compute_gt_fid:
+					print('Will compute the true fid directly from testset')
+					
+					true_loader = util.make_infinite(testloader)
+					def true_fn(N):
+						return util.to(true_loader.demand(N), device)[0]
+					
+					ds_stats = fd.eval.fid.compute_inception_stat(true_fn, inception=inception_model,
+					                                   batch_size=batch_size, n_samples=n_samples,
+					                                   pbar=tqdm if 'inline' in A and A.inline else None)
+					
+					results['gt_fid_stats'] = list(ds_stats)
 		
-		m, s = fd.eval.fid.compute_inception_stat(make_gen_fn(), inception=inception_model,
-		                                          batch_size=batch_size, n_samples=n_samples,
-		                                          pbar=tqdm if 'inline' in A and A.inline else None)
-		results['rec_fid_stats'] = [m, s]
-	
-		if ds_stats is not None:
-			score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
-			results['rec_fid'] = score
+			# rec fid
+			def make_gen_fn():
+				loader = util.make_infinite(valloader)
 			
-			logger.add('scalar', 'fid-rec', score)
-	
-		# hyb fid
-		gen_fn = self.generate_hybrid
-		m, s = fd.eval.fid.compute_inception_stat(gen_fn, inception=inception_model,
-		                                   batch_size=batch_size, n_samples=n_samples,
-		                                   pbar=tqdm if 'inline' in A and A.inline else None)
-		results['hyb_fid_stats'] = [m, s]
+				def gen_fn(N):
+					# assert N == batch_size, '{} vs {}'.format(N, batch_size)
+					x = util.to(loader.demand(N), device)[0]
+					return self(x)
+				
+				return gen_fn
+			
+			m, s = fd.eval.fid.compute_inception_stat(make_gen_fn(), inception=inception_model,
+			                                          batch_size=batch_size, n_samples=n_samples,
+			                                          pbar=tqdm if 'inline' in A and A.inline else None)
+			results['rec_fid_stats'] = [m, s]
 		
-		if ds_stats is not None:
-			score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
-			results['hyb_fid'] = score
+			if ds_stats is not None:
+				score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
+				results['rec_fid'] = score
+				
+				logger.add('scalar', 'fid-rec', score)
+		
+			# hyb fid
+			gen_fn = self.generate_hybrid
+			m, s = fd.eval.fid.compute_inception_stat(gen_fn, inception=inception_model,
+			                                   batch_size=batch_size, n_samples=n_samples,
+			                                   pbar=tqdm if 'inline' in A and A.inline else None)
+			results['hyb_fid_stats'] = [m, s]
 			
-			logger.add('scalar', 'fid-hyb', score)
+			if ds_stats is not None:
+				score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
+				results['hyb_fid'] = score
+				
+				logger.add('scalar', 'fid-hyb', score)
+		
+		else:
+			print('Skipping FID evaluation')
 		
 		# endregion
-		
 		
 
 		return results
