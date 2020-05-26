@@ -548,7 +548,61 @@ unbuffer python project.py a/d/branch6 a/e/conv mpi3d m/ae --dataset.category to
 unbuffer python project.py a/d/branch4 a/e/conv mpi3d m/ae --dataset.category real --info.extra real-4b3
 unbuffer python project.py a/d/branch6 a/e/conv mpi3d m/ae --dataset.category real --info.extra real-6b2
 
+###
 
+unbuffer python project.py t/upd --load t3ds-shapes-vae-lddrev4_0050-6465005-00_200523-155658
+unbuffer python project.py t/upd --load t3ds-shapes-vae-lddrev6_0050-6465005-01_200523-155659
+unbuffer python project.py t/upd --load t3ds-shapes-vae-lddrev12_0050-6465005-02_200523-155700
+unbuffer python project.py t/upd --load tmpi-shapes-vae-real-lddrev12_0050-6465005-08_200523-155703
+unbuffer python project.py t/upd --load tmpi-shapes-vae-toy-lddrev6_0050-6465005-04_200523-155705
+unbuffer python project.py t/upd --load tmpi-shapes-vae-toy-lddrev12_0050-6465005-05_200523-155707
+unbuffer python project.py t/upd --load tmpi-shapes-vae-real-lddrev4_0050-6465005-06_200523-155708
+unbuffer python project.py t/upd --load tmpi-shapes-vae-real-lddrev6_0050-6465005-07_200523-155709
+unbuffer python project.py t/upd --load tmpi-shapes-vae-toy-lddrev4_0050-6465005-03_200523-155710
+
+unbuffer python project.py t/upd --load t3ds-shapes-ae-lddrev4_0051-6465006-00_200523-155726
+unbuffer python project.py t/upd --load t3ds-shapes-ae-lddrev12_0051-6465006-02_200523-155728
+unbuffer python project.py t/upd --load t3ds-shapes-ae-lddrev6_0051-6465006-01_200523-155730
+unbuffer python project.py t/upd --load tmpi-shapes-ae-toy-lddrev4_0051-6465006-03_200523-155735
+unbuffer python project.py t/upd --load tmpi-shapes-ae-real-lddrev12_0051-6465006-08_200523-155735
+unbuffer python project.py t/upd --load tmpi-shapes-ae-real-lddrev4_0051-6465006-06_200523-155738
+unbuffer python project.py t/upd --load tmpi-shapes-ae-real-lddrev6_0051-6465006-07_200523-155739
+unbuffer python project.py t/upd --load tmpi-shapes-ae-toy-lddrev12_0051-6465006-05_200523-155740
+unbuffer python project.py t/upd --load tmpi-shapes-ae-toy-lddrev6_0051-6465006-04_200523-155742
+
+###
+
+unbuffer python project.py final --resume celeba-vae-b4-conv_0031-6362398-05_200517-170611
+unbuffer python project.py final --resume celeba-ae-12b1-conv_0031-6362398-00_200517-170612
+unbuffer python project.py final --resume celeba-vae-b1-conv_0031-6362398-04_200517-170613
+unbuffer python project.py final --resume celeba-vae-b2-conv-s2_0031-6362398-08_200517-170614
+unbuffer python project.py final --resume celeba-ae-12b1-conv-s2_0031-6362398-07_200517-170615
+unbuffer python project.py final --resume celeba-vae-b2-conv_0031-6362398-01_200517-170616
+unbuffer python project.py final --resume celeba-ae-conv_0031-6362398-02_200517-170621
+unbuffer python project.py final --resume celeba-vae-b16-conv_0031-6362398-06_200517-170622
+
+###
+
+unbuffer python project.py t/test --load t3ds-shapes-vae-lddrev12_0063-6470278-02_200525-212130
+unbuffer python project.py t/test --load t3ds-shapes-ae-lddrev12_0063-6470278-10_200525-212135
+unbuffer python project.py t/test --load t3ds-shapes-vae-lddrev6_0063-6470278-01_200525-212141
+unbuffer python project.py t/test --load t3ds-shapes-ae-lddrev6_0063-6470278-11_200525-212130
+unbuffer python project.py t/test --load t3ds-shapes-vae-lddrev4_0063-6470278-00_200525-212135
+unbuffer python project.py t/test --load t3ds-shapes-ae-lddrev4_0063-6470278-09_200525-212134
+
+unbuffer python project.py t/test --load tmpi-shapes-vae-toy-lddrev12_0063-6470278-05_200525-212135
+unbuffer python project.py t/test --load tmpi-shapes-ae-toy-lddrev12_0063-6470278-16_200525-212133
+unbuffer python project.py t/test --load tmpi-shapes-vae-toy-lddrev6_0063-6470278-04_200525-212131
+unbuffer python project.py t/test --load tmpi-shapes-ae-toy-lddrev6_0063-6470278-17_200525-212134
+unbuffer python project.py t/test --load tmpi-shapes-vae-toy-lddrev4_0063-6470278-08_200525-212143
+unbuffer python project.py t/test --load tmpi-shapes-ae-toy-lddrev4_0063-6470278-12_200525-212133
+
+unbuffer python project.py t/test --load tmpi-shapes-vae-real-lddrev12_0063-6470278-03_200525-212143
+unbuffer python project.py t/test --load tmpi-shapes-ae-real-lddrev12_0063-6470278-13_200525-212137
+unbuffer python project.py t/test --load tmpi-shapes-vae-real-lddrev6_0063-6470278-07_200525-212158
+unbuffer python project.py t/test --load tmpi-shapes-ae-real-lddrev6_0063-6470278-15_200525-212149
+unbuffer python project.py t/test --load tmpi-shapes-vae-real-lddrev4_0063-6470278-06_200525-212137
+unbuffer python project.py t/test --load tmpi-shapes-ae-real-lddrev4_0063-6470278-14_200525-212145
 
 
 #####################
