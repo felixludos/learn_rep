@@ -46,7 +46,7 @@ for line in raw.split('\n'):
 	info.new(name=n, type=t, rname=r)
 print(len(info), list(info.select('name')))
 
-dest_root = '/is/ei/fleeb/workspace/chome/results'
+dest_root = '/is/ei/fleeb/workspace/chome/results/completed'
 print(dest_root)
 
 for run in info:
