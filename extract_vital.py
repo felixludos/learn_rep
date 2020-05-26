@@ -41,12 +41,16 @@ WAE	Baseline	3ds-wae-dislib_0003-6337807-02_200509-120136'''
 
 info = util.Table()
 
-for line in raw.split('\n'):
-	n,t,r = line.split('\t')
-	info.new(name=n, type=t, rname=r)
-print(len(info), list(info.select('name')))
+# for line in raw.split('\n'):
+# 	n,t,r = line.split('\t')
+# 	info.new(name=n, type=t, rname=r)
+# print(len(info), list(info.select('name')))
 
-dest_root = '/is/ei/fleeb/workspace/chome/results'
+for name in os.listdir(root):
+	info.new(rname=name)
+print(len(info))
+
+dest_root = '/is/ei/fleeb/workspace/chome/results/completed'
 print(dest_root)
 
 for run in info:
@@ -76,7 +80,7 @@ for run in info:
 			# else:
 			#     print(f'Skipping {src}')
 
-	# else:
-	#
-	# 	pass
+	else:
+		print(f'***MISSING: {run.rname}')
+		pass
 		
