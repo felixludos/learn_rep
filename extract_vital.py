@@ -56,7 +56,7 @@ print(dest_root)
 
 for run in info:
 	rpath = os.path.join(root, run.rname)
-	vital_names = ['config.yml', 'results.pth.tar', 'final.pth.tar']
+	vital_names = ['config.yml', 'results.pth.tar', 'eval.pth.tar', 'final.pth.tar']
 	
 	content_names = set(os.listdir(rpath))
 	
@@ -77,6 +77,8 @@ for run in info:
 		for name in vital_names:
 			src = os.path.join(rpath, name)
 			if name in content_names and name not in dest_content:
+				if name == 'eval.pth.tar':
+					name = 'results.pth.tar'
 				shutil.copy(src, os.path.join(dpath, name))
 			# else:
 			#     print(f'Skipping {src}')
