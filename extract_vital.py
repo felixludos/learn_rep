@@ -51,7 +51,7 @@ for name in os.listdir(root):
 	info.new(rname=name)
 print(len(info))
 
-dest_root = '/is/ei/fleeb/workspace/chome/results/completed'
+dest_root = '/media/fleeb/TRAVELER/completed/'
 print(dest_root)
 
 for run in info:
