@@ -116,7 +116,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		n_samples = A.eval.pull('n_samples', n_samples)
 		
 		valloader, testloader = trn.get_loaders(valdata, testdata,
-		                                        batch_size=batch_size, shuffle=True, drop_last=False)
+		                                        batch_size=batch_size, shuffle='all', drop_last=False)
 		# valloader is not shuffled, but testloader is not.
 		
 		print(f'data: {len(testdata)}, loader: {testloader}')
