@@ -76,9 +76,9 @@ for run in info:
 		dest_content = set(os.listdir(dpath))
 		for name in vital_names:
 			src = os.path.join(rpath, name)
+			if name == 'eval.pth.tar':
+				name = 'results.pth.tar'
 			if name in content_names and name not in dest_content:
-				if name == 'eval.pth.tar':
-					name = 'results.pth.tar'
 				shutil.copy(src, os.path.join(dpath, name))
 			# else:
 			#     print(f'Skipping {src}')
