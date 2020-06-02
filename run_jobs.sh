@@ -606,6 +606,19 @@ unbuffer python project.py t/test --load tmpi-shapes-ae-real-lddrev4_0063-647027
 
 ###
 
+unbuffer python project.py final --resume celeba-wae_0055-6465665-00_200524-143155
+unbuffer python project.py final --resume celeba-vae-b4-conv_0031-6362398-05_200517-170611
+unbuffer python project.py final --resume celeba-vae-b2-conv-s2_0031-6362398-08_200517-170614
+unbuffer python project.py final --resume celeba-vae-b2-conv_0031-6362398-01_200517-170616
+unbuffer python project.py final --resume celeba-vae-b1-conv_0031-6362398-04_200517-170613
+unbuffer python project.py final --resume celeba-vae-b16-conv_0031-6362398-06_200517-170622
+unbuffer python project.py final --resume celeba-vae-12b1-12h_0080-6474327-02_200527-164903
+unbuffer python project.py final --resume celeba-vae-12b1_0080-6474327-03_200527-164858
+unbuffer python project.py final --resume celeba-ae-conv_0031-6362398-02_200517-170621
+unbuffer python project.py final --resume celeba-ae-12b1-conv-s2_0031-6362398-07_200517-170615
+unbuffer python project.py final --resume celeba-ae-12b1-conv_0031-6362398-00_200517-170612
+unbuffer python project.py final --resume celeba-ae-12b1-12h-s2_0080-6474327-01_200527-164901
+unbuffer python project.py final --resume celeba-ae-12b1-12h_0080-6474327-00_200527-164855
 
 
 #####################
