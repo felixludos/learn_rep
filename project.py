@@ -10,7 +10,6 @@ from torch.utils.data import Dataset, DataLoader
 import configargparse
 
 import numpy as np
-#%matplotlib tk
 import matplotlib.pyplot as plt
 
 try:
