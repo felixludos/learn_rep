@@ -1,9 +1,6 @@
-import sys, os, time, shutil
+import os, shutil
 
-import foundation as fd
-from foundation import models
 from foundation import util
-from foundation import train as trn
 
 root = os.environ['FOUNDATION_SAVE_DIR']
 print(root)

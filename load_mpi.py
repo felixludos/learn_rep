@@ -1,5 +1,6 @@
 
-import sys, os, time
+import sys, os
+
 os.environ["CUDA_VISIBLE_DEVICES"]="0"
 os.environ['FOUNDATION_RUN_MODE'] = 'jupyter'
 # os.environ['FOUNDATION_SAVE_DIR'] = '/is/ei/fleeb/workspace/chome/trained_nets'
@@ -7,33 +8,12 @@ os.environ['FOUNDATION_RUN_MODE'] = 'jupyter'
 # %load_ext autoreload
 # %autoreload 2
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torch import optim as O
-import torch.distributions as distrib
-import torch.multiprocessing as mp
-import torchvision.models
-import torchvision
-from torch.utils.data import Dataset, DataLoader
-import gym
-from io import BytesIO
-from PIL import Image
-from tqdm import tqdm_notebook as tqdm
-import inspect
 import numpy as np
 import h5py as hf
 # %matplotlib notebook
 # %matplotlib tk
-import matplotlib.pyplot as plt
-import seaborn as sns
 #plt.switch_backend('Qt5Agg') #('Qt5Agg')
-import foundation as fd
-from foundation import models
-from foundation import util
-from foundation import train
-from foundation import sim as SIM
 #from foundation.util import replicate, Cloner
-from scipy import stats
 
 def print_info(f):
 	print(list(f.keys()), list(f.attrs.keys()))

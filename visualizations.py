@@ -1,40 +1,15 @@
-
-
-
-import sys, os, time
-import shutil
 # from IPython.core.interactiveshell import InteractiveShell
 # InteractiveShell.ast_node_interactivity = "all"
-from IPython import display
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.distributions as distrib
-import torch.multiprocessing as mp
-import torchvision.models
-import torchvision
-from torch.utils.data import Dataset, DataLoader, TensorDataset
-import gym
-import numpy as np
+from torch.utils.data import TensorDataset
 # %matplotlib tk
-import matplotlib.pyplot as plt
-import pickle
-from tqdm import tqdm
-import imageio
-import seaborn as sns
-from collections import OrderedDict
-from PIL import Image, ImageDraw, ImageFont
 #plt.switch_backend('Qt5Agg') #('Qt5Agg')
-import foundation as fd
-from foundation import models
 from foundation import util
-from foundation import train
-from foundation import train as trn
+from foundation.old import train as trn
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import style
 import seaborn as sns
 
 from matplotlib import animation

@@ -1,21 +1,9 @@
-import sys, os, time, shutil#, traceback, ipdb
+import sys  #, traceback, ipdb
 from tqdm import tqdm
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.distributions as distrib
-
 import foundation as fd
-from foundation import models
 from foundation import util
-from foundation import train as trn
-
-import project
-
+from foundation.old import train as trn
 
 _script_name = 'fid'
 
