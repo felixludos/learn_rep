@@ -2,6 +2,8 @@
 import torch
 import torch.nn as nn
 
+import omnifig as fig
+
 import numpy as np
 #%matplotlib tk
 
@@ -10,7 +12,7 @@ from foundation import legacy as lgcy
 
 
 
-@fd.Component('branch-dec')
+@fig.Component('branch-dec')
 class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 	def __init__(self, A):
@@ -21,7 +23,10 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		super().__init__(latent_dim, out_shape)
 
 		root_dim = A.pull('root_dim', 0)
-		branch_dim = A.pull('branch_dim')
+		branch_dim = A.pull('branch_dim', None)
+		split_latent = branch_dim is not None
+
+		full_latent = latent_dim - root_dim
 
 		channels = A.pull('channels')
 
@@ -45,7 +50,7 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 			branch_dim = branch_dim * len(channels)
 			branch_dim = branch_dim[:len(channels)]
 
-		assert latent_dim == root_dim + sum(br for br in branch_dim if br is not None), \
+		assert not split_latent or latent_dim == root_dim + sum(br for br in branch_dim if br is not None), \
 			f'not the right split: {latent_dim} vs {root_dim} {branch_dim}'
 
 		C, H, W = out_shape
@@ -55,10 +60,12 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 			raise Exception(f'no features left: {in_shape} vs {factors}')
 
 		if root_dim > 0:
-
-			assert 'root' in A, 'no root network provided'
-			A.root.din = root_dim
-			A.root.dout = in_shape
+			rtype = A.pull('root._type', None, silent=True)
+			assert rtype is not None, 'no root network provided'
+			rA = A['root']
+			rA.push('din', root_dim, silent=True)
+			rA.push('dout', in_shape, silent=True)
+			
 			root = A.pull('root')
 
 		else:
@@ -67,6 +74,7 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		self.root = root
 		self.root_dim = root_dim
 
+		self.split_latent = split_latent
 		self.branch_dim = [br for br in branch_dim if br is not None]
 
 		create_branch = A.pull('branches')
@@ -83,22 +91,24 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		for i, (in_chn, out_chn, fct) in enumerate(zip(channels, channels[1:], factors)):
 
 			bdim = next(bdims)
-			if bdim is None:
+			if split_latent and bdim is None:
 				branches.append(None)
 			else:
-				nxt = create_branch.current()
-				nxt.din = bdim
-				nxt.features = in_chn
+				if bdim is None:
+					bdim = full_latent
+				nxt = create_branch.view()
+				nxt.push('din', bdim, silent=True)
+				nxt.push('features', in_chn, silent=True)
 	
 				branch = next(create_branch)
 				branches.append(branch)
 				din = branch.dout, *din[1:]
 
-			nxt = create_layer.current()
-			nxt.din = din
-			nxt.in_channels = din[0]
-			nxt.out_channels = out_chn
-			nxt.factor = fct
+			nxt = create_layer.view()
+			nxt.push('din', din, silent=True)
+			nxt.push('in_channels', din[0], silent=True)
+			nxt.push('out_channels', out_chn, silent=True)
+			nxt.push('factor', fct, silent=True)
 
 			layer = next(create_layer)
 			layers.append(layer)
@@ -110,7 +120,8 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		self.branches = nn.ModuleList(branches)
 		self.layers = nn.ModuleList(layers)
 
-		assert len(self.branches) == len(self.branch_dim) == len(self.layers)
+		assert not split_latent or len(self.branches) == len(self.branch_dim) == len(self.layers)
+		assert split_latent or len(self.branches) == len(self.layers)
 
 
 	def _visualize(self, out, logger):
@@ -128,7 +139,7 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 			shape = c.shape
 			c = c.expand(B, *shape)
 
-		styles = q.split(self.branch_dim, dim=1)
+		styles = q.split(self.branch_dim, dim=1) if self.split_latent else [q]*len(self.branches)
 		styles = iter(styles)
 
 		for branch, conv in zip(self.branches, self.layers):
@@ -141,7 +152,7 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		return c
 
 
-@fd.Component('ladder')
+@fig.Component('ladder')
 class Ladder_Branch(lgcy.adain.AdaIN):
 	def __init__(self, A):
 		

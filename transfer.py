@@ -4,12 +4,15 @@ import torch
 import numpy as np
 #%matplotlib tk
 
+import omnifig as fig
 
-from foundation.old import train as trn
+# from foundation.old import train as trn
+# from foundation import train as trn
+
 from foundation import data as datautils
 
 
-@trn.Modification('trans')
+@fig.Modification('trans')
 class Multi_Dataset(datautils.Info_Dataset, datautils.Device_Dataset, datautils.Batchable_Dataset):
 	'''
 	
@@ -226,7 +229,7 @@ class Mechanism_Transfer(datautils.Subset_Dataset):
 	def _filter(self, dataset, fixed):
 		raise NotImplementedError
 
-@trn.Modification('mtrans-3ds')
+@fig.Modification('mtrans-3ds')
 class Shapes3D_Mech_Transfer(Mechanism_Transfer):
 	
 	def _filter(self, dataset, fixed):
@@ -247,7 +250,7 @@ class Shapes3D_Mech_Transfer(Mechanism_Transfer):
 		
 		return sel
 
-@trn.Modification('mtrans-mpi')
+@fig.Modification('mtrans-mpi')
 class MPI_Mech_Transfer(Mechanism_Transfer):
 	
 	def _filter(self, dataset, fixed):
@@ -316,7 +319,7 @@ class Value_Transfer(datautils.Subset_Dataset):
 	def _filter(self, dataset, valid):
 		raise NotImplementedError
 
-@trn.Modification('vtrans-3ds')
+@fig.Modification('vtrans-3ds')
 class Shapes3d_Value_Transfer(Value_Transfer):
 	def _filter(self, dataset, valid):
 		

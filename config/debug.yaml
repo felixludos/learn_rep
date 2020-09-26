@@ -1,0 +1,130 @@
+
+_meta.script_name: train
+
+#parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
+
+#parents: ['a/dislib', 'm/ae', '3dshapes']
+#parents: ['a/double', 'm/ae', '3dshapes']
+
+#parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
+#parents: ['t/upd']
+
+#parents: ['a/d/deconv-deep', 'a/conv', 'm/ae', '3dshapes']
+
+#parents: ['a/d/root6', 'a/e/conv', 'm/ae', '3dshapes']
+#parents: ['a/d/branch12', 'a/e/conv', 'm/ae', '3dshapes']
+
+#parents: ['a/e/attn12', 'a/d/deconv', 'm/ae', '3dshapes']
+
+#parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
+
+#parents: ['resbranch', 'a/d/branch12', 'a/e/conv', '3dshapes', 'm/ae']
+#parents: ['a/ladder12', '3dshapes', 'm/vae']
+parents: ['a/d/branch12', 'a/e/conv', '3dshapes', 'm/vae']
+
+#parents: ['a/lconv', 'mpi3d', 'long', 'm/ae']
+
+#device: cuda
+
+#parents: ['sup-3ds']
+
+#resume: 3ds-ae-12b1-deep_0010-6241682-08_200414-021349
+
+#override:
+#  dataset:
+#    device: cpu
+
+#load: 't3ds-shapes-ae-b1_0050-6286118-06_200428-171928'
+#load: t3ds-shapes-ae-12b1-conv_0053-6286540-10_200429-041524
+#resume: test-cmd_200508-101328
+#extend: 2000
+
+inline: True
+
+#device: "cuda:1"
+
+#test_mode: 0
+
+#eval:
+#  n_samples: 10
+#  fid_dim: 192
+
+#training:
+#  step_limit: 10
+#  val_freq: 500
+#
+dataset:
+  device: cpu
+  category: real
+
+#  limits:
+#    train: 128
+#    upd: 128
+#
+#  mix:
+#    train: 1
+#    upd: 1
+
+#resume: vae_3ds_elu_d24_200320-040612\checkpoint_75000.pth.tar
+#override:
+#  inline: False
+#  device: cuda:0
+#  model:
+#    min_log_std: -5
+
+#output:
+#  save_freq: 500
+#
+#training:
+#  step_limit: 1000
+
+model:
+
+  branch_dim: None
+
+  viz_gen: True
+#  nonlin: relu
+
+#  norm: 'instance'
+#  residual: True
+#  norm: None
+
+#  keys_per_head: 4
+
+#  coord_patches: 0
+
+#  scheduler_type: 'cos'
+#  scheduler_max_steps: 40
+#  scheduler_min_lr: 1.e-5
+
+#  optim_type: adamw
+#  beta1: 0.90
+
+#  min_log_std: -4
+
+#  init_imp_mu: 1
+
+#  imp_noise: 0.5
+
+
+
+#  key_dim: 3
+#  val_dim: 8
+#  keys_per_head: 8
+#  weight_keys: True
+#  gumbel: 0
+
+#  key_dim: 4
+#  val_dim: 4
+#  keys_per_head: 2
+
+#  num_groups: 4
+#  branch_dim: 3
+
+#  decoder:
+#    layer_type: 'double-deconv-layer'
+
+
+#resume = 'test-pycharm_191121-154737'
+#
+#extend = 7

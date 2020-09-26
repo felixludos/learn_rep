@@ -9,6 +9,8 @@ import torch.distributions as distrib
 import numpy as np
 import matplotlib.pyplot as plt
 
+import omnifig as fig
+
 try:
 	import umap, shap
 	import umap.plot
@@ -20,24 +22,24 @@ from sklearn.decomposition import PCA
 import foundation as fd
 from foundation import models
 from foundation import util
-from foundation import train as trn
+# from foundation import train as trn
 
-if 'FOUNDATION_RUN_MODE' in os.environ and os.environ['FOUNDATION_RUN_MODE'] == 'jupyter':
-	from tqdm import tqdm_notebook as tqdm
-else:
-	from tqdm import tqdm
+# if 'FOUNDATION_RUN_MODE' in os.environ and os.environ['FOUNDATION_RUN_MODE'] == 'jupyter':
+# 	from tqdm import tqdm_notebook as tqdm
+# else:
+from tqdm import tqdm
 
 import visualizations as viz_util
-
+import encoders
+# import pointnets
+import decoders
 import transfer
 
 MY_PATH = os.path.dirname(os.path.abspath(__file__))
 
-trn.register_config_dir(os.path.join(MY_PATH, 'config'), recursive=True)
-
 # region Algorithms
 
-@fd.Component('ae')
+@fig.Component('ae')
 class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, fd.Full_Model):
 	def __init__(self, A):
 
@@ -310,8 +312,6 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 				else:
 					print('WARNING: visualizing traversals failed')
 					
-				
-				pass
 
 			logger.flush()
 
@@ -401,7 +401,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		mag = self.reg_fn(q)
 		return mag / B
 
-@trn.AutoModifier('teval')
+@fig.AutoModifier('teval')
 class Transfer_Eval(fd.Full_Model):
 	
 	def prep(self, *datasets):
@@ -524,16 +524,17 @@ class Prior_Autoencoder(AutoEncoder):
 		
 		return results
 
-@fd.Component('vae')
+@fig.Component('vae')
 class VAE(Prior_Autoencoder):
 	def __init__(self, A, norm_mod=None):
 		
 		if norm_mod is None:
 			norm_mod = models.Normal_Distrib_Model
 
-		assert 'reg_wt' in A and A.reg_wt > 0, 'not a vae without regularization'
+		reg_wt = A.pull('reg_wt', None, silent=True)
+		assert reg_wt is not None and reg_wt > 0, 'not a vae without regularization'
 
-		A.reg = None
+		A.push('reg', None, silent=True)
 
 		super().__init__(A)
 		
@@ -552,7 +553,7 @@ class VAE(Prior_Autoencoder):
 			q = q.rsample()
 		return super().decode(q)
 
-@fd.Component('wae')
+@fig.Component('wae')
 class WAE(Prior_Autoencoder):
 	
 	def __init__(self, *args, **kwargs):
@@ -564,7 +565,7 @@ class WAE(Prior_Autoencoder):
 			p = self.sample_prior(q.size(0))
 		return util.MMD(p, q)
 
-@fd.Component('swae')
+@fig.Component('swae')
 class Slice_WAE(Prior_Autoencoder):
 	def __init__(self, A):
 		slices = A.pull('slices', '<>latent_dim')
@@ -668,7 +669,7 @@ class Cost_Aware(Prior_Autoencoder):
 		return self.reg_imp_wt * reg_imp + self.reg_prior_wt * reg_prior
 
 
-@fd.Component('cae')
+@fig.Component('cae')
 class Det_Cost_Aware(Cost_Aware):
 	def encode(self, x):
 		q = super().encode(x)
@@ -692,20 +693,20 @@ class Sto_Cost_Aware(Cost_Aware):
 		std = self.get_importance(noisy=True).expand(*q.size())
 		return distrib.Normal(loc=q, scale=std)
 
-@fd.Component('cwae')
+@fig.Component('cwae')
 class Cost_Aware_WAE(Det_Cost_Aware, WAE):
 	pass
 
-@fd.Component('cswae')
+@fig.Component('cswae')
 class Cost_Aware_SWAE(Det_Cost_Aware, Slice_WAE):
 	pass
 
-@fd.Component('cvae')
+@fig.Component('cvae')
 class Cost_VAE(Sto_Cost_Aware, VAE):
 	pass
 
 
-@fd.AutoModifier('fixed-std')
+@fig.AutoModifier('fixed-std')
 class Fixed_Std(fd.Visualizable, fd.Model):
 	def __init__(self, A, latent_dim=None):
 		
@@ -745,8 +746,8 @@ class Fixed_Std(fd.Visualizable, fd.Model):
 		return distrib.Normal(loc=mu, scale=logsigma.exp())
 		
 
-@fd.AutoComponent('regularization')
-def get_regularization(name, p=2, dim=1, reduction='mean', **kwargs):
+@fig.AutoComponent('regularization')
+def get_regularization(name, p=2, dim=1, reduction='mean'):
 
 	if not isinstance(name, str):
 		return name
@@ -773,7 +774,7 @@ def get_regularization(name, p=2, dim=1, reduction='mean', **kwargs):
 # region Architectures
 
 
-@fd.Component('extraction-enc')
+@fig.Component('extraction-enc')
 class UMAP_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 
 	def __init__(self, A):
@@ -884,7 +885,7 @@ class UMAP_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 			return q
 		return self.net(q)
 
-@fd.Component('ladder-enc')
+@fig.Component('ladder-enc')
 class Ladder_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 	def __init__(self, A):
 		
@@ -963,7 +964,7 @@ class Ladder_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 			q = q.view(B, -1)
 		return q
 
-@fd.Component('dislib-enc')
+@fig.Component('dislib-enc')
 class Disentanglement_lib_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 	def __init__(self, A):
 
@@ -1020,7 +1021,7 @@ class Disentanglement_lib_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 		return self(x)
 
 
-@fd.Component('dislib-dec')
+@fig.Component('dislib-dec')
 class Disentanglement_lib_Decoder(fd.Decodable, fd.Schedulable, fd.Model):
 	def __init__(self, A):
 
@@ -1087,7 +1088,7 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Schedulable, fd.Model):
 
 # region Sup-Models
 
-@fd.Component('sup-model')
+@fig.Component('sup-model')
 class SupModel(fd.Visualizable, fd.Trainable_Model):
 	def __init__(self, A):
 		
@@ -1152,35 +1153,35 @@ class SupModel(fd.Visualizable, fd.Trainable_Model):
 
 # endregion
 
-def get_name(A):
-	if 'name' not in A:
-		model, data = None, None
-		arch = None
-		if 'info' in A:
-			if 'model_type' in A.info:
-				model = A.info.model_type
-			if 'dataset_type' in A.info:
-				data = A.info.dataset_type
-			if 'arch' in A.info:
-				arch = A.info.arch
-		if model is None:
-			model = A.model._type
-		if data is None:
-			if 'name' in A.dataset:
-				data = A.dataset.name
-			else:
-				data = A.dataset._type.split('-')[-1]
-		name = '{}_{}'.format(model,data)
-		if arch is not None:
-			name = '{}_{}'.format(name, arch)
-	
-	if 'info' in A and 'extra' in A.info:
-		name = '{}_{}'.format(name, A.info.extra)
-	
-	return name
+# def get_name(A):
+# 	if 'name' not in A:
+# 		model, data = None, None
+# 		arch = None
+# 		if 'info' in A:
+# 			if 'model_type' in A.info:
+# 				model = A.info.model_type
+# 			if 'dataset_type' in A.info:
+# 				data = A.info.dataset_type
+# 			if 'arch' in A.info:
+# 				arch = A.info.arch
+# 		if model is None:
+# 			model = A.model._type
+# 		if data is None:
+# 			if 'name' in A.dataset:
+# 				data = A.dataset.name
+# 			else:
+# 				data = A.dataset._type.split('-')[-1]
+# 		name = '{}_{}'.format(model,data)
+# 		if arch is not None:
+# 			name = '{}_{}'.format(name, arch)
+#
+# 	if 'info' in A and 'extra' in A.info:
+# 		name = '{}_{}'.format(name, A.info.extra)
+#
+# 	return name
 
 if __name__ == '__main__':
-	sys.exit(trn.main(argv=sys.argv, get_name=get_name))
+	fig.entry('train')
 
 
 
