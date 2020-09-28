@@ -2,8 +2,7 @@
 parents: ['origin']
 
 run:
-  _type: run
-  _mod: ['cls-run', 'timed-run']
+  _mod: [cls-run, timed-run]
 
 device: cuda
 seed: 0
