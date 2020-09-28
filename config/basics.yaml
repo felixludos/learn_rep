@@ -1,6 +1,9 @@
 
 parents: ['origin']
 
+run:
+  _mod: [cls-run, timed-run]
+
 device: cuda
 seed: 0
 num_workers: 0
@@ -32,7 +35,8 @@ dataset:
   device: cpu
 
 model:
-    _type: 'ae'
+    _type: model
+    _model_type: 'ae'
 
 #    scheduler_type: 'step'
 #    scheduler_step: 20000

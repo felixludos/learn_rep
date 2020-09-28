@@ -84,6 +84,9 @@ model:
 
 #  branch_dim: None
 
+#  scheduler_type: cos
+#  scheduler_freq: 5000
+
   viz_gen: True
 #  nonlin: relu
 
