@@ -37,6 +37,27 @@ import transfer
 
 MY_PATH = os.path.dirname(os.path.abspath(__file__))
 
+@fig.Component('run')
+class SAE_Run(fd.op.Torch):
+
+	def _gen_name(self, A):
+		
+		model = A.pull('info.model_type', '<>model._model_type', '<>model._type', None, silent=True)
+		data = A.pull('info.dataset_type', '<>dataset.name', '<>dataset._type', None, silent=True)
+		
+		name = f'{model}_{data}'
+		
+		arch = A.pull('info.arch', None, silent=True)
+		if arch is not None:
+			name = f'{name}_{arch}'
+		
+		extra = A.pull('info.extra', None, silent=True)
+		if extra is not None:
+			name = f'{name}_{extra}'
+		
+		return name
+
+
 # region Algorithms
 
 @fig.Component('ae')
@@ -87,44 +108,21 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		
 		return h
 
-	def _evaluate(self, info):
+	def _evaluate(self, loader, logger=None, A=None, run=None):
+		
+		inline = A.pull('inline', False)
 		
 		# region Prep
 		
 		results = {}
 		
-		A = info['A']
-		
-		valdata = info['datasets'][-1]
-		if 'testset' not in info or info['testset'] is None:
-			testdata = valdata
-			print('Using validation dataset')
-		else:
-			testdata = info['testset']
-		
-		logger = info['logger']
-		
 		device = A.pull('device', 'cpu')
-		batch_size = A.dataset.pull('batch_size', 50)
-		
-		n_samples = max(min(50000,len(testdata)),10000)
-		n_samples = A.eval.pull('n_samples', n_samples)
-		
-		valloader, testloader = trn.get_loaders(valdata, testdata,
-		                                        batch_size=batch_size, shuffle='all', drop_last=False)
-		# valloader is not shuffled, but testloader is not.
-		
-		print(f'data: {len(testdata)}, loader: {testloader}')
-		
-		# endregion
-		
-		# region Default output
 		
 		self.stats.reset()
-		loader = iter(testloader)
+		batches = iter(loader)
 		total = 0
 		
-		batch = next(loader)
+		batch = next(batches)
 		batch = util.to(batch, device)
 		total += batch.size(0)
 		
@@ -132,7 +130,7 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 			out = self.test(batch)
 		
 		if isinstance(self, fd.Visualizable):
-			self.visualize(out, logger)
+			self._visualize(out, logger)
 		
 		results['out'] = out
 		
@@ -148,43 +146,49 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 			logger.add('scalar', k, v)
 		results['stats_num'] = total
 		
-		# endregion
+		# region fid
 		
-		# region FID
+		dataset = loader.get_dataset()
+		batch_size = loader.get_batch_size()
 		
-		skip_fid = A.pull('skip_fid', False)
+		print(f'data: {len(dataset)}, loader: {len(loader)}')
+		
+		skip_fid = A.pull('skip-fid', False)
 		
 		if not skip_fid:
-		
-			fid_dim = A.pull('fid_dim', 2048) # full dim is 2048 (but for testing 192 is fine)
+			fid_dim = A.pull('fid-dim', 2048)
+			
+			n_samples = max(10000, min(len(dataset), 50000))
+			n_samples = A.pull('n-samples', n_samples)
+			
 			if 'inception_model' not in self.volatile:
 				self.volatile.inception_model = fd.eval.fid.load_inception_model(dim=fid_dim, device=device)
+				self.volatile.ds_stats = dataset.get_fid_stats('train', fid_dim)
 			inception_model = self.volatile.inception_model
-		
-			ds_stats = testdata.fid_stats if hasattr(testdata, 'fid_stats') else None
+			ds_stats = self.volatile.ds_stats
 			
-			if ds_stats is None:
-				compute_gt_fid = A.pull('compute_gt_fid', False)
-				if compute_gt_fid:
-					print('Will compute the true fid directly from testset')
-					
-					true_loader = util.make_infinite(testloader)
-					def true_fn(N):
-						return util.to(true_loader.demand(N), device)[0]
-					
-					ds_stats = fd.eval.fid.compute_inception_stat(true_fn, inception=inception_model,
-					                                   batch_size=batch_size, n_samples=n_samples,
-					                                   pbar=tqdm if 'inline' in A and A.inline else None)
-					
-					results['gt_fid_stats'] = list(ds_stats)
-		
+
+			# hyb fid
+			gen_fn = self.generate_hybrid
+			
+			m, s = fd.eval.fid.compute_inception_stat(gen_fn, inception=inception_model,
+			                                          batch_size=batch_size, n_samples=n_samples,
+			                                          pbar=tqdm if inline else None)
+			results['hyb_fid_stats'] = [m, s]
+			
+			if ds_stats is not None:
+				score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
+				results['hyb_fid'] = score
+				
+				logger.add('scalar', 'fid-hyb', score)
+				
 			# rec fid
 			def make_gen_fn():
-				loader = util.make_infinite(valloader)
-			
+				myloader = util.make_infinite(loader)
+				
 				def gen_fn(N):
 					# assert N == batch_size, '{} vs {}'.format(N, batch_size)
-					x = util.to(loader.demand(N), device)[0]
+					x = util.to(myloader.demand(N), device)[0]
 					return self(x)
 				
 				return gen_fn
@@ -193,33 +197,21 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 			                                          batch_size=batch_size, n_samples=n_samples,
 			                                          pbar=tqdm if 'inline' in A and A.inline else None)
 			results['rec_fid_stats'] = [m, s]
-		
+			
 			if ds_stats is not None:
 				score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
 				results['rec_fid'] = score
 				
 				logger.add('scalar', 'fid-rec', score)
 		
-			# hyb fid
-			gen_fn = self.generate_hybrid
-			m, s = fd.eval.fid.compute_inception_stat(gen_fn, inception=inception_model,
-			                                   batch_size=batch_size, n_samples=n_samples,
-			                                   pbar=tqdm if 'inline' in A and A.inline else None)
-			results['hyb_fid_stats'] = [m, s]
-			
-			if ds_stats is not None:
-				score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
-				results['hyb_fid'] = score
-				
-				logger.add('scalar', 'fid-hyb', score)
-		
-		else:
-			print('Skipping FID evaluation')
-		
 		# endregion
 		
-
+		logger.flush()
+		
 		return results
+
+	# def visualize(self, info, logger):
+	# 	if not self.training or self._viz_counter % 2
 
 	def _visualize(self, info, logger):
 
@@ -228,90 +220,89 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		if isinstance(self.dec, fd.Visualizable):
 			self.dec.visualize(info, logger)
 
-		if self._viz_counter % 2 == 0 or not self.training:
-			q = None
-			if 'latent' in info and info.latent is not None:
-				q = info.latent.loc if isinstance(info.latent, distrib.Distribution) else info.latent
+		q = None
+		if 'latent' in info and info.latent is not None:
+			q = info.latent.loc if isinstance(info.latent, distrib.Distribution) else info.latent
 
-				shape = q.size()
-				if len(shape) > 1 and np.product(shape) > 0:
-					try:
-						logger.add('histogram', 'latent-norm', q.norm(p=2, dim=-1))
-						logger.add('histogram', 'latent-std', q.std(dim=0))
-						if isinstance(info.latent, distrib.Distribution):
-							logger.add('histogram', 'logstd-hist', info.latent.scale.add(1e-5).log().mean(dim=0))
-					except ValueError:
-						print('\n\n\nWARNING: histogram just failed\n')
-						print(q.shape, q.norm(p=2, dim=-1).shape)
+			shape = q.size()
+			if len(shape) > 1 and np.product(shape) > 0:
+				try:
+					logger.add('histogram', 'latent-norm', q.norm(p=2, dim=-1))
+					logger.add('histogram', 'latent-std', q.std(dim=0))
+					if isinstance(info.latent, distrib.Distribution):
+						logger.add('histogram', 'logstd-hist', info.latent.scale.add(1e-5).log().mean(dim=0))
+				except ValueError:
+					print('\n\n\nWARNING: histogram just failed\n')
+					print(q.shape, q.norm(p=2, dim=-1).shape)
 
-			B, C, H, W = info.original.shape
-			N = min(B, 8)
+		B, C, H, W = info.original.shape
+		N = min(B, 8)
 
-			if 'reconstruction' in info:
-				viz_x, viz_rec = info.original[:N], info.reconstruction[:N]
+		if 'reconstruction' in info:
+			viz_x, viz_rec = info.original[:N], info.reconstruction[:N]
 
-				recs = torch.cat([viz_x, viz_rec], 0)
-				logger.add('images', 'rec', self._img_size_limiter(recs))
-			elif self._rec is not None:
-				viz_x, viz_rec = self._real[:N], self._rec[:N]
+			recs = torch.cat([viz_x, viz_rec], 0)
+			logger.add('images', 'rec', self._img_size_limiter(recs))
+		elif self._rec is not None:
+			viz_x, viz_rec = self._real[:N], self._rec[:N]
 
-				recs = torch.cat([viz_x, viz_rec], 0)
-				logger.add('images', 'rec', self._img_size_limiter(recs))
+			recs = torch.cat([viz_x, viz_rec], 0)
+			logger.add('images', 'rec', self._img_size_limiter(recs))
 
-			if self.viz_gen or not self.training:
-				viz_gen = self.generate_hybrid(2*N)
-				logger.add('images', 'gen-hyb', self._img_size_limiter(viz_gen))
+		if self.viz_gen or not self.training:
+			viz_gen = self.generate_hybrid(2*N)
+			logger.add('images', 'gen-hyb', self._img_size_limiter(viz_gen))
 
-			if not self.training: # expensive visualizations
+		if not self.training: # expensive visualizations
+			
+			n = 16
+			steps = 20
+			ntrav = 1
+			
+			if q is not None and len(q) >= n:
+				fig, (lax, iax) = plt.subplots(2, figsize=(2*min(q.size(1)//20+1,3)+2,3))
 				
-				n = 16
-				steps = 20
-				ntrav = 1
+				viz_util.viz_latent(q, figax=(fig, lax), )
 				
-				if q is not None and len(q) >= n:
-					fig, (lax, iax) = plt.subplots(2, figsize=(2*min(q.size(1)//20+1,3)+2,3))
-					
-					viz_util.viz_latent(q, figax=(fig, lax), )
-					
-					Q = q[:n]
-					
-					vecs = viz_util.get_traversal_vecs(Q, steps=steps,
-                          mnmx=(Q.min(0)[0].unsqueeze(-1), Q.max(0)[0].unsqueeze(-1))).contiguous()
-					# deltas = torch.diagonal(vecs, dim1=-3, dim2=-1)
-					
-					walks = viz_util.get_traversals(vecs, self.decode).cpu()
-					diffs = viz_util.compute_diffs(walks)
-					
-					info.diffs = diffs
-					
-					viz_util.viz_interventions(diffs, figax=(fig, iax))
-					
+				Q = q[:n]
+				
+				vecs = viz_util.get_traversal_vecs(Q, steps=steps,
+                      mnmx=(Q.min(0)[0].unsqueeze(-1), Q.max(0)[0].unsqueeze(-1))).contiguous()
+				# deltas = torch.diagonal(vecs, dim1=-3, dim2=-1)
+				
+				walks = viz_util.get_traversals(vecs, self.decode, device=self.device).cpu()
+				diffs = viz_util.compute_diffs(walks)
+				
+				info.diffs = diffs
+				
+				viz_util.viz_interventions(diffs, figax=(fig, iax))
+				
 
-					# fig.tight_layout()
-					border, between = 0.02, 0.01
-					plt.subplots_adjust(wspace=between, hspace=between,
-											left=5*border, right=1 - border, bottom=border, top=1 - border)
-					
-					logger.add('figure', 'distrib', fig)
-					
-					full = walks[1:1+ntrav]
-					del walks
-					
-					tH, tW = util.calc_tiling(full.size(1), prefer_tall=True)
-					B, N, S, C, H, W = full.shape
-					
-					# if tH*H > 200: # limit total image size
-					# 	pass
-					
-					full = full.view(B, tH, tW, S, C, H, W)
-					full = full.permute(0, 3, 4, 1, 5, 2, 6).contiguous().view(B, S, C, tH * H, tW * W)
-					
-					logger.add('video', 'traversals', full, fps=12)
+				# fig.tight_layout()
+				border, between = 0.02, 0.01
+				plt.subplots_adjust(wspace=between, hspace=between,
+										left=5*border, right=1 - border, bottom=border, top=1 - border)
 				
+				logger.add('figure', 'distrib', fig)
 				
-				else:
-					print('WARNING: visualizing traversals failed')
-					
+				full = walks[1:1+ntrav]
+				del walks
+				
+				tH, tW = util.calc_tiling(full.size(1), prefer_tall=True)
+				B, N, S, C, H, W = full.shape
+				
+				# if tH*H > 200: # limit total image size
+				# 	pass
+				
+				full = full.view(B, tH, tW, S, C, H, W)
+				full = full.permute(0, 3, 4, 1, 5, 2, 6).contiguous().view(B, S, C, tH * H, tW * W)
+				
+				logger.add('video', 'traversals', full, fps=12)
+			
+			
+			else:
+				print('WARNING: visualizing traversals failed')
+				
 
 			logger.flush()
 
@@ -404,6 +395,9 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 @fig.AutoModifier('teval')
 class Transfer_Eval(fd.Full_Model):
 	
+	def __init__(self):
+		raise NotImplementedError
+	
 	def prep(self, *datasets):
 		dataset = datasets[0]
 		assert isinstance(dataset, transfer.Multi_Dataset), f'not transfer setting: {dataset}'
@@ -486,41 +480,44 @@ class Prior_Autoencoder(AutoEncoder):
 				logger.add('images', 'gen-prior', self._img_size_limiter(viz_gen))
 		
 		
-	def _evaluate(self, info):
+	def _evaluate(self, loader, logger=None, A=None, run=None):
 		
-		results = super()._evaluate(info)
+		results = super()._evaluate(loader, logger=logger, A=A, run=run)
 		
-		A = info['A']
-		
-		valdata = info['datasets'][-1]
-		if 'testset' not in info or info['testset'] is None:
-			testdata = valdata
-			print('Using validation dataset')
-		else:
-			testdata = info['testset']
-		
-		logger = info['logger']
-		
+		inline = A.pull('inline', False)
 		device = A.pull('device', 'cpu')
-		batch_size = A.dataset.pull('batch_size', 50)
-		n_samples = A.eval.pull('n_samples', 50000)
 		
-		ds_stats = testdata.fid_stats if hasattr(testdata, 'fid_stats') else None
+		dataset = loader.get_dataset()
+		batch_size = loader.get_batch_size()
 		
+		print(f'data: {len(dataset)}, loader: {len(loader)}')
 		
-		inception_model = self.volatile.inception_model
+		skip_fid = A.pull('skip-fid', False)
 		
-		gen_fn = self.generate_prior
-		m, s = fd.eval.fid.compute_inception_stat(gen_fn, inception=inception_model,
-		                                          batch_size=batch_size, n_samples=n_samples,
-		                                          pbar=tqdm if 'inline' in A and A.inline else None)
-		results['prior_fid_stats'] = [m, s]
-		
-		if ds_stats is not None:
-			score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
-			results['prior_fid'] = score
+		if not skip_fid:
+			fid_dim = A.pull('fid-dim', 2048)
 			
-			logger.add('scalar', 'fid-prior', score)
+			n_samples = max(10000, min(len(dataset), 50000))
+			n_samples = A.pull('n-samples', n_samples)
+			
+			if 'inception_model' not in self.volatile:
+				self.volatile.inception_model = fd.eval.fid.load_inception_model(dim=fid_dim, device=device)
+				self.volatile.ds_stats = dataset.get_fid_stats('train', fid_dim)
+			inception_model = self.volatile.inception_model
+			ds_stats = self.volatile.ds_stats
+			
+			gen_fn = self.generate_hybrid
+			
+			m, s = fd.eval.fid.compute_inception_stat(gen_fn, inception=inception_model,
+			                                          batch_size=batch_size, n_samples=n_samples,
+			                                          pbar=tqdm if inline else None)
+			results['prior_fid_stats'] = [m, s]
+			
+			if ds_stats is not None:
+				score = fd.eval.fid.compute_frechet_distance(m, s, *ds_stats)
+				results['prior_fid'] = score
+				
+				logger.add('scalar', 'fid-prior', score)
 		
 		return results
 

@@ -74,11 +74,13 @@ dataset:
 #  model:
 #    min_log_std: -5
 
-#output:
+output:
 #  save_freq: 500
-#
-#training:
-#  step_limit: 1000
+  log_freq: 5
+  val_freq: None
+
+training:
+  step_limit: 10
 
 model:
 

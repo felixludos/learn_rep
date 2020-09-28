@@ -7,6 +7,7 @@ from torch.utils.data import TensorDataset
 from foundation import util
 # from foundation.old import train as trn
 # from foundation import train as trn
+from foundation import data as datautils
 
 import pandas as pd
 import numpy as np
@@ -89,13 +90,13 @@ def get_traversal_vecs(Q, steps=32, bounds=None, mnmx=None):
 
 	return vecs
 
-def get_traversals(vecs, model, pbar=None): # last dim must be latent dim (model input)
+def get_traversals(vecs, model, device='cpu', pbar=None): # last dim must be latent dim (model input)
 
 	*shape, D = vecs.shape
 
 	dataset = TensorDataset(vecs.view(-1,D))
 
-	loader = trn.get_loaders(dataset, batch_size=64, shuffle=False)
+	loader = datautils.get_loaders(dataset, device=device, batch_size=64, shuffle=False)
 
 	if pbar is not None:
 		loader = pbar(loader)
