@@ -3,7 +3,7 @@ _meta.script_name: train
 
 #parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
-#parents: ['a/dislib', 'm/ae', '3dshapes']
+parents: ['a/dislib', 'm/ae', '3dshapes']
 #parents: ['a/double', 'm/ae', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
@@ -19,7 +19,7 @@ _meta.script_name: train
 #parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
 
 #parents: ['resbranch', 'a/d/branch12', 'a/e/conv', '3dshapes', 'm/ae']
-parents: ['a/d/branch12', 'a/e/conv', '3dshapes', 'm/ae']
+#parents: ['a/d/branch12', 'a/e/conv', '3dshapes', 'm/ae']
 
 #parents: ['a/ladder12', '3dshapes', 'm/vae']
 #parents: ['a/d/branch12', 'a/e/conv', '3dshapes', 'm/vae']
@@ -81,6 +81,8 @@ output:
 
 training:
   step_limit: 10
+
+eval-after-training: False
 
 model:
 
