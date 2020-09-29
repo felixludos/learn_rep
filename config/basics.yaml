@@ -29,7 +29,7 @@ training:
 
   val_freq: 5000
 
-  time_limit: 2 # hrs
+  time_limit: 4 # hrs
 
 dataset:
   drop_last: True
