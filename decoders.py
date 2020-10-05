@@ -8,9 +8,8 @@ import numpy as np
 #%matplotlib tk
 
 import foundation as fd
-from foundation import legacy as lgcy
 
-
+import adain
 
 @fig.Component('branch-dec')
 class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
@@ -153,7 +152,7 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 
 @fig.Component('ladder')
-class Ladder_Branch(lgcy.adain.AdaIN):
+class Ladder_Branch(adain.AdaIN):
 	def __init__(self, A):
 		
 		super().__init__(A)
