@@ -17,16 +17,21 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 	def __init__(self, A):
 
-		latent_dim = A.pull('latent_dim', '<>din')
+		latent_dim = A.pull('latent_dim', '<>din', None)
 		out_shape = A.pull('out_shape', '<>dout')
-
-		super().__init__(latent_dim, out_shape)
 
 		root_dim = A.pull('root_dim', 0)
 		branch_dim = A.pull('branch_dim', None)
 		split_latent = branch_dim is not None
 
+		if latent_dim is None:
+			assert branch_dim is not None
+			latent_dim = root_dim + sum(br for br in branch_dim if br is not None)
+			A.push('latent_dim', latent_dim)
+
 		full_latent = latent_dim - root_dim
+
+		super().__init__(latent_dim, out_shape)
 
 		channels = A.pull('channels')
 
@@ -120,7 +125,7 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 		self.branches = nn.ModuleList(branches)
 		self.layers = nn.ModuleList(layers)
 
-		assert not split_latent or len(self.branches) == len(self.branch_dim) == len(self.layers)
+		assert not split_latent or len(self.branches) == sum(self.branch_dim) == len(self.layers)
 		assert split_latent or len(self.branches) == len(self.layers)
 
 
