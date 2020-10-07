@@ -1,5 +1,7 @@
 
-_meta.script_name: train
+#_meta.script_name: train
+
+_meta.script_name: download-mvtec
 
 #parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
