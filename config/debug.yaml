@@ -3,6 +3,8 @@
 
 _meta.script_name: download-mvtec
 
+size: 64
+
 #parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', '3dshapes']
