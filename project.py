@@ -323,6 +323,8 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		x = batch[0]
 		B = x.size(0)
 
+		x = self.preprocess(x)
+
 		out.original = x
 
 		rec, q = self(x, ret_q=True)
@@ -387,6 +389,9 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		if ret_q:
 			return rec, q
 		return rec
+
+	def preprocess(self, x):
+		return x
 
 	def regularize(self, q, p=None):
 		B = q.size(0)
@@ -999,11 +1004,11 @@ class Disentanglement_lib_Encoder(fd.Encodable, fd.Schedulable, fd.Model):
 			self.conv = nn.Sequential(*models.build_conv_layers(settings, nonlin=nonlin, out_nonlin=nonlin,
 			                                                   pool_type=None, norm_type=None))
 
-			self.net = models.make_MLP(out_shape, latent_dim, hidden_dims=[256,], nonlin=nonlin)
+			self.net = models.make_MLP(out_shape, latent_dim, hidden=[256,], nonlin=nonlin)
 
 		else:
 
-			self.net = models.make_MLP(in_shape, latent_dim, hidden_dims=[1200, 1200], nonlin=nonlin)
+			self.net = models.make_MLP(in_shape, latent_dim, hidden=[1200, 1200], nonlin=nonlin)
 
 		self.uses_conv = net_type == 'conv'
 
@@ -1053,7 +1058,7 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Schedulable, fd.Model):
 
 			in_shape = shapes[0]
 
-			self.net = models.make_MLP(latent_dim, in_shape, hidden_dims=[256], nonlin=nonlin, )
+			self.net = models.make_MLP(latent_dim, in_shape, hidden=[256], nonlin=nonlin, )
 
 			self.deconv = nn.Sequential(*models.build_deconv_layers(settings, sizes=shapes[:-1],
 			                                                        nonlin=nonlin, out_nonlin='sigmoid',
@@ -1061,7 +1066,7 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Schedulable, fd.Model):
 
 		else:
 
-			self.net = models.make_MLP(latent_dim, out_shape, hidden_dims=[1200,1200,1200], nonlin=nonlin)
+			self.net = models.make_MLP(latent_dim, out_shape, hidden=[1200,1200,1200], nonlin=nonlin)
 
 		self.uses_conv = net_type == 'conv'
 
