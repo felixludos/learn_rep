@@ -323,6 +323,8 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		x = batch[0]
 		B = x.size(0)
 
+		x = self.preprocess(x)
+
 		out.original = x
 
 		rec, q = self(x, ret_q=True)
@@ -387,6 +389,9 @@ class AutoEncoder(fd.Generative, fd.Encodable, fd.Decodable, fd.Regularizable, f
 		if ret_q:
 			return rec, q
 		return rec
+
+	def preprocess(self, x):
+		return x
 
 	def regularize(self, q, p=None):
 		B = q.size(0)

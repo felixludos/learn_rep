@@ -1,13 +1,11 @@
 
-#_meta.script_name: train
-
-_meta.script_name: download-mvtec
+_meta.script_name: train
 
 size: 64
 
 #parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
-#parents: ['a/dislib', 'm/ae', '3dshapes']
+parents: ['a/dislib', 'm/ae', '3dshapes']
 #parents: ['a/double', 'm/ae', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
@@ -16,7 +14,7 @@ size: 64
 #parents: ['a/d/deconv-deep', 'a/conv', 'm/ae', '3dshapes']
 
 #parents: ['a/d/root6', 'a/e/conv', 'm/ae', '3dshapes']
-parents: ['a/d/branch12', 'a/e/conv', 'm/ae', '3dshapes']
+#parents: ['a/d/branch12', 'a/e/conv', 'm/ae', '3dshapes']
 
 #parents: ['a/e/attn12', 'a/d/deconv', 'm/ae', '3dshapes']
 

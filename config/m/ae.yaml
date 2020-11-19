@@ -1,7 +1,7 @@
 parents: ['basics']
 
 model:
-  _type: 'ae'
+  _model_type: 'ae'
 
   reg_wt: 0
 
