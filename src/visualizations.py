@@ -72,7 +72,7 @@ def get_traversal_vecs(Q, steps=32, bounds=None, mnmx=None):
 
 	if mnmx is None:
 		if bounds is None:
-			mnmx = (Q.min(0)[0].view(D, 1), Q.max(0)[0].view(D, 1))
+			mnmx = (Q.min_val(0)[0].view(D, 1), Q.max(0)[0].view(D, 1))
 		else:
 			mnmx = torch.ones(D,device=Q.device)*bounds[0], torch.ones(D,device=Q.device)*bounds[1]
 

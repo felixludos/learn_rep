@@ -9,10 +9,11 @@ import numpy as np
 
 import foundation as fd
 
-import adain
+from src import branches
+
 
 @fig.Component('branch-dec')
-class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
+class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.FunctionBase):
 
 	def __init__(self, A):
 
@@ -156,29 +157,3 @@ class Branched_Decoder(fd.Decodable, fd.Visualizable, fd.Schedulable, fd.Model):
 
 		return c
 
-
-@fig.Component('ladder')
-class Ladder_Branch(adain.AdaIN):
-	def __init__(self, A):
-		
-		super().__init__(A)
-		
-		din = self.din
-		qdim = self.style_dim
-		ndim = self.noise_dim
-		
-		extra = qdim if ndim is None else ndim
-		if isinstance(din, (tuple, list)):
-			dout = extra + din[0], *din[1:]
-		else:
-			dout = din + extra
-		self.dout = dout
-	
-	def include_noise(self, x, q):
-		
-		B = q.size(0)
-		
-		q = q.unsqueeze(-1).unsqueeze(-1).expand(B, self.noise_dim, *x.shape[2:])
-		
-		return torch.cat([x,q], 1) # concatenates the noise
-		

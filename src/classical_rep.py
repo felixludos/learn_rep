@@ -28,7 +28,7 @@ def main(A):
 	mode = A.dataset.pull('mode', 'train') # 'mode' overrides 'train'
 
 	dataset = trn.default_load_data(info, mode=mode)
-	assert isinstance(dataset, datautils.Device_Dataset), 'Dataset must be in memory'
+	assert isinstance(dataset, datautils.Deviced), 'Dataset must be in memory'
 
 	idx = A.pull('buffer_idx', 0)
 

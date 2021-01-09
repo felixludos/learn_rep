@@ -6,13 +6,11 @@ author: felixludos
 version: 0.1
 license: MIT
 
-src: project.py
-
 related: [foundation]
 
 #github: felixludos/learn_rep
 
 #description: "Universal configuration system for common execution environments"
 
-
+src: startup.py
 

@@ -13,7 +13,7 @@ from foundation import data as datautils
 
 
 @fig.Modification('trans')
-class Multi_Dataset(datautils.Info_Dataset, datautils.Device_Dataset, datautils.Batchable_Dataset):
+class Multi_Dataset(datautils.Info_Dataset, datautils.Deviced, datautils.Batchable):
 	'''
 	
 	dataset.get_factor_order() should returns a ordered list of factors
@@ -255,7 +255,7 @@ class MPI_Mech_Transfer(Mechanism_Transfer):
 	
 	def _filter(self, dataset, fixed):
 		
-		inds = dataset.indices
+		inds = dataset._self_indices
 		div = dataset._flr
 		
 		sel = None
