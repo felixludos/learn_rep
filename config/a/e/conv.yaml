@@ -8,7 +8,6 @@ model.encoder:
 
   kernel: 3
   down: 1
-  stride: 2
   pool: max
 
   layers:

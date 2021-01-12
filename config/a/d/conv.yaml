@@ -9,7 +9,6 @@ model.decoder:
 
   kernel: 3
   up: 2
-  stride: 1
 
   unpool: bilinear
 

@@ -2,6 +2,7 @@ parents: [base]
 
 model:
   _model_type: wae
+  _model_mod.gaussian-prior: 1
 
   reg-wt: 10
 

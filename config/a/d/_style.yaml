@@ -1,0 +1,24 @@
+
+parents: [base]
+
+model.decoder:
+  _type: style-dec
+
+  final_din: None
+  final_dout: <>dout
+
+  # for conv layers
+  kernel: 3
+  unpool: bilinear
+
+
+  # for style layers
+  split-style: yes
+
+  style_type: adain
+  style-dim: 3
+
+  style_net:
+    _type: mlp
+    hidden: [64]
+

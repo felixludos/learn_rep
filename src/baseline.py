@@ -18,7 +18,7 @@ class Disentanglement_lib_Encoder(fd.Encodable, fd.Optimizable, fd.Function):
 	def __init__(self, A, din=None, dout=None, **kwargs):
 		
 		if din is None:
-			din = A.pull('in_shape', '<>din')
+			din = A.pull('in-shape', '<>din')
 		if dout is None:
 			dout = A.pull('latent-dim', '<>dout')
 
@@ -62,7 +62,7 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Optimizable, fd.Function):
 		if din is None:
 			din = A.pull('latent-dim', '<>din')
 		if dout is None:
-			dout = A.pull('out_shape', '<>dout')
+			dout = A.pull('out-shape', '<>dout')
 
 		C, H, W = dout
 		

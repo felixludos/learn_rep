@@ -1,0 +1,33 @@
+
+parents: [a/d/_style]
+
+model.decoder:
+
+  up: 2
+
+  layers:
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      channels: 128
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      channels: 64
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      channels: 64
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      channels: 32
+
+  last:
+    _type: <>conv_type
+    channels: 32
+    nonlin: sigmoid
+    norm: None
