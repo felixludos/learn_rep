@@ -1,0 +1,18 @@
+parents: [base]
+
+
+dataset:
+    name: mnist
+
+    download: False
+    labeled: False
+
+    batch_size: 128
+
+    splt.val: 0.166666
+
+
+info:
+    dataset_type: mnist
+
+

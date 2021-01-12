@@ -20,7 +20,7 @@ class Disentanglement_lib_Encoder(fd.Encodable, fd.Optimizable, fd.Function):
 		if din is None:
 			din = A.pull('in_shape', '<>din')
 		if dout is None:
-			dout = A.pull('latent_dim', '<>dout')
+			dout = A.pull('latent-dim', '<>dout')
 
 		C, H, W = din
 		
@@ -30,13 +30,13 @@ class Disentanglement_lib_Encoder(fd.Encodable, fd.Optimizable, fd.Function):
 		hidden_dim = A.pull('hidden_dim', 256)
 		
 		net = nn.Sequential(
-			nn.Conv2d(C, 32, kernel_size=2, stride=2, padding=1),
+			nn.Conv2d(C, 32, kernel_size=2, stride=2),
 			util.get_nonlinearity(A.pull('nonlin', 'relu')),
-			nn.Conv2d(32, 32, kernel_size=2, stride=2, padding=1),
+			nn.Conv2d(32, 32, kernel_size=2, stride=2),
 			util.get_nonlinearity(A.pull('nonlin', 'relu', silent=True)),
-			nn.Conv2d(32, 64, kernel_size=2, stride=2, padding=1),
+			nn.Conv2d(32, 64, kernel_size=2, stride=2),
 			util.get_nonlinearity(A.pull('nonlin', 'relu', silent=True)),
-			nn.Conv2d(64, 64, kernel_size=2, stride=2, padding=1),
+			nn.Conv2d(64, 64, kernel_size=2, stride=2),
 			util.get_nonlinearity(A.pull('nonlin', 'relu', silent=True)),
 			nn.Flatten(),
 			nn.Linear(flat_dim, hidden_dim),
@@ -60,7 +60,7 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Optimizable, fd.Function):
 	def __init__(self, A, din=None, dout=None, **kwargs):
 		
 		if din is None:
-			din = A.pull('latent_dim', '<>din')
+			din = A.pull('latent-dim', '<>din')
 		if dout is None:
 			dout = A.pull('out_shape', '<>dout')
 
@@ -77,13 +77,14 @@ class Disentanglement_lib_Decoder(fd.Decodable, fd.Optimizable, fd.Function):
 			nn.Linear(hidden_dim, flat_dim),
 			util.get_nonlinearity(A.pull('nonlin', 'relu', silent=True)),
 			models.Reshaper(flat_shape),
-			nn.Conv2d(64, 64, kernel_size=4, stride=2),
+			nn.ConvTranspose2d(64, 64, kernel_size=4, stride=2, padding=1),
 			util.get_nonlinearity(A.pull('nonlin', 'relu', silent=True)),
-			nn.Conv2d(64, 32, kernel_size=4, stride=2),
+			nn.ConvTranspose2d(64, 32, kernel_size=4, stride=2, padding=1),
 			util.get_nonlinearity(A.pull('nonlin', 'relu', silent=True)),
-			nn.Conv2d(32, 32, kernel_size=4, stride=2),
+			nn.ConvTranspose2d(32, 32, kernel_size=4, stride=2, padding=1),
 			util.get_nonlinearity(A.pull('nonlin', 'relu', silent=True)),
-			nn.Conv2d(32, 32, kernel_size=4, stride=2),
+			nn.ConvTranspose2d(32, C, kernel_size=4, stride=2, padding=1),
+			util.get_nonlinearity('sigmoid')
 		)
 		
 		super().__init__(A, din=din, dout=dout, **kwargs)

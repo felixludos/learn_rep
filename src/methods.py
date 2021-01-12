@@ -93,7 +93,7 @@ class Autoencoder(SimpleAutoencoder):
 				Q = q[:n]
 				
 				vecs = viz_util.get_traversal_vecs(Q, steps=steps,
-				                                   mnmx=(Q.min_val(0)[0].unsqueeze(-1), Q.max(0)[0].unsqueeze(-1))).contiguous()
+				                                   mnmx=(Q.min(0)[0].unsqueeze(-1), Q.max(0)[0].unsqueeze(-1))).contiguous()
 				# deltas = torch.diagonal(vecs, dim1=-3, dim2=-1)
 				
 				walks = viz_util.get_traversals(vecs, self.decode, device=self.device).cpu()
@@ -101,7 +101,7 @@ class Autoencoder(SimpleAutoencoder):
 				
 				info.diffs = diffs
 				
-				viz_util.viz_interventions(diffs, figax=(fig, iax))
+				viz_util.viz_interventions(diffs, figax=(fg, iax))
 				
 
 				# fig.tight_layout()
@@ -109,7 +109,7 @@ class Autoencoder(SimpleAutoencoder):
 				plt.subplots_adjust(wspace=between, hspace=between,
 										left=5*border, right=1 - border, bottom=border, top=1 - border)
 				
-				records.log('figure', 'distrib', fig)
+				records.log('figure', 'distrib', fg)
 				
 				full = walks[1:1+ntrav]
 				del walks

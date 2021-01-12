@@ -1,0 +1,13 @@
+parents: [base]
+
+model:
+  _model_type: vae
+
+  reg-wt: 1
+
+  encoder:
+    _mod.normal: 1
+#    ret_normal: True
+
+info:
+  model_type: vae

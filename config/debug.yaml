@@ -1,11 +1,13 @@
 
 _meta.script_name: train
 
-size: 64
+#parents: [ a/conv, m/ae, d/3ds ]
+#parents: [ a/conv, m/vae, d/3ds ]
+#parents: [ a/conv, m/wae, d/3ds ]
+parents: [a/dislib, m/wae, d/3ds]
 
-#parents: ['m/ae', 'a/d/branch-deep', 'a/conv', '3dshapes']
 
-parents: ['a/dislib', 'm/ae', '3dshapes']
+
 #parents: ['a/double', 'm/ae', '3dshapes']
 
 #parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
@@ -45,97 +47,22 @@ parents: ['a/dislib', 'm/ae', '3dshapes']
 
 inline: True
 
-#device: "cuda:1"
+#dataset:
+#  device: cpu
+#  category: real
 
-#test_mode: 0
 
-#eval:
-#  n_samples: 10
-#  fid_dim: 192
-
-#training:
-#  step_limit: 10
-#  val_freq: 500
-#
-dataset:
-  device: cpu
-  category: real
-
-#  limits:
-#    train: 128
-#    upd: 128
-#
-#  mix:
-#    train: 1
-#    upd: 1
-
-#resume: vae_3ds_elu_d24_200320-040612\checkpoint_75000.pth.tar
-#override:
-#  inline: False
-#  device: cuda:0
-#  model:
-#    min_log_std: -5
-
-output:
-#  save_freq: 500
-  log_freq: 5
-  val_freq: None
-
-training:
-  step_limit: 10
-
-#eval-after-training: False
-
-model:
-
-#  branch_dim: None
-
-#  scheduler_type: cos
-#  scheduler_freq: 5000
-
-  viz_gen: True
-#  nonlin: relu
-
-#  norm: 'instance'
-#  residual: True
-#  norm: None
-
-#  keys_per_head: 4
-
-#  coord_patches: 0
-
-#  scheduler_type: 'cos'
-#  scheduler_max_steps: 40
-#  scheduler_min_lr: 1.e-5
-
-#  optim_type: adamw
-#  beta1: 0.90
-
-#  min_log_std: -4
-
-#  init_imp_mu: 1
-
-#  imp_noise: 0.5
+model.optim.lr: 0.0005
+#model.optim.lr:
+#  _type: scheduler/cos
+#  value: 0.005
+#  end: 0.0001
+#  freq: 1000
+#  skew: 0.5
+#  limit: <>budget
+#  include_zero: False
 
 
 
-#  key_dim: 3
-#  val_dim: 8
-#  keys_per_head: 8
-#  weight_keys: True
-#  gumbel: 0
-
-#  key_dim: 4
-#  val_dim: 4
-#  keys_per_head: 2
-
-#  num_groups: 4
-#  branch_dim: 3
-
-#  decoder:
-#    layer_type: 'double-deconv-layer'
 
 
-#resume = 'test-pycharm_191121-154737'
-#
-#extend = 7

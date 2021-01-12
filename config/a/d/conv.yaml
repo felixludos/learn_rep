@@ -1,0 +1,34 @@
+parents: [base]
+
+model.decoder:
+  _type: multilayer
+
+  final_din: <>latent-dim
+  final_dout: <>dout
+  in_order: no # creates the layers in reverse order
+
+  kernel: 3
+  up: 2
+  stride: 1
+
+  unpool: bilinear
+
+  first:
+    _type: mlp
+    hidden: [128, 256]
+
+  layers:
+    - _type: <>conv_type
+      channels: 128
+    - _type: <>conv_type
+      channels: 64
+    - _type: <>conv_type
+      channels: 64
+    - _type: <>conv_type
+      channels: 32
+    - _type: <>conv_type
+      channels: 32
+      nonlin: sigmoid
+      norm: None
+
+

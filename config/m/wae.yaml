@@ -1,0 +1,9 @@
+parents: [base]
+
+model:
+  _model_type: wae
+
+  reg-wt: 10
+
+info:
+  model_type: wae

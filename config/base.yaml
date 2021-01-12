@@ -1,0 +1,51 @@
+parents: [origin]
+
+name: test-learn_rep
+
+device: cuda
+seed: 0
+num_workers: 0
+
+budget: 100000
+
+time_limit: 4 # hrs
+
+validation.freq: 5000
+checkpoint.freq: 5000
+print.freq: 100
+viz.freq: 500
+records.freq: 200
+
+
+dataset:
+  device: cpu
+  drop_last: yes
+
+
+model:
+  _model_type: ae
+
+  conv_type: conv-layer
+
+  nonlin: elu
+  norm: group
+
+  latent-dim: 12
+
+  reg: pow2
+
+  criterion:
+    _type: criterion
+    ident: bce
+    kwargs.reduction: sum
+
+  optim:
+    _type: adam
+    lr: 0.01
+    weight_decay: 0
+    momentum: 0
+    beta1: 0.9
+    beta2: 0.999
+
+info:
+  model_type: ae

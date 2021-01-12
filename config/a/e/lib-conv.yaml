@@ -1,0 +1,5 @@
+parents: [base]
+
+model.encoder:
+  _type: dislib-enc
+

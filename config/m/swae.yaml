@@ -1,0 +1,11 @@
+parents: [base]
+
+model:
+  _model_type: swae
+
+  reg-wt: 10
+
+  slices: 32
+
+info:
+  model_type: swae
