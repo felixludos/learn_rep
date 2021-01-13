@@ -7,86 +7,31 @@ import foundation as fd
 from foundation import models
 from foundation import util
 
-class StyleLayer(fd.Function):
 
-	def __init__(self, A, style_dim=None, **kwargs):
 
-		if style_dim is None:
-			style_dim = A.pull('style-dim', None)
+def _find_dims(A, din=None, dout=None):
 
-		super().__init__(A, **kwargs)
-
-		self.style_dim = style_dim
-		self.register_buffer('_style', None)
-
-	def _find_dims(self, A, din=None, dout=None):
-
-		if din is None and dout is None:
-			din = A.pull('din', None)
-			if din is None:
-				dout = A.pull('dout')
-				din = dout
-			else:
-				dout = din
-		elif din is not None:
-			dout = din
-		elif dout is not None:
+	if din is None and dout is None:
+		din = A.pull('din', None)
+		if din is None:
+			dout = A.pull('dout')
 			din = dout
 		else:
-			assert din == dout, f'bad size: {din} vs {dout}'
+			dout = din
+	elif din is not None:
+		dout = din
+	elif dout is not None:
+		din = dout
+	else:
+		assert din == dout, f'bad size: {din} vs {dout}'
 
-		return din, dout
-
-	def cache_style(self, q):
-		self._style = q
-
-	def _process_style(self, q):
-
-		if q is None:
-			assert self._style is not None, 'no style provided or cached'
-			q = self._style
-		elif self._style is not None:
-			raise Exception('Provided a style, when one was already cached')
-
-		self._style = None
-
-		return q
-
-	def infuse(self, x, q):
-		raise NotImplementedError
-
-	def forward(self, x, q=None):
-
-		q = self._process_style(q)
-
-		return self.infuse(x, q)
-
-class PriorStructuralLayer(models.Prior, StyleLayer):
-
-	def __init__(self, A, style_dim=None, **kwargs):
-		super().__init__(A, style_dim=style_dim, prior_dim=style_dim, **kwargs)
-		if style_dim is None:
-			self.prior_dim = self.style_dim
-
-	def forward(self, x, q=None):
-		if q is None and self._style is None:
-			self.cache_style(self.sample_prior(x.size(0)))
-		return super().forward(x, q=q)
-
-@fig.AutoModifier('gaussian-style')
-class Gaussian(models.Gaussian, PriorStructuralLayer):
-	pass
-
-@fig.AutoModifier('uniform-style')
-class Uniform(models.Uniform, PriorStructuralLayer):
-	pass
-
+	return din, dout
 
 @fig.Component('adain')
-class AdaIN(StyleLayer):
+class AdaIN(models.StyleLayer):
 	def __init__(self, A, din=None, dout=None, style_dim=None, **kwargs):
 
-		din, dout = self._find_dims(A, din, dout)
+		din, dout = _find_dims(A, din, dout)
 
 		if style_dim is None:
 			style_dim = A.pull('style-dim', None)
@@ -113,47 +58,47 @@ class AdaIN(StyleLayer):
 		self.net = net
 		self.feature_dim = feature_dim
 
-	def _process_style(self, q):
-		q = super()._process_style(q)
-		return self.net(q)
+	def process_style(self, style):
+		style = super().process_style(style)
+		return self.net(style)
 
-	def infuse(self, x, q):
+	def infuse(self, content, style):
 		if self.norm is not None:
-			x = self.norm(x)
-		if len(x.shape) != len(q.shape):
-			assert len(x.shape) > len(q.shape), 'not the right sizes: {} vs {}'.format(x.shape, q.shape)
-			q = q.view(*q.shape, *(1,)*(len(x.shape)-len(q.shape)))
-		return x + q
+			content = self.norm(content)
+		if len(content.shape) != len(style.shape):
+			assert len(content.shape) > len(style.shape), 'not the right sizes: {} vs {}'.format(content.shape, style.shape)
+			style = style.view(*style.shape, *(1,) * (len(content.shape) - len(style.shape)))
+		return content + style
 
 
-@fig.Component('norm-adain')
-class Norm_AdaIN(AdaIN):
+@fig.Component('affine-adain')
+class Affine_AdaIN(AdaIN):
 	def __init__(self, A, **kwargs):
 		net = A.pull('net', None, raw=True, silent=True)
 		if net is not None:
 			net.push('_mod.normal', 4, silent=True)
 		super().__init__(A, **kwargs)
 
-	def include_noise(self, x, q):
+	def infuse(self, content, style):
 		if self.norm is not None:
-			x = self.norm(x)
-		mu, sigma = q.loc, q.scale
-		if len(x.shape) != len(mu.shape):
-			assert len(x.shape) > len(mu.shape), 'not the right sizes: {} vs {}'.format(x.shape, mu.shape)
-			mu = mu.view(*mu.shape, *(1,)*(len(x.shape)-len(mu.shape)))
-			sigma = sigma.view(*sigma.shape, *(1,) * (len(x.shape) - len(sigma.shape)))
+			content = self.norm(content)
+		mu, sigma = style.loc, style.scale
+		if len(content.shape) != len(mu.shape):
+			assert len(content.shape) > len(mu.shape), 'not the right sizes: {} vs {}'.format(content.shape, mu.shape)
+			mu = mu.view(*mu.shape, *(1,)*(len(content.shape) - len(mu.shape)))
+			sigma = sigma.view(*sigma.shape, *(1,) * (len(content.shape) - len(sigma.shape)))
 
-		return sigma*x + mu
+		return sigma * content + mu
 
 
 @fig.Component('ladder')
-class LadderLayer(StyleLayer):
+class LadderLayer(models.StyleLayer):
 	def __init__(self, A, din=None, dout=None, style_dim=None, **kwargs):
 
 		if style_dim is None:
 			style_dim = A.pull('style-dim')
 
-		din, dout = self._find_dims(A, din, dout)
+		din, dout = _find_dims(A, din, dout)
 		feature_dim = din[0] if isinstance(din, (tuple, list)) else din
 
 		net_info = A.pull('net', None, silent=True, raw=True)
@@ -175,19 +120,19 @@ class LadderLayer(StyleLayer):
 		self.extra_dim = extra_dim
 		self.net = net
 
-	def _process_style(self, q):
-		q = super()._process_style(q)
+	def process_style(self, style):
+		style = super().process_style(style)
 		if self.net is not None:
-			q = self.net(q)
-		return q
+			style = self.net(style)
+		return style
 
-	def include_noise(self, x, q):
+	def infuse(self, content, style):
 		
-		B = q.size(0)
+		B = style.size(0)
 		
-		q = q.unsqueeze(-1).unsqueeze(-1).expand(B, self.extra_dim, *x.shape[2:])
+		style = style.unsqueeze(-1).unsqueeze(-1).expand(B, self.extra_dim, *content.shape[2:])
 		
-		return torch.cat([x, q], 1)  # concatenates the noise
+		return torch.cat([content, style], 1)  # concatenates the noise
 
 
 

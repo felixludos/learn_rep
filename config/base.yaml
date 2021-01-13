@@ -1,5 +1,7 @@
 parents: [origin]
 
+run._type: sae-run
+
 name: test-learn_rep
 
 device: cuda
