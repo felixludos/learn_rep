@@ -7,7 +7,6 @@ model.decoder:
   final_dout: <>dout
   in_order: no # creates the layers in reverse order
 
-  kernel: 3
   up: 2
 
   unpool: bilinear

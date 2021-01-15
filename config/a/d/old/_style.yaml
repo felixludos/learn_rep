@@ -8,17 +8,20 @@ model.decoder:
   final_dout: <>dout
 
   # for conv layers
-  kernel: 3
+  channels: 64
   unpool: bilinear
 
+  last:
+    _type: <>conv_type
+    nonlin: sigmoid
+    norm: None
 
   # for style layers
   split-style: yes
 
-  style_type: adain
-  style-dim: 3
+  style_type: affine-adain
 
   style_net:
     _type: mlp
-    hidden: [64]
+    hidden: [64, 128]
 

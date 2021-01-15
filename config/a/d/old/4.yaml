@@ -1,0 +1,27 @@
+
+parents: [a/d/old/_style]
+
+style-dim: 3
+
+model.decoder:
+
+  up: 2
+
+  layers:
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+#      channels: 128
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+

@@ -5,12 +5,13 @@ _meta.script_name: train
 #parents: [ a/conv, m/vae, d/3ds ]
 #parents: [ a/conv, m/wae, d/3ds ]
 #parents: [a/dislib, m/wae, d/3ds]
-parents: [a/d/4s, a/dislib, m/wae, d/3ds]
+parents: [a/d/old/12, a/e/conv, m/wae, d/3ds]
 
 
 model.decoder:
   normalize-features: no
 
+residual: yes
 
 
 #parents: ['a/double', 'm/ae', '3dshapes']
@@ -67,7 +68,7 @@ model.optim.lr: 0.0005
 #  limit: <>budget
 #  include_zero: False
 
-
+print_dims: True
 
 
 

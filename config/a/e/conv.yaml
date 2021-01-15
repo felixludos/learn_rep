@@ -7,8 +7,8 @@ model.encoder:
   final_dout: <>latent-dim
 
   kernel: 3
-  down: 1
-  pool: max
+  down: 2
+#  pool: max
 
   layers:
     - _type: <>conv_type

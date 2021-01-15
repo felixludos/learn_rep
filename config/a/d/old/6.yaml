@@ -1,5 +1,7 @@
 
-parents: [a/d/_style]
+parents: [a/d/old/_style]
+
+style-dim: 2
 
 model.decoder:
 
@@ -9,25 +11,29 @@ model.decoder:
     - _type: <>style_type
       net: <!>style_net
     - _type: <>conv_type
-      channels: 128
+      up: 1
+#      channels: 128
 
     - _type: <>style_type
       net: <!>style_net
     - _type: <>conv_type
-      channels: 64
 
     - _type: <>style_type
       net: <!>style_net
     - _type: <>conv_type
-      channels: 64
 
     - _type: <>style_type
       net: <!>style_net
     - _type: <>conv_type
-      channels: 32
+#      up: 1
 
-  last:
-    _type: <>conv_type
-    channels: 32
-    nonlin: sigmoid
-    norm: None
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+#    - _type: <>conv_type
+#      channels: 32
+
+  last.up: 1

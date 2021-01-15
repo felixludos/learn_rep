@@ -1,0 +1,70 @@
+
+parents: [a/d/old/_style]
+
+style-dim: 1
+
+model.decoder:
+
+  up: 2
+
+  layers:
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+#    - _type: <>conv_type
+#      channels: 32
+
+  last.up: 1
