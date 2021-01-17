@@ -2,7 +2,7 @@ import omnifig as fig
 import foundation as fd
 
 @fig.Component('sae-run')
-class SAE_Run(fd.op.TorchRun):
+class SAE_Run(fd.op.Torch_Run):
 
 	def _gen_name(self, A):
 
