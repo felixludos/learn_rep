@@ -24,9 +24,11 @@ model.decoder:
       channels: 64
     - _type: <>conv_type
       channels: 32
-    - _type: <>conv_type
-      channels: 32
-      nonlin: sigmoid
-      norm: None
+
+  last:
+    _type: <>conv_type
+    channels: 32
+    nonlin: sigmoid
+    norm: None
 
 

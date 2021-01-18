@@ -5,8 +5,11 @@ _meta.script_name: train
 #parents: [ a/conv, m/vae, d/3ds ]
 #parents: [ a/conv, m/wae, d/3ds ]
 #parents: [a/dislib, m/wae, d/3ds]
-parents: [a/d/old/12, a/e/conv, m/wae, d/3ds]
+#parents: [a/d/old/12, a/e/conv, m/wae, d/3ds]
 
+parents: [a/conv, m/wae, d/3ds]
+
+model.encoder.layers.0._type: coord-conv-layer
 
 model.decoder:
   normalize-features: no
