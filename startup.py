@@ -1,6 +1,7 @@
 print('importing src')
 import sys, os
-sys.path.insert(1,os.getcwd())
+# sys.path.insert(1,os.getcwd())
+print('__file__', __file__)
 print(os.getcwd())
 print(sys.path)
 import src
