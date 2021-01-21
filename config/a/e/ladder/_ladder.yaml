@@ -1,0 +1,32 @@
+
+model:
+
+  rung_dims: 3
+  residual_core: False
+
+  encoder:
+    _type: ladder-enc
+
+    rung_type: rung
+    rung_net:
+      _type: mlp
+      hidden: [ 64, 32 ]
+
+    kernels: 3
+    down: 2
+
+    pool: max
+
+    rungs:
+      _type: iter
+
+
+      channels: [64]
+
+      fc_hidden: [64, 32]
+
+    layers:
+      _type: multilayer
+
+      in_shape: <>din
+      residual: <>residual_core

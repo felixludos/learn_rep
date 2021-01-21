@@ -11,7 +11,7 @@ import foundation as fd
 from foundation import models
 
 @fig.Component('style-dec')
-class StyleDecorder(fd.Decodable, models.StyleSharing):
+class StyleDecoder(fd.Decodable, models.StyleSharing):
 
 	def __init__(self, A, **kwargs):
 
@@ -27,4 +27,16 @@ class StyleDecorder(fd.Decodable, models.StyleSharing):
 
 	def forward(self, q):
 		return super().forward(self.get_content(q.size(0)), q)
+
+
+
+
+
+
+
+
+
+
+
+
 

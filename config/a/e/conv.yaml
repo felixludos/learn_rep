@@ -8,11 +8,13 @@ model.encoder:
 
   kernel: 3
   down: 2
-#  pool: max
+  pool: max
+
+  first:
+    _type: <>conv_type
+    channels: 32
 
   layers:
-    - _type: <>conv_type
-      channels: 32
     - _type: <>conv_type
       channels: 32
     - _type: <>conv_type
@@ -21,6 +23,7 @@ model.encoder:
       channels: 64
     - _type: <>conv_type
       channels: 128
+
 
   last:
     _type: mlp

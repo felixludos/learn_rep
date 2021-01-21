@@ -1,0 +1,64 @@
+
+parents: [a/e/_ladder]
+
+model.encoder:
+  _type: ladder-enc
+
+  final_din: <>din
+  final_dout: <>latent-dim
+
+  kernel: 3
+  down: 2
+#  pool: max
+
+  first:
+    _type: <>conv_type
+    channels: 32
+
+  layers:
+    - _type: <>conv_type
+      channels: 32
+    - _type: <>rung_type
+      net:
+        _type: multilayer
+        layers:
+          - _type: <>conv_type
+            channels: 16
+          - _type: <>conv_type
+            channels: 8
+        last: <!>rung_net
+
+    - _type: <>conv_type
+      channels: 64
+    - _type: <>rung_type
+      net:
+        _type: multilayer
+        layers:
+          - _type: <>conv_type
+            channels: 32
+          - _type: <>conv_type
+            channels: 64
+        last: <!>rung_net
+
+    - _type: <>conv_type
+      channels: 64
+    - _type: <>rung_type
+      net:
+        _type: multilayer
+        layers:
+          - _type: <>conv_type
+            channels: 64
+        last: <!>rung_net
+
+    - _type: <>conv_type
+      channels: 128
+    - _type: <>rung_type
+      net:
+        _type: multilayer
+        layers:
+          - _type: <>conv_type
+            channels: 128
+        last: <!>rung_net
+
+
+info.arch_type: ladder4
