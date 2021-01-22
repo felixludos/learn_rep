@@ -12,5 +12,5 @@ related: [foundation]
 
 #description: "Universal configuration system for common execution environments"
 
-src: startup.py
+init: startup.py
 
