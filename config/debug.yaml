@@ -5,9 +5,9 @@ _meta.script_name: train
 #parents: [ a/conv, m/vae, d/3ds ]
 #parents: [ a/conv, m/wae, d/3ds ]
 #parents: [a/dislib, m/wae, d/3ds]
-#parents: [a/d/old/12, a/e/conv, m/wae, d/3ds]
+parents: [a/d/old/12, a/e/conv, m/ae, d/3ds]
 
-parents: [a/ladder/4, m/vae, d/3ds]
+#parents: [a/ladder/4, m/vae, d/3ds]
 
 reg-wt: 16
 

@@ -4,6 +4,8 @@ parents: [base]
 model.decoder:
   _type: style-dec
 
+  in_order: no
+
   _din: None
   _dout: <>dout
 
