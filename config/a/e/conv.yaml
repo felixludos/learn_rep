@@ -3,8 +3,8 @@ parents: [base]
 model.encoder:
   _type: multilayer
 
-  final_din: <>din
-  final_dout: <>latent-dim
+  _din: <>din
+  _dout: <>latent-dim
 
   kernel: 3
   down: 2

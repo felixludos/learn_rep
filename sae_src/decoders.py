@@ -1,6 +1,7 @@
 #os.environ["CUDA_VISIBLE_DEVICES"]="0"
 import torch
 import torch.nn as nn
+from torch import distributions as distrib
 
 import omnifig as fig
 
@@ -11,11 +12,13 @@ import foundation as fd
 from foundation import models
 
 @fig.Component('style-dec')
-class StyleDecoder(fd.Decodable, models.StyleSharing):
+class StyleDecoder(fd.Decodable, models.StyleFusion):
 
-	def __init__(self, A, **kwargs):
+	def __init__(self, A, in_order=False, **kwargs):
+		
+		in_order = A.pull('in_order', in_order)
 
-		super().__init__(A, in_order=False, **kwargs)
+		super().__init__(A, in_order=in_order, **kwargs)
 
 		din, dout = self.get_dims()
 

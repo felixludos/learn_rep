@@ -1,6 +1,5 @@
 
-#_meta.script_name: train
-_meta.help: True
+_meta.script_name: train
 
 #parents: [ a/conv, m/ae, d/3ds ]
 #parents: [ a/conv, m/vae, d/3ds ]
@@ -8,14 +7,15 @@ _meta.help: True
 #parents: [a/dislib, m/wae, d/3ds]
 #parents: [a/d/old/12, a/e/conv, m/wae, d/3ds]
 
-parents: [a/conv, m/wae, d/3ds]
+parents: [a/ladder/4, m/vae, d/3ds]
 
-model.encoder.layers.0._type: coord-conv-layer
+#parents: [a/conv, m/wae, d/3ds]
 
-model.decoder:
-  normalize-features: no
+#model.encoder.layers.0._type: coord-conv-layer
 
-residual: yes
+#viz.freq: 5
+
+#residual: yes
 
 
 #parents: ['a/double', 'm/ae', '3dshapes']
@@ -56,6 +56,7 @@ residual: yes
 #extend: 2000
 
 inline: True
+device: cuda:1
 
 #dataset:
 #  device: cpu

@@ -8,6 +8,7 @@ model:
   encoder:
     _mod.normal: 1
 #    ret_normal: True
+    _dout_key: latent-dim
 
 info:
   model_type: vae

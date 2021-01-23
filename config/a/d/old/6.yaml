@@ -1,9 +1,8 @@
 
 parents: [a/d/old/_style]
 
-style-dim: 2
-
 model.decoder:
+  depth: 6
 
   up: 2
 

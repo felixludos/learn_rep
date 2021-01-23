@@ -17,7 +17,6 @@ import seaborn as sns
 from matplotlib import animation
 
 
-
 def viz_latent(Q, figax=None, figsize=(9, 3), lim_y=None):
 	Xs = np.arange(Q.shape[-1]) + 1
 	inds = np.stack([Xs] * Q.shape[0])

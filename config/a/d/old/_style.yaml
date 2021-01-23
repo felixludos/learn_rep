@@ -4,8 +4,13 @@ parents: [base]
 model.decoder:
   _type: style-dec
 
-  final_din: None
-  final_dout: <>dout
+  _din: None
+  _dout: <>dout
+
+  style-dim:
+    _type: expr
+    _op: '//'
+    _terms: [<>latent-dim, <>depth]
 
   # for conv layers
   channels: 64
@@ -18,6 +23,7 @@ model.decoder:
 
   # for style layers
   split-style: yes
+  normalize-features: no
 
   style_type: affine-adain
 

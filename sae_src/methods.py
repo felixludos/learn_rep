@@ -234,6 +234,3 @@ class Slice_WAE(WAE):
 		pd = pd.sort(0)[0]
 
 		return (qd - pd).abs().mean()
-
-
-

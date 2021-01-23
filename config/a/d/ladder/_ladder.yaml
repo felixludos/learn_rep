@@ -1,0 +1,10 @@
+
+
+model.decoder:
+
+  style_type: rung-gen
+  feature-dim: 16
+
+#  style_net:
+#    _type: mlp
+#    hidden: [64, 128]

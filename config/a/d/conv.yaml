@@ -3,8 +3,8 @@ parents: [base]
 model.decoder:
   _type: multilayer
 
-  final_din: <>latent-dim
-  final_dout: <>dout
+  _din: <>latent-dim
+  _dout: <>dout
   in_order: no # creates the layers in reverse order
 
   up: 2

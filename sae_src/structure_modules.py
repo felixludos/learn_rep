@@ -28,7 +28,7 @@ def _find_dims(A, din=None, dout=None):
 	return din, dout
 
 @fig.Component('adain')
-class AdaIN(models.StyleLayer):
+class AdaIN(models.StyleFusionLayer):
 	def __init__(self, A, din=None, dout=None, style_dim=None, **kwargs):
 
 		din, dout = _find_dims(A, din, dout)
