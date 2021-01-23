@@ -4,10 +4,6 @@ parents: [a/e/ladder/_ladder]
 model.encoder:
   depth: 4
 
-  first:
-    _type: <>conv_type
-    channels: 32
-
   layers:
     - _type: <>conv_type
       channels: 32

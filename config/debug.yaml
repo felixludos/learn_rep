@@ -1,21 +1,36 @@
 
 _meta.script_name: train
+#_meta.script_name: eval
 
-#parents: [ a/conv, m/ae, d/3ds ]
+#parents: [ a/conv, m/vae, d/3ds ]
 #parents: [ a/conv, m/vae, d/3ds ]
 #parents: [ a/conv, m/wae, d/3ds ]
-#parents: [a/dislib, m/wae, d/3ds]
-parents: [a/d/old/12, a/e/conv, m/ae, d/3ds]
+parents: [hybrid, a/dislib, m/vae, d/3ds]
+#parents: [hybrid, a/d/old/12, a/e/conv, m/ae, d/3ds]
 
-#parents: [a/ladder/4, m/vae, d/3ds]
+#parents: [a/ladder/12, m/vae, d/3ds]
 
-reg-wt: 16
+#path: test-pycharm_210123-231915
+#
+#override:
+#  eval:
+#    mode: test
+#    ident: final4
+#
+#  evaluation: None
 
-#parents: [a/conv, m/wae, d/3ds]
+#reg-wt: 16
 
 #model.encoder.layers.0._type: coord-conv-layer
 
+#budget: 1000
 #viz.freq: 5
+
+#evaluation: None
+#validation: None
+
+#eval.mode: test
+
 
 #residual: yes
 
@@ -57,23 +72,18 @@ reg-wt: 16
 #resume: test-cmd_200508-101328
 #extend: 2000
 
+name: test-pycharm
 inline: True
-device: cuda:1
+#device: cuda:1
+
+fid.dim: 64
+fid.n_samples: 1000
 
 #dataset:
 #  device: cpu
 #  category: real
 
 
-model.optim.lr: 0.0005
-#model.optim.lr:
-#  _type: scheduler/cos
-#  value: 0.005
-#  end: 0.0001
-#  freq: 1000
-#  skew: 0.5
-#  limit: <>budget
-#  include_zero: False
 
 print_dims: True
 

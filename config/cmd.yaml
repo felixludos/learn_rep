@@ -1,4 +1,4 @@
-#name: 'test-cmd'
+name: 'test-cmd'
 
 inline: True
 

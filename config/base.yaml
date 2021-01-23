@@ -1,8 +1,10 @@
 parents: [origin]
 
-run._type: sae-run
+run:
+  _type: sae-run
+  _mod.timed-run: 1
 
-name: test-learn_rep
+#name: test-learn_rep
 
 device: cuda
 seed: 0
@@ -18,6 +20,7 @@ print.freq: 100
 viz.freq: 500
 records.freq: 200
 
+fid._type: fid
 
 dataset:
   device: cpu

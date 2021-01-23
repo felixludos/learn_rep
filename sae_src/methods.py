@@ -24,6 +24,7 @@ from foundation import models
 from foundation import util
 from foundation.models.unsup import Autoencoder as SimpleAutoencoder, Generative_AE, Variational_Autoencoder, Wasserstein_Autoencoder
 from foundation import viz as viz_util
+from foundation.data.collectors import MissingFIDStatsError
 # from foundation import train as trn
 
 # if 'FOUNDATION_RUN_MODE' in os.environ and os.environ['FOUNDATION_RUN_MODE'] == 'jupyter':
@@ -48,9 +49,52 @@ class Autoencoder(SimpleAutoencoder):
 		
 		super().__init__(A, **kwargs)
 		
-		self.register_buffer('_latent', None, persistent=True)
-
 		self._viz_settings.add('gen-prior')
+
+	def _compute_fid(self, fid, generate_fn, name, out):
+		
+		stats = fid.compute_stats(generate_fn, name=name)
+		out[f'{name}_fid_stats'] = stats
+		
+		dist = None
+		try:
+			dist = fid.compute_distance(stats)
+		except AssertionError:
+			print('Failed to compute the Rec FID')
+		else:
+			title = f'{name}_fid'
+			self.register_stats(title)
+			self.mete(title, dist)
+			out[title] = dist
+			print(f'{name.capitalize()} FID: {dist:.2f}')
+		return dist
+		
+	def _evaluate(self, info, config):
+		
+		out = super()._evaluate(info, config)
+		
+		fid = config.pull('fid', None, ref=True)
+		
+		if fid is not None:
+		
+			dataset = info.get_dataset()
+			
+			try:
+				base_stats = dataset.get_fid_stats(fid.dim, dataset.get_mode(), 'train')
+			except MissingFIDStatsError as e:
+				print(e)
+			else:
+				fid.set_baseline_stats(base_stats)
+			
+			loader = info.get_loader('train', infinite=True)
+			def _rec_gen(N):
+				img = self._process_batch(loader.demand(N)).original
+				return self(img)
+			
+			self._compute_fid(fid, generate_fn=_rec_gen, name='rec', out=out)
+			
+		
+		return out
 
 	def _visualize(self, info, records):
 		
@@ -112,15 +156,27 @@ class Autoencoder(SimpleAutoencoder):
 				
 
 @fig.AutoModifier('hybrid')
-class Hybrid(fd.Generative, Autoencoder):
+class Hybrid(Autoencoder, Generative_AE):
 	def __init__(self, A, **kwargs):
 
 		viz_gen_hybrid = A.pull('viz-gen-hybrid', True)
 	
 		super().__init__(A, **kwargs)
 		
+		self.register_buffer('_latent', None, persistent=True) # TODO: replace this with a proper replay buffer
+		
 		if viz_gen_hybrid:
 			self._viz_settings.add('gen-hybrid')
+	
+	def _evaluate(self, info, config):
+		
+		out = super()._evaluate(info, config)
+		
+		fid = config.pull('fid', None, ref=True, silent=True)
+		if fid is not None:
+			self._compute_fid(fid, self.generate_hybrid, name='hybrid', out=out)
+	
+		return out
 	
 	def _visualize(self, info, records):
 		super()._visualize(info, records)
@@ -131,6 +187,15 @@ class Hybrid(fd.Generative, Autoencoder):
 		if 'gen-hybrid' in self._viz_settings or not self.training:
 			viz_gen = self.generate_hybrid(2 * N)
 			records.log('images', 'gen-hybrid', util.image_size_limiter(viz_gen))
+	
+	def _step(self, batch, out=None):
+		out = super()._step(batch, out=out)
+		if self.training and 'latent' in out:
+			q = out.latent
+			if isinstance(out.latent, distrib.Distribution):
+				q = q.loc
+			self._latent = q.detach()
+		return out
 	
 	def hybridize(self, prior=None):
 		if prior is None:
@@ -177,6 +242,16 @@ class Prior(Autoencoder, Generative_AE):
 		
 		if viz_gen_prior:
 			self._viz_settings.add('gen-prior')
+	
+	def _evaluate(self, info, config):
+		
+		out = super()._evaluate(info, config)
+		
+		fid = config.pull('fid', None, ref=True, silent=True)
+		if fid is not None:
+			self._compute_fid(fid, self.generate_prior, name='prior', out=out)
+		
+		return out
 	
 	def _visualize(self, info, records):
 		super()._visualize(info, records)
