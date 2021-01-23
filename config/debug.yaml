@@ -9,6 +9,8 @@ _meta.script_name: train
 
 parents: [a/ladder/4, m/vae, d/3ds]
 
+reg-wt: 16
+
 #parents: [a/conv, m/wae, d/3ds]
 
 #model.encoder.layers.0._type: coord-conv-layer

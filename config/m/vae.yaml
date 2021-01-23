@@ -1,9 +1,9 @@
 parents: [base]
 
+reg-wt: 1
+
 model:
   _model_type: vae
-
-  reg-wt: 1
 
   encoder:
     _mod.normal: 1
