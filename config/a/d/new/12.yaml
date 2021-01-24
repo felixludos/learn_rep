@@ -1,0 +1,45 @@
+parents: [a/d/new/_style, a/d/old/12]
+
+
+model.decoder:
+  depth: 12
+
+  up: 2
+
+  layers:
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>style_type
+      net: <!>style_net
+
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>style_type
+      net: <!>style_net
+
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>style_type
+      net: <!>style_net
+
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>style_type
+      net: <!>style_net
+
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>style_type
+      net: <!>style_net
