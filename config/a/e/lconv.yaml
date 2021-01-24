@@ -1,0 +1,47 @@
+parents: [base]
+
+model.encoder:
+  _type: multilayer
+
+  _din: <>din
+  _dout: <>latent-dim
+
+  kernel: 3
+  down: 2
+  pool: max
+  channels: 64
+
+  first._type: <>conv_type
+
+  layers:
+    - _type: <>conv_type
+
+    - _type: <>conv_type
+      down: 1
+    - _type: <>conv_type
+    
+    - _type: <>conv_type
+      down: 1
+    - _type: <>conv_type
+      down: 1
+    - _type: <>conv_type
+    
+    - _type: <>conv_type
+      down: 1
+    - _type: <>conv_type
+      down: 1
+    - _type: <>conv_type
+    
+    - _type: <>conv_type
+      down: 1
+    - _type: <>conv_type
+      down: 1
+
+  last:
+    _type: mlp
+
+    hidden: [256, 128]
+    out_nonlin: None
+
+
+

@@ -6,7 +6,9 @@ _meta.script_name: train
 #parents: [ a/conv, m/vae, d/3ds ]
 #parents: [ a/conv, m/wae, d/3ds ]
 #parents: [hybrid, a/dislib, m/vae, d/3ds]
-parents: [scheduler, hybrid, a/d/new/12, a/e/conv, m/ae, d/3ds]
+#parents: [scheduler, hybrid, a/d/new/12, a/e/conv, m/ae, d/3ds]
+
+parents: [hybrid, a/lconv, m/ae, d/3ds]
 #parents: [a/ladder/12, m/vae, d/3ds]
 
 #parents: [a/large/d/old16, a/large/e/conv, m/ae, d/celeba]
