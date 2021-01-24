@@ -5,10 +5,13 @@ _meta.script_name: train
 #parents: [ a/conv, m/vae, d/3ds ]
 #parents: [ a/conv, m/vae, d/3ds ]
 #parents: [ a/conv, m/wae, d/3ds ]
-parents: [hybrid, a/dislib, m/vae, d/3ds]
+#parents: [hybrid, a/dislib, m/vae, d/3ds]
 #parents: [hybrid, a/d/old/12, a/e/conv, m/ae, d/3ds]
+parents: [a/ladder/12, m/vae, d/3ds]
 
-#parents: [a/ladder/12, m/vae, d/3ds]
+#parents: [a/large/d/old16, a/large/e/conv, m/ae, d/celeba]
+
+#latent-dim: 24
 
 #path: test-pycharm_210123-231915
 #
@@ -35,42 +38,11 @@ parents: [hybrid, a/dislib, m/vae, d/3ds]
 #residual: yes
 
 
-#parents: ['a/double', 'm/ae', '3dshapes']
-
-#parents: ['a/dislib', 'm/ae', 't/3ds-shapes']
-#parents: ['t/upd']
-
-#parents: ['a/d/deconv-deep', 'a/conv', 'm/ae', '3dshapes']
-
-#parents: ['a/d/root6', 'a/e/conv', 'm/ae', '3dshapes']
-#parents: ['a/d/branch12', 'a/e/conv', 'm/ae', '3dshapes']
-
-#parents: ['a/e/attn12', 'a/d/deconv', 'm/ae', '3dshapes']
-
-#parents: ['a/e/attn12', 'a/d/branch12', 'm/ae', '3dshapes']
-
-#parents: ['resbranch', 'a/d/branch12', 'a/e/conv', '3dshapes', 'm/ae']
-#parents: ['a/d/branch12', 'a/e/conv', '3dshapes', 'm/ae']
-
-#parents: ['a/ladder12', '3dshapes', 'm/vae']
-#parents: ['a/d/branch12', 'a/e/conv', '3dshapes', 'm/vae']
-
-#parents: ['a/lconv', 'mpi3d', 'long', 'm/ae']
 
 #device: cuda
 
-#parents: ['sup-3ds']
+model.optim.lr: 0.001
 
-#resume: 3ds-ae-12b1-deep_0010-6241682-08_200414-021349
-
-#override:
-#  dataset:
-#    device: cpu
-
-#load: 't3ds-shapes-ae-b1_0050-6286118-06_200428-171928'
-#load: t3ds-shapes-ae-12b1-conv_0053-6286540-10_200429-041524
-#resume: test-cmd_200508-101328
-#extend: 2000
 
 name: test-pycharm
 inline: True

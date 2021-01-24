@@ -1,0 +1,26 @@
+parents: [base]
+
+budget: 200000
+
+validation.freq: 20000
+checkpoint.freq: 20000
+print.freq: 200
+viz.freq: 2000
+records.freq: 500
+
+latent-dim: 32
+
+time_limit: 8 # hrs
+
+model:
+
+  optim:
+    _type: adam
+    lr: 0.0005
+    weight_decay: 0
+    momentum: 0
+    beta1: 0.9
+    beta2: 0.999
+
+info:
+  model_type: ae

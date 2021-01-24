@@ -1,0 +1,14 @@
+parents: [base128]
+
+dataset:
+    name: 'celeba'
+
+    batch_size: 32
+
+    split.val: 0.1
+
+
+info:
+    dataset_type: celeba
+
+

@@ -14,10 +14,10 @@ budget: 100000
 
 time_limit: 4 # hrs
 
-validation.freq: 5000
-checkpoint.freq: 5000
+validation.freq: 10000
+checkpoint.freq: 10000
 print.freq: 100
-viz.freq: 500
+viz.freq: 1000
 records.freq: 200
 
 fid._type: fid
@@ -27,6 +27,8 @@ dataset:
   drop_last: yes
 
 
+latent-dim: 12
+
 model:
   _model_type: ae
 
@@ -34,8 +36,6 @@ model:
 
   nonlin: elu
   norm: group
-
-  latent-dim: 12
 
   reg: pow2
 

@@ -1,0 +1,31 @@
+parents: [a/d/conv]
+
+model.decoder:
+
+  first.hidden: [128, 256, 256, 512]
+
+  layers:
+    - _type: <>conv_type
+      channels: 256
+    - _type: <>conv_type
+      channels: 256
+      up: 1
+    - _type: <>conv_type
+      channels: 128
+    - _type: <>conv_type
+      channels: 128
+      up: 1
+    - _type: <>conv_type
+      channels: 128
+    - _type: <>conv_type
+      channels: 128
+      up: 1
+    - _type: <>conv_type
+      channels: 128
+    - _type: <>conv_type
+      channels: 128
+      up: 1
+    - _type: <>conv_type
+      channels: 64
+
+  last.channels: 64

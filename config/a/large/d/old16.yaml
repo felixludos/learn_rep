@@ -1,0 +1,86 @@
+
+parents: [a/d/old/12]
+
+model.decoder:
+  depth: 16
+
+  style_net.hidden: [64, 128, 256]
+
+  channels: 128
+
+  layers:
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 1
+
+    - _type: <>style_type
+      net: <!>style_net
+
+  last.up: 2
