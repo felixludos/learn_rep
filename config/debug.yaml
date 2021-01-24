@@ -6,8 +6,8 @@ _meta.script_name: train
 #parents: [ a/conv, m/vae, d/3ds ]
 #parents: [ a/conv, m/wae, d/3ds ]
 #parents: [hybrid, a/dislib, m/vae, d/3ds]
-#parents: [hybrid, a/d/old/12, a/e/conv, m/ae, d/3ds]
-parents: [a/ladder/12, m/vae, d/3ds]
+parents: [nosplit, hybrid, a/d/old/12, a/e/conv, m/ae, d/3ds]
+#parents: [a/ladder/12, m/vae, d/3ds]
 
 #parents: [a/large/d/old16, a/large/e/conv, m/ae, d/celeba]
 
@@ -41,7 +41,7 @@ parents: [a/ladder/12, m/vae, d/3ds]
 
 #device: cuda
 
-model.optim.lr: 0.001
+#model.optim.lr: 0.001
 
 
 name: test-pycharm
