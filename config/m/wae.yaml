@@ -1,10 +1,10 @@
 parents: [base]
 
+reg-wt: 10
+
 model:
   _model_type: wae
   _model_mod.gaussian-prior: 1
-
-  reg-wt: 10
 
 info:
   model_type: wae

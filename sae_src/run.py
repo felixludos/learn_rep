@@ -16,8 +16,9 @@ class SAE_Run(fd.op.Torch_Run):
 		if model is not None:
 			
 			beta = A.pull('info.beta', '<>model.reg-wt', None)
-			if beta is not None:
-				model = f'{model}{beta:2g}'.replace('.', 'p')
+			if beta is not None and beta > 0:
+				# model = f'{model}{beta:2g}'.replace('.', 'p')
+				model = f'{model}{beta}'.replace('.', 'p')
 			terms.append(model)
 		
 		etype = A.pull('info.enc_type', None, silent=True)
