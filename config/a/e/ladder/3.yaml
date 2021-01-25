@@ -1,9 +1,9 @@
 parents: [a/e/ladder/_ladder]
 
-info.enc_type: l4
+info.enc_type: l3
 
 model.encoder:
-  tfms: 4
+  tfms: 3
 
   layers:
     - _type: <>conv_type
@@ -15,16 +15,13 @@ model.encoder:
 
     - _type: <>conv_type
     - _type: <>conv_type
-    - _type: <>rung_type
-      net: <!>rung_net
-
     - _type: <>conv_type
       down: 2
     - _type: <>conv_type
-    - _type: <>conv_type
     - _type: <>rung_type
       net: <!>rung_net
 
+    - _type: <>conv_type
     - _type: <>conv_type
       down: 2
     - _type: <>conv_type

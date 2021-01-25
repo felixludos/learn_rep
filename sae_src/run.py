@@ -6,17 +6,39 @@ class SAE_Run(fd.op.Torch_Run):
 
 	def _gen_name(self, A):
 
-		model = A.pull('info.model_type', '<>model._model_type', '<>model._type', None, silent=True)
+		terms = []
+		
 		data = A.pull('info.dataset_type', '<>dataset.name', '<>dataset._type', None, silent=True)
-
-		name = f'{model}_{data}'
-
-		arch = A.pull('info.arch', None, silent=True)
-		if arch is not None:
-			name = f'{name}_{arch}'
+		if data is not None:
+			terms.append(data)
+		
+		model = A.pull('info.model_type', '<>model._model_type', '<>model._type', None, silent=True)
+		if model is not None:
+			
+			beta = A.pull('info.beta', '<>model.reg-wt', None)
+			if beta is not None:
+				model = f'{model}{beta:2g}'.replace('.', 'p')
+			terms.append(model)
+		
+		etype = A.pull('info.enc_type', None, silent=True)
+		if etype is not None:
+			terms.append(f'e-{etype}')
+		dtype = A.pull('info.dec_type', None, silent=True)
+		if dtype is not None:
+			terms.append(f'd-{dtype}')
+		if etype is None and dtype is None:
+			atype = A.pull('info.arch_type', None, silent=True)
+			if atype is not None:
+				terms.append(atype)
+		
 
 		extra = A.pull('info.extra', None, silent=True)
 		if extra is not None:
-			name = f'{name}_{extra}'
+			terms.append(str(extra))
 
-		return name
+		name = '_'.join(terms)
+		
+		if not len(name):
+			name = 'unknown'
+
+		return name.replace(' ', '')

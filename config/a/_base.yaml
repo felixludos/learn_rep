@@ -1,0 +1,61 @@
+#parents: [base]
+
+model:
+
+
+  nonlin: elu
+  norm: group
+
+  conv_type: conv-layer
+
+  encoder:
+    _type: multilayer
+
+    _din: <>din
+    _dout: <>latent-dim
+
+    down: 1
+    pool: max
+
+    first:
+      _type: <>conv_type
+      down: 2
+      kernel: 5
+
+    last:
+      _type: mlp
+      out_nonlin: None
+
+  decoder:
+    _type: multilayer
+
+    _din: <>latent-dim
+    _dout: <>dout
+    in_order: no # creates the layers in reverse order
+
+    up: 1
+    unpool: bilinear
+
+    first:
+      _type: mlp
+    last:
+      _type: <>conv_type
+      up: 2
+      nonlin: sigmoid
+      norm: None
+
+#  reg: pow2    # not needed
+
+  criterion:
+    _type: criterion
+    ident: bce
+    kwargs.reduction: sum
+
+  optim:
+    _type: adam
+    lr: 0.0005
+    weight_decay: 0
+    momentum: 0
+    beta1: 0.9
+    beta2: 0.999
+

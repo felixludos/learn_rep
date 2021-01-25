@@ -1,4 +1,4 @@
-parents: [base]
+parents: [a/_base]
 
 model.decoder:
   _type: multilayer
@@ -8,7 +8,6 @@ model.decoder:
   in_order: no # creates the layers in reverse order
 
   up: 2
-  channels: 64
 
   unpool: bilinear
 
@@ -18,29 +17,17 @@ model.decoder:
 
   layers:
     - _type: <>conv_type
-      up: 1
+      channels: 128
     - _type: <>conv_type
-      up: 1
+      channels: 64
     - _type: <>conv_type
-
+      channels: 64
     - _type: <>conv_type
-      up: 1
-    - _type: <>conv_type
-      up: 1
-    - _type: <>conv_type
-
-    - _type: <>conv_type
-      up: 1
-    - _type: <>conv_type
-      up: 1
-    - _type: <>conv_type
-
-    - _type: <>conv_type
-      up: 1
-    - _type: <>conv_type
+      channels: 32
 
   last:
     _type: <>conv_type
+    channels: 32
     nonlin: sigmoid
     norm: None
 

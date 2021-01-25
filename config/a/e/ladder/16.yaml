@@ -1,40 +1,75 @@
 
-parents: [a/e/ladder/_ladder]
+parents: [a/_base]
 
-info.enc_type: l6
+info.enc_type: l16
 
 model.encoder:
-  tfms: 6
+  tfms: 16
 
   layers:
+    - _type: <>rung_type
+      net: <!>rung_net
+
     - _type: <>conv_type
     - _type: <>rung_type
       net: <!>rung_net
 
     - _type: <>conv_type
+    - _type: <>rung_type
+      net: <!>rung_net
+
     - _type: <>conv_type
       down: 2
     - _type: <>rung_type
       net: <!>rung_net
 
     - _type: <>conv_type
+    - _type: <>rung_type
+      net: <!>rung_net
+
     - _type: <>conv_type
     - _type: <>rung_type
       net: <!>rung_net
 
     - _type: <>conv_type
       down: 2
+    - _type: <>rung_type
+      net: <!>rung_net
+
     - _type: <>conv_type
     - _type: <>rung_type
       net: <!>rung_net
 
     - _type: <>conv_type
+    - _type: <>rung_type
+      net: <!>rung_net
+
     - _type: <>conv_type
       down: 2
     - _type: <>rung_type
       net: <!>rung_net
 
     - _type: <>conv_type
+    - _type: <>rung_type
+      net: <!>rung_net
+
+    - _type: <>conv_type
+    - _type: <>rung_type
+      net: <!>rung_net
+
+    - _type: <>conv_type
+      down: 2
+    - _type: <>rung_type
+      net: <!>rung_net
+
+    - _type: <>conv_type
+    - _type: <>rung_type
+      net: <!>rung_net
+
+    - _type: <>conv_type
+    - _type: <>rung_type
+      net: <!>rung_net
+
     - _type: <>conv_type
       down: 2
     - _type: <>rung_type

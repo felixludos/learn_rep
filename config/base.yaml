@@ -28,29 +28,3 @@ dataset:
 
 
 latent-dim: 12
-
-model:
-  _model_type: ae
-
-  conv_type: conv-layer
-
-  nonlin: elu
-  norm: group
-
-  reg: pow2
-
-  criterion:
-    _type: criterion
-    ident: bce
-    kwargs.reduction: sum
-
-  optim:
-    _type: adam
-    lr: 0.0005
-    weight_decay: 0
-    momentum: 0
-    beta1: 0.9
-    beta2: 0.999
-
-info:
-  model_type: ae

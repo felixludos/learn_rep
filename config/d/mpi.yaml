@@ -1,13 +1,17 @@
 parents: [a/size/64, base]
 
+cat: toy
+
 dataset:
-    name: 3dshapes
+    name: mpi3d
+
+    category: <>cat
 
     batch_size: 128
 
     split.val: 0.1
 
 info:
-    dataset_type: 3ds
+    dataset_type: <>cat
 
 

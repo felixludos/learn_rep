@@ -1,0 +1,5 @@
+
+parents: [a/_base]
+
+model.encoder.first._type: coord-conv-layer
+

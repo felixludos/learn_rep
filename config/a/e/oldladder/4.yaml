@@ -1,0 +1,64 @@
+
+parents: [a/e/oldladder/_ladder]
+
+model.encoder:
+  depth: 4
+
+  layers:
+    - _type: <>conv_type
+      channels: 32
+    - _type: <>rung_type
+      net:
+        _type: multilayer
+        first: None
+        layers:
+          - _type: <>conv_type
+            channels: 16
+          - _type: <>conv_type
+            channels: 8
+        last: <!>rung_net
+
+    - _type: <>conv_type
+      channels: 64
+    - _type: <>rung_type
+      net:
+        _type: multilayer
+        first: None
+        layers:
+          - _type: <>conv_type
+            channels: 32
+          - _type: <>conv_type
+            channels: 32
+        last: <!>rung_net
+
+    - _type: <>conv_type
+      channels: 64
+    - _type: <>rung_type
+      net:
+        _type: multilayer
+        first: None
+        layers:
+          - _type: <>conv_type
+            channels: 32
+        last: <!>rung_net
+
+    - _type: <>conv_type
+      channels: 128
+    - _type: <>rung_type
+      net:
+        _type: multilayer
+        first: None
+        layers:
+          - _type: mlp
+            hidden: None
+            _dout: 128
+#        first: None
+#        layers:
+#          - _type: <>conv_type
+#            channels: 128
+#            kernel: 2
+#            padding: 0
+        last: <!>rung_net
+
+
+info.arch_type: ladder4

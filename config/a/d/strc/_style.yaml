@@ -1,0 +1,25 @@
+
+parents: [a/_base]
+
+model.decoder:
+  _type: style-dec
+
+  _din: None # fixed features, size doesnt matter
+
+  style-dim:
+    _type: expr
+    _op: '//'
+    _terms: [<>latent-dim, <>tfms]
+
+  # for style tfms
+  split-style: yes
+  normalize-features: no
+
+  style_type: affine-adain
+
+  style_net._type: mlp
+
+  first: None
+
+
+info.arch_type: strc

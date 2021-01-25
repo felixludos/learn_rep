@@ -1,4 +1,4 @@
-parents: [base128]
+parents: [a/size/128, base128]
 
 dataset:
     name: 'celeba'

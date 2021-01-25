@@ -1,5 +1,6 @@
-parents: [base]
+parents: [a/_base]
 
 model.encoder:
   _type: dislib-enc
 
+info.enc_type: dis

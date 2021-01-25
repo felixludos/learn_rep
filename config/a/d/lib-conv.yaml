@@ -1,4 +1,0 @@
-parents: [base]
-
-model.decoder:
-  _type: dislib-dec

@@ -2,16 +2,18 @@
 _meta.script_name: train
 #_meta.script_name: eval
 
-#parents: [ a/conv, m/vae, d/3ds ]
-#parents: [ a/conv, m/vae, d/3ds ]
-#parents: [ a/conv, m/wae, d/3ds ]
-#parents: [hybrid, a/dislib, m/vae, d/3ds]
-#parents: [scheduler, hybrid, a/d/new/12, a/e/conv, m/ae, d/3ds]
+#parents: [ coord, nosplit, hybrid, a/e/conv12, a/d/strc/12, m/vae, d/3ds]
+#parents: [ hybrid, a/e/conv12, a/d/strc/12, m/wae, d/3ds ]
+#parents: [ hybrid, a/ladder/12, m/vae, d/mpi ]
+parents: [ hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds ]
 
-parents: [hybrid, a/lconv, m/ae, d/3ds]
-#parents: [a/ladder/12, m/vae, d/3ds]
+#parents: [ hybrid, a/e/conv16, a/d/strc/16, m/ae, d/celeba ]
 
-#parents: [a/large/d/old16, a/large/e/conv, m/ae, d/celeba]
+model.nonlin: mish
+model.norm: None
+model.residual: True
+reg-wt: 4
+#cat: sim
 
 #latent-dim: 24
 
@@ -46,7 +48,7 @@ parents: [hybrid, a/lconv, m/ae, d/3ds]
 #model.optim.lr: 0.001
 
 
-name: test-pycharm
+#name: test-pycharm
 inline: True
 #device: cuda:1
 
@@ -63,3 +65,14 @@ print_dims: True
 
 
 
+#parents: [ a/conv, m/vae, d/3ds ]
+#parents: [ a/conv, m/vae, d/3ds ]
+#parents: [ a/conv, m/wae, d/3ds ]
+#parents: [hybrid, a/dislib, m/vae, d/3ds]
+#parents: [scheduler, hybrid, a/d/new/12, a/e/conv, m/ae, d/3ds]
+
+#parents: [hybrid, a/lconv, m/ae, d/mpi]
+#parents: [ nosplit, hybrid, a/large/e/lconv, a/large/d/old16, m/vae, d/celeba ]
+#parents: [a/ladder/12, m/vae, d/3ds]
+
+#parents: [a/large/d/old16, a/large/e/conv, m/ae, d/celeba]

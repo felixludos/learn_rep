@@ -1,3 +1,5 @@
 
-parents: [a/d/ladder/_ladder, a/d/old/12]
+parents: [a/d/ladder/_ladder, a/d/strc/12]
+
+info.dec_type: l12
 

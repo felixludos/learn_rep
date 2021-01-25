@@ -1,45 +1,76 @@
-parents: [a/d/new/_style]
+parents: [a/d/strc/_style]
 
+info.dec_type: s16
 
 model.decoder:
-  depth: 12
-
-  up: 2
+  tfms: 16
 
   layers:
     - _type: <>style_type
       net: <!>style_net
-    - _type: <>style_type
-      net: <!>style_net
-    - _type: <>style_type
-      net: <!>style_net
+    - _type: <>conv_type
+      up: 2
 
+    - _type: <>style_type
+      net: <!>style_net
     - _type: <>conv_type
 
     - _type: <>style_type
       net: <!>style_net
-    - _type: <>style_type
-      net: <!>style_net
-    - _type: <>style_type
-      net: <!>style_net
-
     - _type: <>conv_type
 
     - _type: <>style_type
       net: <!>style_net
+    - _type: <>conv_type
+      up: 2
+
     - _type: <>style_type
       net: <!>style_net
-
     - _type: <>conv_type
 
     - _type: <>style_type
       net: <!>style_net
-    - _type: <>style_type
-      net: <!>style_net
-
     - _type: <>conv_type
 
     - _type: <>style_type
       net: <!>style_net
+    - _type: <>conv_type
+      up: 2
+
     - _type: <>style_type
       net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 2
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 2
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+

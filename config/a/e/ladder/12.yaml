@@ -1,164 +1,59 @@
 
 parents: [a/e/ladder/_ladder]
 
+info.enc_type: l12
+
 model.encoder:
-  depth: 12
+  tfms: 12
 
   layers:
-    - _type: <>conv_type
-      channels: 32
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: <>conv_type
-            channels: 16
-          - _type: <>conv_type
-            channels: 8
-        last: <!>rung_net
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 64
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: <>conv_type
-            channels: 32
-          - _type: <>conv_type
-            channels: 32
-        last: <!>rung_net
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 64
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: <>conv_type
-            channels: 32
-        last: <!>rung_net
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 128
+      down: 2
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: mlp
-            hidden: None
-            _dout: 128
-        last: <!>rung_net
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 128
-      down: 1
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: mlp
-            hidden: None
-            _dout: 128
-        last: <!>rung_net
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 128
-      down: 1
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: mlp
-            hidden: None
-            _dout: 128
-        last: <!>rung_net
-
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 128
-      down: 1
+      down: 2
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: mlp
-            hidden: None
-            _dout: 128
-        last: <!>rung_net
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 128
-      down: 1
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: mlp
-            hidden: None
-            _dout: 128
-        last: <!>rung_net
-
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 128
-      down: 1
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: mlp
-            hidden: None
-            _dout: 128
-        last: <!>rung_net
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 128
-      down: 1
+      down: 2
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: mlp
-            hidden: None
-            _dout: 128
-        last: <!>rung_net
-
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 128
-      down: 1
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: mlp
-            hidden: None
-            _dout: 128
-        last: <!>rung_net
+      net: <!>rung_net
 
     - _type: <>conv_type
-      channels: 128
-      down: 1
+      down: 2
     - _type: <>rung_type
-      net:
-        _type: multilayer
-        first: None
-        layers:
-          - _type: mlp
-            hidden: None
-            _dout: 128
-        last: <!>rung_net
-
-info.arch_type: ladder12
+      net: <!>rung_net

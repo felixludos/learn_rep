@@ -1,0 +1,32 @@
+
+parents: [a/_base]
+
+info.dec_type: c16
+
+model.decoder:
+
+  layers:
+    - _type: <>conv_type
+      up: 2
+    - _type: <>conv_type
+    - _type: <>conv_type
+
+    - _type: <>conv_type
+      up: 2
+    - _type: <>conv_type
+    - _type: <>conv_type
+
+    - _type: <>conv_type
+      up: 2
+    - _type: <>conv_type
+    - _type: <>conv_type
+
+    - _type: <>conv_type
+      up: 2
+    - _type: <>conv_type
+    - _type: <>conv_type
+
+    - _type: <>conv_type
+      up: 2
+    - _type: <>conv_type
+    - _type: <>conv_type

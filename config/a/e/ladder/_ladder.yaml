@@ -1,25 +1,21 @@
 
+parents: [a/_base]
+
 model.encoder:
   _type: ladder-enc
 
-  _din: <>din
   _dout: None
+
+  last: None
+
+  rung_type: rung-infer
 
   style-dim:
     _type: expr
     _op: '//'
-    _terms: [ <>latent-dim, <>depth ]
+    _terms: [ <>latent-dim, <>tfms ]
 
-  rung_type: rung-infer
-  rung_net:
-    _type: mlp
-    hidden: [ 64, 32 ]
+  rung_net._type: mlp
 
-  kernels: 3
-  down: 2
+  pool-rung: max
 
-#    pool: max
-
-  first:
-    _type: <>conv_type
-    channels: 32

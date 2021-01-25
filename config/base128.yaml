@@ -12,15 +12,3 @@ latent-dim: 32
 
 time_limit: 8 # hrs
 
-model:
-
-  optim:
-    _type: adam
-    lr: 0.0005
-    weight_decay: 0
-    momentum: 0
-    beta1: 0.9
-    beta2: 0.999
-
-info:
-  model_type: ae

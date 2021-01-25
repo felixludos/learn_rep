@@ -1,0 +1,44 @@
+
+parents: [a/d/strc/_style]
+
+info.dec_type: s6
+
+model.decoder:
+  tfms: 6
+
+  layers:
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+    - _type: <>conv_type
+      up: 2
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+    - _type: <>conv_type
+      up: 2
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+    - _type: <>conv_type
+
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+      up: 2
+    - _type: <>conv_type
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+    - _type: <>conv_type
+      up: 2
+
+    - _type: <>style_type
+      net: <!>style_net
+    - _type: <>conv_type
+
+

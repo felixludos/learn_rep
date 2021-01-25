@@ -1,6 +1,8 @@
 import sys, os
 from pathlib import Path
 
+from omnibelt import unspecified_argument
+
 import numpy as np
 import torch
 from torch import nn
@@ -18,26 +20,51 @@ from .structure_modules import _find_dims
 
 @fig.Component('rung-infer')
 class InferenceRung(models.StyleExtractorLayer):
-	def __init__(self, A, din=None, dout=None, style_dim=None, **kwargs):
+	def __init__(self, A, din=None, dout=None, style_dim=None, pool_rung=unspecified_argument, **kwargs):
 		
 		if style_dim is None:
 			style_dim = A.pull('style-dim')
 		
 		din, dout = _find_dims(A, din, dout)
 		
+		if pool_rung is unspecified_argument:
+			pool_rung = A.pull('pool-rung', None)
+		assert pool_rung is None or pool_rung in {'avg', 'sum', 'max'}
+		
+		feature_dim = din
+		if pool_rung is not None and isinstance(din, (list, tuple)):
+			feature_dim = din[0]
+		
 		net_info = A.pull('net', silent=True, raw=True)
 		if net_info is not None:
-			net_info.push('din', din, silent=True)
+			net_info.push('din', feature_dim, silent=True)
 			net_info.push('latent-dim', style_dim, silent=True)
 			net_info.push('dout', style_dim, silent=True)
 		net = A.pull('net')
 		
 		super().__init__(A, din=din, dout=dout, style_dim=style_dim, **kwargs)
 		
+		self.pool_rung = pool_rung
 		self.net = net
 		
+	def extra_repr(self) -> str:
+		if self.pool_rung is not None:
+			return f'pool={self.pool_rung}'
+		return super().extra_repr()
+		
 	def extract(self, inp, **unused):
-		return inp, self.net(inp)
+		style = inp
+		if self.pool_rung is not None:
+			B, C, *rest = inp.shape
+			style = inp.view(B, C, -1)
+			if self.pool_rung == 'max':
+				style = style.max(-1)[0]
+			elif self.pool_rung == 'sum':
+				style = style.sum(-1)
+			else:
+				style = style.mean(-1)
+		style = self.net(style)
+		return inp, style
 	
 
 @fig.Component('rung-gen')

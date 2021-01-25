@@ -1,2 +1,4 @@
 
 parents: [a/d/lib-conv, a/e/lib-conv]
+
+info.arch_type: dis

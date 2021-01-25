@@ -1,0 +1,25 @@
+
+parents: [a/_base]
+
+latent-dim: 12
+
+model:
+
+  channels: 64
+  feature-dim: 16
+
+  encoder:
+
+    last.hidden: [ 256, 128 ]
+#    layers.0.down: 1
+
+    rung_net.hidden: [ 128, 64 ]
+
+  decoder:
+
+    first.hidden: [ 128, 256 ]
+#    layers.-1.up: 1
+
+    style_net.hidden: [ 64, 128 ]
+
+info.size: 64
