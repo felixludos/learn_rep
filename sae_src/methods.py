@@ -53,25 +53,31 @@ class Autoencoder(SimpleAutoencoder):
 
 	def _compute_fid(self, fid, generate_fn, name, out):
 		
-		stats = fid.compute_stats(generate_fn, name=name)
-		out[f'{name}_fid_stats'] = stats
+		statkey = f'{name}_fid_stats'
 		
-		dist = None
-		try:
-			dist = fid.compute_distance(stats)
-		except AssertionError:
-			print('Failed to compute the Rec FID')
-		else:
-			title = f'{name}_fid'
-			self.register_stats(title)
-			self.mete(title, dist)
-			out[title] = dist
-			print(f'{name.capitalize()} FID: {dist:.2f}')
+		if statkey not in out:
+			out[statkey] = fid.compute_stats(generate_fn, name=name)
+		stats = out[statkey]
+		
+		key = f'{name}_fid'
+		
+		if key not in out:
+			try:
+				dist = fid.compute_distance(stats)
+			except AssertionError:
+				print('Failed to compute the Rec FID')
+			else:
+				self.register_stats(key)
+				self.mete(key, dist)
+				out[key] = dist
+				print(f'{name.capitalize()} FID: {dist:.2f}')
+		
+		dist = out[key]
 		return dist
 		
-	def _evaluate(self, info, config):
+	def _evaluate(self, info, config, out=None):
 		
-		out = super()._evaluate(info, config)
+		out = super()._evaluate(info, config, out=out)
 		
 		fid = config.pull('fid', None, ref=True)
 		
@@ -86,7 +92,7 @@ class Autoencoder(SimpleAutoencoder):
 			else:
 				fid.set_baseline_stats(base_stats)
 			
-			loader = info.get_loader('train', infinite=True)
+			loader = info.get_loader(infinite=True)
 			def _rec_gen(N):
 				img = self._process_batch(loader.demand(N)).original
 				return self(img)
@@ -168,9 +174,9 @@ class Hybrid(Autoencoder, Generative_AE):
 		if viz_gen_hybrid:
 			self._viz_settings.add('gen-hybrid')
 	
-	def _evaluate(self, info, config):
+	def _evaluate(self, info, config, out=None):
 		
-		out = super()._evaluate(info, config)
+		out = super()._evaluate(info, config, out=out)
 		
 		fid = config.pull('fid', None, ref=True, silent=True)
 		if fid is not None:
@@ -243,9 +249,9 @@ class Prior(Autoencoder, Generative_AE):
 		if viz_gen_prior:
 			self._viz_settings.add('gen-prior')
 	
-	def _evaluate(self, info, config):
+	def _evaluate(self, info, config, out=None):
 		
-		out = super()._evaluate(info, config)
+		out = super()._evaluate(info, config, out=out)
 		
 		fid = config.pull('fid', None, ref=True, silent=True)
 		if fid is not None:

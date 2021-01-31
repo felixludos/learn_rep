@@ -1,20 +1,34 @@
 
-_meta.script_name: train
+
+#_meta.script_name: eval-multiple-runs
+parents: [eval/3ds]
+
+#_meta.script_name: train
 #_meta.script_name: eval
 
 #parents: [ coord, nosplit, hybrid, a/e/conv12, a/d/strc/12, m/vae, d/3ds]
 #parents: [ hybrid, a/e/conv12, a/d/strc/6, m/ae, d/3ds ]
 #parents: [ hybrid, a/ladder/12, m/vae, d/mpi ]
 #parents: [ hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds ]
-parents: [ hybrid, a/conv12, m/wae, d/3ds ]
+#parents: [ hybrid, a/conv12, m/wae, d/3ds ]
 
 #parents: [ hybrid, a/e/conv16, a/d/strc/16, m/ae, d/celeba ]
+
+#path: 3ds_ae0_e-c12_d-s2_nosplit_210125-134343
+#path: celeba_ae0_e-c16_d-s16_mish_210125-132401
+#
+#saveroot: C:\Users\anwan\Documents\workspace\sae\trained_nets
+##override.mode: test
+#mode: test
+#ident: final-test
+#evaluation: None
+#evaluation.step-limit: 10
 
 #model.nonlin: mish
 #model.norm: None
 #model.residual: True
 #reg-wt: 4
-#cat: sim
+cat: toy
 
 #latent-dim: 24
 
@@ -54,14 +68,16 @@ parents: [ hybrid, a/conv12, m/wae, d/3ds ]
 inline: True
 #device: cuda:1
 
+#fid.dim: 2048
 fid.dim: 64
 fid.n_samples: 1000
+#fid.batch_size: 32
 
 #dataset:
 #  device: cpu
 #  category: real
 
-
+pbar._type: progress-bar
 
 print_dims: True
 
