@@ -1,10 +1,10 @@
 
 
 #_meta.script_name: eval-multiple-runs
-#parents: [eval/3ds]
+parents: [eval/mpi]
 
 #_meta.script_name: train
-_meta.script_name: eval
+#_meta.script_name: eval
 
 #parents: [ coord, nosplit, hybrid, a/e/conv12, a/d/strc/12, m/vae, d/3ds]
 #parents: [ hybrid, a/e/conv12, a/d/strc/6, m/ae, d/3ds ]
@@ -14,15 +14,17 @@ _meta.script_name: eval
 
 #parents: [ hybrid, a/e/conv16, a/d/strc/16, m/ae, d/celeba ]
 
+#run-name: 3ds_ae0_e-c12_d-s4_nosplit_210125-045440
+run-name: toy_ae_e-c12_d-s12_mish-seed2_210126-122537
 #path: 3ds_ae0_e-c12_d-s4_nosplit_210125-045440
-path: real_vae1_e-l2_d-l2_210127-231833
+#path: real_vae1_e-l2_d-l2_210127-231833
 #
 saveroot: C:\Users\anwan\Documents\workspace\sae\trained_nets
 ##override.mode: test
-mode: test
-ident: final-test2
+#mode: test
+#ident: final-test2
 #evaluation: None
-evaluation.step-limit: 10
+#evaluation.step-limit: 10
 
 #model.nonlin: mish
 #model.norm: None

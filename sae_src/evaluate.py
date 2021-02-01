@@ -528,7 +528,7 @@ def _eval_run(A, run=None, metrics=None, mode=None,
 	return scores, results
 
 
-@fig.Script('eval-multiple-runs')
+@fig.Script('eval-multiple-metrics')
 def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecified_argument):
 	
 	saveroot = A.pull('saveroot', os.environ.get('FOUNDATION_SAVE_DIR', '.'))
@@ -537,7 +537,11 @@ def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecifie
 	override = A.pull('override', None, raw=True, silent=True)
 	
 	if runs is None:
-		runs = A.pull('runs')
+		runs = A.pull('runs', None)
+	
+	if runs is None:
+		run_name = A.pull('run-name')
+		runs = [run_name]
 	
 	if dataset is unspecified_argument:
 		dataset = A.pull('dataset', None)
@@ -568,68 +572,68 @@ def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecifie
 				print(f'Running: {run.get_name()} ({i+1}/{len(runs)})')
 				_eval_run(A, run=run, metrics=metrics)
 
-
-@fig.Script('eval-fid')
-def _eval_fid(A, run=None, fid=None, dataset=None):
-	if run is None:
-		run = A.pull('run')
-	
-	if fid is None:
-		fid = A.pull('fid', ref=True)
-	
-	ident = A.pull('ident', 'eval')
-	overwrite = A.pull('overwrite', False)
-	
-	model = None
-	results = run.get_results(ident)
-	out = None if overwrite or results is None else util.TensorDict(results)
-	
-	if 'rec_fid' not in results:
-		
-		model = run.get_model()
-		if dataset is None:
-			dataset = run.get_dataset()
-		else:
-			run.dataset = dataset
-	
-		out = model.evaluate(run, A, out=out)
-		
-	
-		run.update_results(ident, out)
-	
-
-@fig.Script('eval-multiple-fids')
-def _eval_all_fid(A, runs=None, dataset=unspecified_argument, fid=None):
-
-	saveroot = A.pull('saveroot', os.environ.get('FOUNDATION_SAVE_DIR', '.'))
-	root = Path(saveroot)
-
-	override = A.pull('override', None, raw=True, silent=True)
-	
-	if runs is None:
-		runs = A.pull('runs')
-
-	if dataset is unspecified_argument:
-		dataset = A.pull('dataset', None)
-
-	if fid is None:
-		fid = A.pull('fid', ref=True)
-	
-	with A.silenced():
-		
-		for i, name in enumerate(runs):
-			
-			path = root / name
-			
-			if path.is_dir():
-				config = fig.get_config(str(path))
-				config.push('path', name)
-				config.push('saveroot', saveroot)
-				if override is not None:
-					config.update({'override': override})
-				run = config.pull('run')
-				
-				print(f'Running: {run.get_name()} ({i + 1}/{len(runs)})')
-				_eval_fid(A, run=run, fid=fid, dataset=dataset)
-	pass
-
+#
+# @fig.Script('eval-fid')
+# def _eval_fid(A, run=None, fid=None, dataset=None):
+# 	if run is None:
+# 		run = A.pull('run')
+#
+# 	if fid is None:
+# 		fid = A.pull('fid', ref=True)
+#
+# 	ident = A.pull('ident', 'eval')
+# 	overwrite = A.pull('overwrite', False)
+#
+# 	model = None
+# 	results = run.get_results(ident)
+# 	out = None if overwrite or results is None else util.TensorDict(results)
+#
+# 	if 'rec_fid' not in results:
+#
+# 		model = run.get_model()
+# 		if dataset is None:
+# 			dataset = run.get_dataset()
+# 		else:
+# 			run.dataset = dataset
+#
+# 		out = model.evaluate(run, A, out=out)
+#
+#
+# 		run.update_results(ident, out)
+#
+#
+# @fig.Script('eval-multiple-fids')
+# def _eval_all_fid(A, runs=None, dataset=unspecified_argument, fid=None):
+#
+# 	saveroot = A.pull('saveroot', os.environ.get('FOUNDATION_SAVE_DIR', '.'))
+# 	root = Path(saveroot)
+#
+# 	override = A.pull('override', None, raw=True, silent=True)
+#
+# 	if runs is None:
+# 		runs = A.pull('runs')
+#
+# 	if dataset is unspecified_argument:
+# 		dataset = A.pull('dataset', None)
+#
+# 	if fid is None:
+# 		fid = A.pull('fid', ref=True)
+#
+# 	with A.silenced():
+#
+# 		for i, name in enumerate(runs):
+#
+# 			path = root / name
+#
+# 			if path.is_dir():
+# 				config = fig.get_config(str(path))
+# 				config.push('path', name)
+# 				config.push('saveroot', saveroot)
+# 				if override is not None:
+# 					config.update({'override': override})
+# 				run = config.pull('run')
+#
+# 				print(f'Running: {run.get_name()} ({i + 1}/{len(runs)})')
+# 				_eval_fid(A, run=run, fid=fid, dataset=dataset)
+# 	pass
+#
