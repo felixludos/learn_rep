@@ -20,6 +20,8 @@ runs:
 - 3ds_vae1_e-l6_d-l6_mish_210125-140021
 - 3ds_vae1_e-l12_d-l12_mish_210125-140249
 
+#saveroot: C:\Users\anwan\Documents\workspace\sae\trained_nets
+
 #num_groups: 10
 #num_latent: 100
 #num_train: 100
