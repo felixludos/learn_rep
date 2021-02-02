@@ -1,0 +1,3 @@
+_meta.script_name: train
+
+parents: [a/conv12, m/ae, d/vec]
