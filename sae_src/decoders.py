@@ -19,9 +19,13 @@ class StyleDecoder(fd.Decodable, models.StyleFusion):
 		in_order = A.pull('in_order', in_order)
 
 		super().__init__(A, in_order=in_order, **kwargs)
+		
+		self.group_dims = self.style_dims.copy()
 
 		din, dout = self.get_dims()
 
+		if not isinstance(din, (list, tuple)):
+			din = din,
 		self.root = nn.Parameter(torch.randn(*din), requires_grad=True)
 		self.din = self.get_style_dim()
 

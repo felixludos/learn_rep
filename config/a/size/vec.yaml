@@ -1,0 +1,29 @@
+
+parents: [a/_base]
+
+width: 64
+
+model:
+
+  feature-dim: 16
+
+  conv_type: dense-layer
+
+  criterion.ident: mse
+
+  optim.lr: 0.001
+
+  encoder:
+
+    rung_net.hidden: [ <>width ]
+
+    last.hidden: [<>width]
+
+  decoder:
+
+    first.hidden: [<>width]
+
+    style_net.hidden: [ <>width ]
+
+    last.nonlin: None
+

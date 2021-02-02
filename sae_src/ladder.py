@@ -83,17 +83,24 @@ class GenerativeRung(models.StyleFusionLayer):
 			din = A.pull('din', None)
 			
 		if din is not None:
-			C, H, W = din
-			dout = C+extra_dim, H, W
+			if isinstance(din, (tuple, list)):
+				C, H, W = din
+				dout = C+extra_dim, H, W
+			else:
+				dout = din+extra_dim
 			
 		else:
 			
 			if dout is None:
 				dout = A.pull('dout', None)
 		
-			C, H, W = dout
+			if isinstance(dout, (tuple, list)):
+				C, H, W = dout
+				
+				din = C-extra_dim, H, W
 			
-			din = C-extra_dim, H, W
+			else:
+				din = dout - extra_dim
 		
 		super().__init__(A, din=din, style_dim=style_dim, dout=dout, **kwargs)
 		

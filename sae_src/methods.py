@@ -65,7 +65,7 @@ class Autoencoder(SimpleAutoencoder):
 			try:
 				dist = fid.compute_distance(stats)
 			except AssertionError:
-				print('Failed to compute the Rec FID')
+				print(f'Failed to compute the {name.capitalize()} FID')
 			else:
 				self.register_stats(key)
 				self.mete(key, dist)
@@ -82,7 +82,7 @@ class Autoencoder(SimpleAutoencoder):
 		fid = config.pull('fid', None, ref=True)
 		
 		if fid is not None:
-		
+			
 			dataset = info.get_dataset()
 			
 			try:
@@ -91,7 +91,8 @@ class Autoencoder(SimpleAutoencoder):
 				print(e)
 			else:
 				fid.set_baseline_stats(base_stats)
-			
+		
+		if not config.pull('skip-rec-fid', False) and fid is not None:
 			loader = info.get_loader(infinite=True)
 			def _rec_gen(N):
 				img = self._process_batch(loader.demand(N)).original
@@ -169,6 +170,8 @@ class Hybrid(Autoencoder, Generative_AE):
 	
 		super().__init__(A, **kwargs)
 		
+		self.hybridize_groups = A.pull('hybridize-groups', False)
+		
 		self.register_buffer('_latent', None, persistent=True) # TODO: replace this with a proper replay buffer
 		
 		if viz_gen_hybrid:
@@ -178,9 +181,12 @@ class Hybrid(Autoencoder, Generative_AE):
 		
 		out = super()._evaluate(info, config, out=out)
 		
-		fid = config.pull('fid', None, ref=True, silent=True)
-		if fid is not None:
-			self._compute_fid(fid, self.generate_hybrid, name='hybrid', out=out)
+		if not config.pull('skip-hyb-fid', False):
+		
+			fid = config.pull('fid', None, ref=True, silent=True)
+			if fid is not None:
+				self._compute_fid(fid, self.generate_hybrid,
+				                  name='hyb-grp' if self.hybridize_groups else 'hybrid', out=out)
 	
 		return out
 	
@@ -206,6 +212,13 @@ class Hybrid(Autoencoder, Generative_AE):
 	def hybridize(self, prior=None):
 		if prior is None:
 			prior = self._latent
+		if self.hybridize_groups and hasattr(self.decoder, 'group_dims') and self.decoder.group_dims is not None:
+			splits = self.decoder.group_dims
+			groups = prior.split(splits, dim=1)
+			qs = []
+			for group in groups:
+				qs.append(group[torch.randperm(len(group),device=group.device)])
+			return torch.cat(qs, 1)
 		return util.shuffle_dim(prior)
 	
 	def sample_hybrid(self, N=None, prior=None):

@@ -1,0 +1,20 @@
+
+
+saveroot: C:\Users\anwan\Documents\workspace\sae\final
+
+mode: test
+ident: final-hyb
+
+fid.pbar._type: progress-bar
+
+evaluation: None
+
+override.model.hybridize-groups: True
+
+skip-rec-fid: True
+
+#path: 3ds_ae0_e-c12_d-s6_mish_210125-140253
+
+#fid.dim: 2048
+#fid.n_samples: 1000
+#fid.batch_size: 20

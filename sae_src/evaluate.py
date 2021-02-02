@@ -425,10 +425,14 @@ class LatentResponses(Disentanglement_Evaluator):
 			plt.tight_layout()
 			util.save_figure(f'{run_name}_interactions', root=self.figure_dir)
 		
-
-		if self.interventions is None:
-			self.interventions = sample_full_interventions(self.dataset, num_groups=self.num_groups, pbar=self.pbar)
-
+		try:
+			if self.interventions is None:
+				self.interventions = sample_full_interventions(self.dataset, num_groups=self.num_groups, pbar=self.pbar)
+		except:
+			print('Skipping factor responses')
+			
+			return {}, \
+			       {'response_mat': R, 'covariance': C, }
 		
 		out = factor_reponses(model.encode, model.decode, self.interventions, pbar=self.pbar,
 		                            include_q=self.include_q,
