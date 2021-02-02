@@ -17,4 +17,4 @@ skip-rec-fid: True
 
 #fid.dim: 2048
 #fid.n_samples: 1000
-#fid.batch_size: 20
+fid.batch_size: 20

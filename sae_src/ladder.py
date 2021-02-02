@@ -56,13 +56,14 @@ class InferenceRung(models.StyleExtractorLayer):
 		style = inp
 		if self.pool_rung is not None:
 			B, C, *rest = inp.shape
-			style = inp.view(B, C, -1)
-			if self.pool_rung == 'max':
-				style = style.max(-1)[0]
-			elif self.pool_rung == 'sum':
-				style = style.sum(-1)
-			else:
-				style = style.mean(-1)
+			if len(rest):
+				style = inp.view(B, C, -1)
+				if self.pool_rung == 'max':
+					style = style.max(-1)[0]
+				elif self.pool_rung == 'sum':
+					style = style.sum(-1)
+				else:
+					style = style.mean(-1)
 		style = self.net(style)
 		return inp, style
 	
@@ -124,9 +125,11 @@ class GenerativeRung(models.StyleFusionLayer):
 	
 	def infuse(self, content, style, **kwargs):
 		
-		B = style.size(0)
+		B, C, *rest = content.size()
 		
-		style = style.unsqueeze(-1).unsqueeze(-1).expand(B, self.extra_dim, *content.shape[2:])
+		if len(rest):
+			style = style.unsqueeze(-1).unsqueeze(-1).expand(B, self.extra_dim, *rest)
+		
 		
 		return torch.cat([content, style], 1)  # concatenates the noise
 
