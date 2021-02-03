@@ -1,0 +1,68 @@
+# parents = [...]
+
+step_device: <>device
+device: cuda
+num_workers: 0
+seed: 0
+
+#limit: <>budget
+
+run:
+  _type: run
+  _mod:
+    inline: 5
+  allow-missing-mods: True
+
+
+clock:
+  _type: clock
+  tau: 1
+
+validation:
+  _type: run/epoch
+  loader-seed: <>seed
+  mode: val
+checkpoint._type: run/checkpoint
+viz._type: run/viz
+print._type: run/print
+
+evaluation:
+  _type: run/epoch
+  loader-seed: <>seed
+  mode: <>eval.mode
+
+records:
+  _type: records
+  include-zero: True
+
+logger:
+  _type: logger
+  tensorboard: true
+  log_dir: <>path
+
+  use_log_fmts: True
+
+stats:
+  _type: stats-manager
+  reset-modes: [val, test]
+
+
+dataset:
+  _type: dataset
+
+  batch_size: 128
+
+  shuffle: true
+  drop_last: false
+
+  store_keys: ['din', 'dout']
+
+  mode-aliases:
+    eval: val
+
+model:
+  _type: model
+
+  _print_model: yes
+  _print_optim: yes
+
