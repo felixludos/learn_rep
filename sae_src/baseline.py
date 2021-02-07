@@ -8,9 +8,9 @@ from torch.nn import functional as F
 
 import omnifig as fig
 
-import foundation as fd
-from foundation import models
-from foundation import util
+import omnilearn as fd
+from omnilearn import models
+from omnilearn import util
 
 
 @fig.Component('dislib-enc')

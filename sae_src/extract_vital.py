@@ -1,8 +1,8 @@
 import os, shutil
 
-from foundation import util
+from omnilearn import util
 
-root = os.environ['FOUNDATION_SAVE_DIR']
+root = os.environ['OMNILEARN_SAVE_DIR']
 print(root)
 
 raw = '''AE	Conv	3ds-ae-conv_0002-6337051-00_200508-232722

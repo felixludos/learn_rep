@@ -5,8 +5,8 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader
 from torch import distributions as distrib
 
-from foundation import util
-from foundation.data import Intervention_Sampler
+from omnilearn import util
+from omnilearn.data import Intervention_Sampler
 
 
 def compute_response(Q, encode, decode, include_q2=False,

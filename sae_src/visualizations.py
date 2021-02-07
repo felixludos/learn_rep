@@ -4,10 +4,10 @@ import torch
 from torch.utils.data import TensorDataset
 # %matplotlib tk
 #plt.switch_backend('Qt5Agg') #('Qt5Agg')
-from foundation import util
+from omnilearn import util
 # from foundation.old import train as trn
 # from foundation import train as trn
-from foundation import data as datautils
+from omnilearn import data as datautils
 
 import pandas as pd
 import numpy as np

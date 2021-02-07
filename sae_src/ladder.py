@@ -11,9 +11,9 @@ from torch import distributions as distrib
 
 import omnifig as fig
 
-import foundation as fd
-from foundation import models
-from foundation import util
+import omnilearn as fd
+from omnilearn import models
+from omnilearn import util
 
 from .structure_modules import _find_dims
 

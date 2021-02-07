@@ -5,8 +5,9 @@ import torch
 
 from omnibelt import unspecified_argument
 
-from foundation.op.datasets import MPI3D, Shapes3D, CelebA
-from foundation.data import Dataset, JointFactorSampler, DatasetBase, Batchable, Deviced
+from omnilearn.op.datasets import MPI3D, Shapes3D, CelebA
+from omnilearn.data import Dataset, JointFactorSampler, DatasetBase, Batchable, Deviced
+from omnilearn.util import Configurable, InitWall
 
 @Dataset('full-mpi3d')
 class Full_MPI3D(MPI3D):
@@ -42,6 +43,7 @@ class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
 		seed = A.pull('seed')
 		mode = A.pull('mode', 'train')
 		seed += hash(mode) # deterministically change seed depending on train/test split
+		seed %= 2**32
 
 		labeled = A.pull('labeled', False)
 
@@ -59,6 +61,7 @@ class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
 		self.num_nodes = num_nodes
 		
 		self.labeled = labeled
+		self.seed = seed
 		self.rng = torch.Generator(device=device).manual_seed(seed)
 		
 		self.prior = None
@@ -109,7 +112,38 @@ class RandomNetDataset(SimpleVectorDataset):
 		return self.net(prior).detach()
 
 
+from .scm import SCM_Simul
+from .scm.data import erdos_renyi
+
+@Dataset('random-scm')
+class RandomSCMDataset(RandomNetDataset):
+	def __init__(self, A, **kwargs):
+		super().__init__(A, **kwargs)
+		
+		self.er = erdos_renyi.ER(self.num_nodes, num_samples=self.num_samples, seed=self.seed)
+		self.prior = self.er.samples.to(self.get_device())
 
 
 
+# # @Dataset('random-scm')
+# class SCMDataset(DatasetBase, Configurable, InitWall, SCM_Simul):
+# 	def __init__(self, A, num_nodes=None, num_samples=None, device=None, **kwargs):
+#
+# 		if num_nodes is None:
+# 			num_nodes = A.pull('num-nodes', 8)
+#
+# 		if num_samples is None:
+# 			num_samples = A.pull('num-samples', 100000)
+#
+# 		if device is None:
+# 			device = A.pull('device')
+#
+# 		super().__init__(A, _req_kwargs={'num_nodes':num_nodes,
+# 		                                 'num_samples':num_samples, 'device': device},
+# 		                 device=device, **kwargs)
+#
+# 		self.din, self.dout = self.samples.shape[-1], self.samples.shape[-1]
+#
+# 	def __len__(self):
+# 		return len(self.samples)
 

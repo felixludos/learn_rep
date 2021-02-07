@@ -12,8 +12,8 @@ import numpy as np
 import torch
 from torch import distributions as distrib
 
-from foundation import util
-from foundation.eval import Evaluator
+from omnilearn import util
+from omnilearn.eval import Evaluator
 
 from .responses import sample_full_interventions, response_mat, factor_reponses
 from .metrics import metric_beta_vae, metric_factor_vae, mig, dci, irs, sap, \
@@ -457,6 +457,8 @@ class LatentResponses(Disentanglement_Evaluator):
 		return {'disentanglement': disentanglement}, \
 		       {'response_mat':R, 'covariance':C, 'factor_responses':mats, 'factor_responses_q':lts,}
 	
+	
+	
 @fig.Script('eval-metrics')
 def _eval_run(A, run=None, metrics=None, mode=None,
               force_run=None, force_save=None, log_stats=unspecified_argument,
@@ -472,7 +474,7 @@ def _eval_run(A, run=None, metrics=None, mode=None,
 	if force_save is None:
 		force_save = A.pull('force-save', False)
 	if force_run is None:
-		force_run = A.pull('force-run', False)
+		force_run = A.pull('force-run', force_save)
 	
 	if log_stats is unspecified_argument:
 		log_stats = A.pull('log-stats', None)
@@ -501,12 +503,12 @@ def _eval_run(A, run=None, metrics=None, mode=None,
 	scores = {}
 	results = {}
 	
-	todo = metrics.items()
-	if pbar is not None:
-		todo = pbar(todo, total=len(metrics))
-	for name, metric in todo:
-		if pbar is not None:
-			todo.set_description(name)
+	# if pbar is not None:
+	# 	todo = pbar(todo, total=len(metrics))
+	for name, metric in metrics.items():
+		# if pbar is not None:
+		# 	todo.set_description(name)
+		print(name)
 		metric.set_model(model)
 		
 		score, result = metric.compute(run)
@@ -535,7 +537,7 @@ def _eval_run(A, run=None, metrics=None, mode=None,
 @fig.Script('eval-multiple-metrics')
 def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecified_argument):
 	
-	saveroot = A.pull('saveroot', os.environ.get('FOUNDATION_SAVE_DIR', '.'))
+	saveroot = A.pull('saveroot', os.environ.get('OMNILEARN_SAVE_DIR', '.'))
 	root = Path(saveroot)
 	
 	override = A.pull('override', None, raw=True, silent=True)
@@ -575,69 +577,3 @@ def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecifie
 				
 				print(f'Running: {run.get_name()} ({i+1}/{len(runs)})')
 				_eval_run(A, run=run, metrics=metrics)
-
-#
-# @fig.Script('eval-fid')
-# def _eval_fid(A, run=None, fid=None, dataset=None):
-# 	if run is None:
-# 		run = A.pull('run')
-#
-# 	if fid is None:
-# 		fid = A.pull('fid', ref=True)
-#
-# 	ident = A.pull('ident', 'eval')
-# 	overwrite = A.pull('overwrite', False)
-#
-# 	model = None
-# 	results = run.get_results(ident)
-# 	out = None if overwrite or results is None else util.TensorDict(results)
-#
-# 	if 'rec_fid' not in results:
-#
-# 		model = run.get_model()
-# 		if dataset is None:
-# 			dataset = run.get_dataset()
-# 		else:
-# 			run.dataset = dataset
-#
-# 		out = model.evaluate(run, A, out=out)
-#
-#
-# 		run.update_results(ident, out)
-#
-#
-# @fig.Script('eval-multiple-fids')
-# def _eval_all_fid(A, runs=None, dataset=unspecified_argument, fid=None):
-#
-# 	saveroot = A.pull('saveroot', os.environ.get('FOUNDATION_SAVE_DIR', '.'))
-# 	root = Path(saveroot)
-#
-# 	override = A.pull('override', None, raw=True, silent=True)
-#
-# 	if runs is None:
-# 		runs = A.pull('runs')
-#
-# 	if dataset is unspecified_argument:
-# 		dataset = A.pull('dataset', None)
-#
-# 	if fid is None:
-# 		fid = A.pull('fid', ref=True)
-#
-# 	with A.silenced():
-#
-# 		for i, name in enumerate(runs):
-#
-# 			path = root / name
-#
-# 			if path.is_dir():
-# 				config = fig.get_config(str(path))
-# 				config.push('path', name)
-# 				config.push('saveroot', saveroot)
-# 				if override is not None:
-# 					config.update({'override': override})
-# 				run = config.pull('run')
-#
-# 				print(f'Running: {run.get_name()} ({i + 1}/{len(runs)})')
-# 				_eval_fid(A, run=run, fid=fid, dataset=dataset)
-# 	pass
-#

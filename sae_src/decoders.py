@@ -8,8 +8,8 @@ import omnifig as fig
 import numpy as np
 #%matplotlib tk
 
-import foundation as fd
-from foundation import models
+import omnilearn as fd
+from omnilearn import models
 
 @fig.Component('style-dec')
 class StyleDecoder(fd.Decodable, models.StyleFusion):
@@ -20,7 +20,7 @@ class StyleDecoder(fd.Decodable, models.StyleFusion):
 
 		super().__init__(A, in_order=in_order, **kwargs)
 		
-		self.group_dims = self.style_dims.copy()
+		self.group_dims = self.style_dims.copy() if self.style_dims is not None else None
 
 		din, dout = self.get_dims()
 

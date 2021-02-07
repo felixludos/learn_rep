@@ -1,5 +1,6 @@
+from omnibelt import set_global_setting
 import omnifig as fig
-import foundation as fd
+import omnilearn as fd
 
 @fig.Component('sae-run')
 class SAE_Run(fd.op.Torch_Run):

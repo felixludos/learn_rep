@@ -9,22 +9,26 @@ import torch.distributions as distrib
 import numpy as np
 import matplotlib.pyplot as plt
 
+from omnibelt import get_printer
+
 import omnifig as fig
+
+prt = get_printer(__name__)
 
 try:
 	import umap, shap
 	import umap.plot
 	import gpumap
 except ImportError:
-	print('WARNING: umap not found')
+	prt.info('umap not found')
 from sklearn.decomposition import PCA
 
-import foundation as fd
-from foundation import models
-from foundation import util
-from foundation.models.unsup import Autoencoder as SimpleAutoencoder, Generative_AE, Variational_Autoencoder, Wasserstein_Autoencoder
-from foundation import viz as viz_util
-from foundation.data.collectors import MissingFIDStatsError
+import omnilearn as fd
+from omnilearn import models
+from omnilearn import util
+from omnilearn.models.unsup import Autoencoder as SimpleAutoencoder, Generative_AE, Variational_Autoencoder, Wasserstein_Autoencoder
+from omnilearn import viz as viz_util
+from omnilearn.data.collectors import MissingFIDStatsError
 # from foundation import train as trn
 
 # if 'FOUNDATION_RUN_MODE' in os.environ and os.environ['FOUNDATION_RUN_MODE'] == 'jupyter':
@@ -193,10 +197,10 @@ class Hybrid(Autoencoder, Generative_AE):
 	def _visualize(self, info, records):
 		super()._visualize(info, records)
 		
-		B = info.original.size(0)
+		B, C, *other = info.original.size()
 		N = min(B, 8)
 		
-		if 'gen-hybrid' in self._viz_settings or not self.training:
+		if len(other) and 'gen-hybrid' in self._viz_settings or not self.training:
 			viz_gen = self.generate_hybrid(2 * N)
 			records.log('images', 'gen-hybrid', util.image_size_limiter(viz_gen))
 	
@@ -275,10 +279,10 @@ class Prior(Autoencoder, Generative_AE):
 	def _visualize(self, info, records):
 		super()._visualize(info, records)
 		
-		B = info.original.size(0)
+		B, C, *other = info.original.size()
 		N = min(B, 8)
 		
-		if 'gen-prior' in self._viz_settings or not self.training:
+		if len(other) and 'gen-prior' in self._viz_settings or not self.training:
 			viz_gen = self.generate_prior(2 * N)
 			records.log('images', 'gen-prior', util.image_size_limiter(viz_gen))
 	
