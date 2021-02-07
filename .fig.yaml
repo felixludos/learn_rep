@@ -1,14 +1,11 @@
 
 name: sae
 #name: Structure by Architecture
-author: felixludos
 
 version: 0.1
 license: MIT
 
 #related: [foundation]
-
-#github: felixludos/learn_rep
 
 #description: "Universal configuration system for common execution environments"
 
