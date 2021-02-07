@@ -1,5 +1,5 @@
-humpack==0.3.2
-omnibelt==0.4.1
-omnifig==0.5.9
-git+git://github.com/felixludos/foundation@learnrep
+humpack==0.3.3
+omnibelt==0.4.2
+omnifig==0.5.11
+omnilearn==0.5.1
 
