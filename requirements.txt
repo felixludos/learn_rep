@@ -1,5 +1,5 @@
 humpack==0.3.3
 omnibelt==0.4.2
 omnifig==0.5.11
-omnilearn==0.5.3
+omnilearn==0.5.5
 
