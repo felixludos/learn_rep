@@ -1,5 +1,6 @@
+networkx
 humpack==0.3.4
 omnibelt==0.4.3
 omnifig==0.5.12
-omnilearn==0.5.6
+omnilearn==0.5.7
 
