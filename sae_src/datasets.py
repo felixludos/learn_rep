@@ -104,8 +104,9 @@ class RandomNetDataset(SimpleVectorDataset):
 		if net is unspecified_argument:
 			torch.manual_seed(seed) # should not change in testset
 			net = A.pull('net', None)
-			for param in net.parameters():
-				param.requires_grad = False
+			if net is not None:
+				for param in net.parameters():
+					param.requires_grad = False
 		
 		super().__init__(A, num_nodes=num_nodes, out_dim=num_nodes if net is None else net.dout, **kwargs)
 		
@@ -135,6 +136,8 @@ class RandomSCMDataset(RandomNetDataset):
 	
 	def get_adjacency_matrix(self):
 		return self.er.adjacency_matrix.copy()
+
+
 
 @fig.Component('scm-interventions')
 class SCMSampler(InterventionSampler):

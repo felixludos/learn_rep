@@ -9,10 +9,10 @@
 #budget: 1000
 #dataset.net: None
 
-#seed: 1
+#seed: 1000
 
 parents: [eval/scm]
-run-name: test-pycharm_210210-042053
+run-name: scm_vae1_e-c12_d-c12_210210-044522
 force-run: True
 #
 figure_dir: 'C:\Users\anwan\OneDrive\Khan\research\learn_rep\figures\icml\scm'

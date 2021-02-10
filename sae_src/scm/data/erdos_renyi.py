@@ -1,7 +1,9 @@
 import numpy as np
 import torch
 from .generator import Generator
-import networkx as nx 
+import networkx as nx
+
+from omnilearn import util
 
 class ER(Generator):
 	def __init__(self, num_nodes, exp_edges = 1, noise_type='isotropic-gaussian', noise_sigma = 1.0, num_samples=1000, seed = 10):
@@ -11,15 +13,14 @@ class ER(Generator):
 		p = float(exp_edges)/ (num_nodes-1)
 		
 		acyclic = 0
-		count = 1
 
 		while not acyclic:
+			seed = util.gen_deterministic_seed(seed)
 			if exp_edges <= 2:
-				self.graph = nx.generators.random_graphs.fast_gnp_random_graph(num_nodes, p, directed = True, seed = seed*count)
+				self.graph = nx.generators.random_graphs.fast_gnp_random_graph(num_nodes, p, directed = True, seed = seed)
 			else:
-				self.graph = nx.generators.random_graphs.gnp_random_graph(num_nodes, p, directed = True, seed = seed*count)
+				self.graph = nx.generators.random_graphs.gnp_random_graph(num_nodes, p, directed = True, seed = seed)
 			acyclic = expm_np(nx.to_numpy_matrix(self.graph), num_nodes) == 0
-			count += 1
 		super().__init__(num_nodes, len(self.graph.edges), noise_type, num_samples, seed = seed)
 		self.init_sampler()
 		self.samples = self.sample(self.num_samples)
