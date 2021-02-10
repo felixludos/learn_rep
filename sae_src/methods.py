@@ -54,6 +54,8 @@ class Autoencoder(SimpleAutoencoder):
 		super().__init__(A, **kwargs)
 		
 		self._viz_settings.add('gen-prior')
+		if A.pull('force-viz', False):
+			self._viz_settings.add('force')
 
 	def _compute_fid(self, fid, generate_fn, name, out):
 		
@@ -109,7 +111,19 @@ class Autoencoder(SimpleAutoencoder):
 
 	def _visualize(self, info, records):
 		
+		settings = self._viz_settings
+		
+		if 'force' in settings:
+			ori, rec = info.original, info.reconstruction
+			
+			B = ori.size(0)
+			H, W = util.calc_tiling(ori.size(-1))
+			
+			info.original, info.reconstruction = ori.view(B, 1, H, W).sigmoid(), rec.view(B, 1, H, W).sigmoid()
+		
 		super()._visualize(info, records)
+		
+		x = info.original
 		
 		if self.get_mode() != 'train': # expensive visualizations
 			
@@ -117,7 +131,7 @@ class Autoencoder(SimpleAutoencoder):
 			steps = 20
 			ntrav = 1
 			
-			if 'latent' in info:
+			if 'latent' in info and len(x.shape) > 2:
 				q = info.latent
 				if isinstance(info.latent, distrib.Distribution):
 					q = q.loc
@@ -132,7 +146,15 @@ class Autoencoder(SimpleAutoencoder):
 				                                   mnmx=(Q.min(0)[0].unsqueeze(-1), Q.max(0)[0].unsqueeze(-1))).contiguous()
 				# deltas = torch.diagonal(vecs, dim1=-3, dim2=-1)
 				
-				walks = viz_util.get_traversals(vecs, self.decode, device=self.device).cpu()
+				decode = self.decode
+				if 'force' in settings:
+					def decode(q):
+						B = q.size(0)
+						r = self.decode(q)
+						r = r.view(B, 1, H, W).sigmoid()
+						return r
+				
+				walks = viz_util.get_traversals(vecs, decode, device=self.device).cpu()
 				diffs = viz_util.compute_diffs(walks)
 				
 				info.diffs = diffs
@@ -195,13 +217,16 @@ class Hybrid(Autoencoder, Generative_AE):
 		return out
 	
 	def _visualize(self, info, records):
+		settings = self._viz_settings
 		super()._visualize(info, records)
 		
 		B, C, *other = info.original.size()
 		N = min(B, 8)
 		
-		if len(other) and 'gen-hybrid' in self._viz_settings or not self.training:
-			viz_gen = self.generate_hybrid(2 * N)
+		if len(other) and ('gen-hybrid' in self._viz_settings or not self.training):
+			viz_gen = self.generate_hybrid(2 * N).view(2*N, C, *other)
+			if 'force' in settings:
+				viz_gen = viz_gen.sigmoid()
 			records.log('images', 'gen-hybrid', util.image_size_limiter(viz_gen))
 	
 	def _step(self, batch, out=None):
@@ -277,13 +302,16 @@ class Prior(Autoencoder, Generative_AE):
 		return out
 	
 	def _visualize(self, info, records):
+		settings = self._viz_settings
 		super()._visualize(info, records)
 		
 		B, C, *other = info.original.size()
 		N = min(B, 8)
 		
-		if len(other) and 'gen-prior' in self._viz_settings or not self.training:
-			viz_gen = self.generate_prior(2 * N)
+		if len(other) and ('gen-prior' in self._viz_settings or not self.training):
+			viz_gen = self.generate_prior(2 * N).view(2*N, C, *other)
+			if 'force' in settings:
+				viz_gen = viz_gen.sigmoid()
 			records.log('images', 'gen-prior', util.image_size_limiter(viz_gen))
 	
 	def generate(self, N=1, prior=None):

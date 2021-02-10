@@ -13,7 +13,9 @@ import torch
 from torch import distributions as distrib
 
 from omnilearn import util
+from omnilearn.op import get_save_dir
 from omnilearn.eval import Evaluator
+from omnilearn.data import InterventionSamplerBase
 
 from .responses import sample_full_interventions, response_mat, factor_reponses
 from .metrics import metric_beta_vae, metric_factor_vae, mig, dci, irs, sap, \
@@ -351,7 +353,7 @@ class LatentResponses(Disentanglement_Evaluator):
 		if figure_dir is not None:
 			figure_dir = Path(figure_dir)
 			if not figure_dir.is_dir():
-				figure_dir.mkdir()
+				figure_dir.mkdir(exist_ok=True)
 		
 		pbar = A.pull('pbar', None)
 		
@@ -390,7 +392,7 @@ class LatentResponses(Disentanglement_Evaluator):
 		bs = self.batch_size
 		loader = self.dataset.get_loader(infinite=True, shuffle=True, seed=0, batch_size=bs)
 		loader = iter(loader)
-		pbar = tqdm(total=total)
+		pbar = self.pbar(total=total)
 		while len(fullQ) < total // bs:
 			batch = next(loader)
 			x = model._process_batch(batch).original
@@ -425,10 +427,17 @@ class LatentResponses(Disentanglement_Evaluator):
 			plt.tight_layout()
 			util.save_figure(f'{run_name}_interactions', root=self.figure_dir)
 		
+		sampler = info.get_config().pull('sampler', None)
+		if sampler is None:
+			sampler = InterventionSamplerBase(self.dataset)
+		else:
+			self.interventions = None
+		
 		try:
 			if self.interventions is None:
-				self.interventions = sample_full_interventions(self.dataset, num_groups=self.num_groups, pbar=self.pbar)
+				self.interventions = sample_full_interventions(sampler, num_groups=self.num_groups, pbar=self.pbar)
 		except:
+			raise
 			print('Skipping factor responses')
 			
 			return {}, \
@@ -451,6 +460,17 @@ class LatentResponses(Disentanglement_Evaluator):
 			plt.xlabel('Latent dimension')
 			plt.tight_layout()
 			util.save_figure(f'{run_name}_factor-responses', root=self.figure_dir)
+		
+			try:
+				graph = self.dataset.get_adjacency_matrix()
+			except AttributeError:
+				pass
+			else:
+				util.plot_mat(graph, val_fmt=1)
+				plt.yticks(range(len(factors)), factors)
+				plt.xlabel('True Dimension')
+				plt.tight_layout()
+				util.save_figure(f'{run_name}_graph', root=self.figure_dir)
 		
 		disentanglement = M.max(0)[0].sum() / M.sum()
 		
@@ -537,8 +557,7 @@ def _eval_run(A, run=None, metrics=None, mode=None,
 @fig.Script('eval-multiple-metrics')
 def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecified_argument):
 	
-	saveroot = A.pull('saveroot', os.environ.get('OMNILEARN_SAVE_DIR', '.'))
-	root = Path(saveroot)
+	saveroot = get_save_dir(A)
 	
 	override = A.pull('override', None, raw=True, silent=True)
 	
@@ -559,21 +578,31 @@ def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecifie
 			del metrics['_list']
 			
 	if runs == 'all':
-		runs = list(root.glob('*'))
+		runs = list(saveroot.glob('*'))
 		
 	with A.silenced():
 	
 		for i, name in enumerate(runs):
 			
-			path = root / name
+			run = fig.quick_run('load-run', path=name, saveroot=str(saveroot), override=override)
 			
-			if path.is_dir():
-				config = fig.get_config(str(path))
-				config.push('path', name)
-				config.push('saveroot', saveroot)
-				if override is not None:
-					config.update({'override':override})
-				run = config.pull('run')
-				
-				print(f'Running: {run.get_name()} ({i+1}/{len(runs)})')
-				_eval_run(A, run=run, metrics=metrics)
+			print(f'Running: {run.get_name()} ({i + 1}/{len(runs)})')
+			
+			if dataset is None:
+				for metric in metrics.values():
+					metric.set_dataset(run.get_dataset())
+			
+			_eval_run(A, run=run, metrics=metrics)
+			#
+			# path = root / name
+			#
+			# if path.is_dir():
+			# 	config = fig.get_config(str(path))
+			# 	config.push('path', name)
+			# 	config.push('saveroot', saveroot)
+			# 	if override is not None:
+			# 		config.update({'override':override})
+			# 	run = config.pull('run')
+			#
+			# 	print(f'Running: {run.get_name()} ({i+1}/{len(runs)})')
+			# 	_eval_run(A, run=run, metrics=metrics)

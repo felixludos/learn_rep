@@ -55,15 +55,39 @@ class ER(Generator):
 			for i in range(self.num_nodes):
 				self.graph.nodes[i]['sampler'] = torch.distributions.exponential.Exponential(noise_std[i])
 
-	def sample(self, num_samples, graph = None, node = None, value = None):
+	# def sample(self, num_samples, graph = None, node = None, value = None):
+	# 	if graph is None:
+	# 		graph = self.graph
+	#
+	# 	samples = torch.zeros(num_samples, self.num_nodes)
+	# 	edge_pointer = 0
+	# 	for i in nx.topological_sort(graph):
+	# 		if i == node:
+	# 			noise = torch.tensor([value]*num_samples)
+	# 		else:
+	# 			noise = self.graph.nodes[i]['sampler'].sample([num_samples])
+	# 		parents = list(self.graph.predecessors(i))
+	# 		if len(parents) == 0:
+	# 			samples[:,i] = noise
+	# 		else:
+	# 			curr = 0.
+	# 			for j in parents:
+	# 				curr += self.weighted_adjacency_matrix[j, i]*samples[:,j]
+	# 				edge_pointer += 1
+	# 			curr += noise
+	# 			samples[:, i] = curr
+	# 	return samples
+	
+
+	def sample(self, num_samples, graph = None, values = {}):
 		if graph is None:
 			graph = self.graph
 
 		samples = torch.zeros(num_samples, self.num_nodes)
 		edge_pointer = 0
 		for i in nx.topological_sort(graph):
-			if i == node:
-				noise = torch.tensor([value]*num_samples)
+			if i in values:
+				noise = torch.tensor([values[i]]*num_samples)
 			else:
 				noise = self.graph.nodes[i]['sampler'].sample([num_samples])
 			parents = list(self.graph.predecessors(i))
@@ -78,16 +102,48 @@ class ER(Generator):
 				samples[:, i] = curr
 		return samples
 
+	def _cut_graph(self, node, graph=None):
+		if graph is None:
+			graph = self.adjacency_matrix.copy()
+		graph[:, node] = 0. #Cut off all the parents
+		return graph
+
+	# def intervene(self, num_samples, node = None, value = None):
+	# 	if node is None:
+	# 		node = torch.randint(self.num_nodes, (1,))
+	# 	if value is None:
+	# 		value = torch.distributions.uniform.Uniform(-5,5).sample()
+	#
+	# 	mutated_graph = self._cut_graph(node)
+	#
+	# 	return self.sample(num_samples, nx.DiGraph(mutated_graph), {node.item():value.item()}), node, value
+
 	def intervene(self, num_samples, node = None, value = None):
-		if node is None:
-			node = torch.randint(self.num_nodes, (1,))
-		if value is None:
-			value = torch.distributions.uniform.Uniform(-5,5).sample()
+		return self.multi_intervene(num_samples, node, value)
 
-		mutated_graph = self.adjacency_matrix.copy()
-		mutated_graph[:, node] = 0. #Cut off all the parents
+	def multi_intervene(self, num_samples, nodes, values=None):
+		'''
+		
+		:param num_samples:
+		:param nodes: list of indices
+		:param values: list of values for each node that should be intervened
+		:return:
+		'''
+		if not isinstance(nodes, (list, tuple)):
+			nodes = [nodes]
+		if values is None:
+			values = torch.rand(len(nodes)).mul(10).sub(5)
+		elif not isinstance(values, (list, tuple)):
+			values = [values]
+		assert len(values) == len(nodes)
+		
+		graph = None
+		for node in nodes:
+			graph = self._cut_graph(node, graph)
+		
+		return self.sample(num_samples, nx.DiGraph(graph), dict(zip(nodes, values))), values
 
-		return self.sample(num_samples, nx.DiGraph(mutated_graph), node.item(), value.item()), node, value
+		
 
 def matrix_poly_np(matrix, d):
     x = np.eye(d) + matrix/d

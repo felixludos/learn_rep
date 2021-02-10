@@ -1,12 +1,12 @@
 
 import omnifig as fig
-
+import random
 import torch
 
 from omnibelt import unspecified_argument
 
 from omnilearn.op.datasets import MPI3D, Shapes3D, CelebA
-from omnilearn.data import Dataset, JointFactorSampler, DatasetBase, Batchable, Deviced
+from omnilearn.data import Dataset, JointFactorSampler, InterventionSampler, DatasetBase, Batchable, Deviced
 from omnilearn.util import Configurable, InitWall
 
 @Dataset('full-mpi3d')
@@ -94,21 +94,25 @@ class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
 
 @Dataset('random-net')
 class RandomNetDataset(SimpleVectorDataset):
-	def __init__(self, A, net=None, **kwargs):
+	def __init__(self, A, net=unspecified_argument, **kwargs):
 
 		num_nodes = A.pull('num-nodes', 8)
 		
-		if net is None:
-			net = A.pull('net')
-		for param in net.parameters():
-			param.requires_grad = False
+		if net is unspecified_argument:
+			net = A.pull('net', None)
+		if net is not None:
+			for param in net.parameters():
+				param.requires_grad = False
 		
-		super().__init__(A, num_nodes=num_nodes, out_dim=net.dout, **kwargs)
+		super().__init__(A, num_nodes=num_nodes, out_dim=num_nodes if net is None else net.dout, **kwargs)
 		
-		net.to(self.get_device())
+		if net is not None:
+			net.to(self.get_device())
 		self.net = net
 
 	def _process_prior(self, prior):
+		if self.net is None:
+			return prior
 		return self.net(prior).detach()
 
 
@@ -123,6 +127,53 @@ class RandomSCMDataset(RandomNetDataset):
 		self.er = erdos_renyi.ER(self.num_nodes, num_samples=self.num_samples, seed=self.seed)
 		self.prior = self.er.samples.to(self.get_device())
 
+	def get_factor_order(self):
+		return list(map(str,range(self.num_nodes)))
+	
+	def get_adjacency_matrix(self):
+		return self.er.adjacency_matrix.copy()
+
+@fig.Component('scm-interventions')
+class SCMSampler(InterventionSampler):
+	
+	def __init__(self, A, batch_size=None, **kwargs):
+		if batch_size is None:
+			batch_size = A.pull('batch_size', 128)
+		
+		super().__init__(A, **kwargs)
+		
+		self.batch_size = batch_size
+	
+	def __len__(self):
+		return self.dataset.num_nodes
+	
+	@property
+	def factors_num_values(self):
+		return [None]*self.dataset.num_nodes
+	
+	def intervention(self, idx=None, B=None, val=None):
+		if B is None:
+			B = self.batch_size
+		prior = self.dataset.er.intervene(B, idx, val)[0]
+		return self.dataset.process_prior(prior)
+	
+	def full_intervention(self, idx=None, B=None, vals=None):
+		if B is None:
+			B = self.batch_size
+		if idx is None:
+			idx = random.randint(0, self.num_factors-1)
+		if vals is not None:
+			vals = list(vals.t())
+			del vals[idx]
+		
+		inds = list(range(self.num_factors))
+		del inds[idx]
+		
+		prior = self.dataset.er.multi_intervene(B, inds, vals)[0]
+		return self.dataset.process_prior(prior)
+		
+	
+	pass
 
 
 # # @Dataset('random-scm')

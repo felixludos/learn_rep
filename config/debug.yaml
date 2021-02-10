@@ -1,14 +1,25 @@
 
-#_meta.help: True
-_meta.script_name: train
+#_meta.script_name: train
 #_meta.script_name: eval
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
 #parents: [demo]
 
-parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, d/vec]
+#parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, d/scm]
+#budget: 1000
+#dataset.net: None
 
-dataset.name: random-scm
+parents: [eval/scm]
+##run-name: random-net_ae_e-c12_d-s12_mish_210209-222008
+##run-name: random-net_ae_e-c12_d-s12_210209-203706
+#run-name: random-net_vae0p0001_e-c12_d-c12_210209-214350
+run-name: scm_ae_e-c12_d-s12_mish_210210-011012
+force-run: True
+
+figure_dir: 'C:\Users\anwan\OneDrive\Khan\research\learn_rep\figures\icml\scm'
+
+override.sampler:
+  _type: scm-interventions
 
 #parents: [ coord, nosplit, hybrid, a/e/conv12, a/d/strc/12, m/vae, d/3ds]
 #parents: [ hybrid, a/e/conv12, a/d/strc/6, m/ae, d/3ds ]
@@ -75,14 +86,14 @@ cat: toy
 #model.optim.lr: 0.001
 
 
-#name: test-pycharm
+name: test-pycharm
 inline: True
 #device: cuda:1
 
 #fid.dim: 2048
-fid.dim: 64
-fid.n_samples: 1000
-fid.batch_size: 20
+#fid.dim: 64
+#fid.n_samples: 1000
+#fid.batch_size: 20
 
 #dataset:
 #  device: cpu

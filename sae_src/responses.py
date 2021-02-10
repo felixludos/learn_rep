@@ -6,7 +6,7 @@ from torch.utils.data import TensorDataset, DataLoader
 from torch import distributions as distrib
 
 from omnilearn import util
-from omnilearn.data import Intervention_Sampler
+
 
 
 def compute_response(Q, encode, decode, include_q2=False,
@@ -93,9 +93,7 @@ def response_mat(Q, encode, decode, scales=None, dist_type='rms', **resp_kwargs)
 
 # from full interventions
 
-def sample_full_interventions(dataset, num_groups=50, device='cuda', pbar=None):
-	
-	sampler = Intervention_Sampler(dataset)
+def sample_full_interventions(sampler, num_groups=50, device='cuda', pbar=None):
 	
 	D = len(sampler)
 	
@@ -125,11 +123,11 @@ def factor_reponses(encode, decode, factor_samples, resp_kwargs={}, include_q=Fa
 	
 	for i, groups in enumerate(factor_samples):
 		
-		N, G, C, H, W = groups.size()
+		N, G, C, *other = groups.size()
 		
 		with torch.no_grad():
 			
-			Q = encode(groups.view(N*G, C, H, W))
+			Q = encode(groups.view(N*G, C, *other))
 			if isinstance(Q, distrib.Distribution):
 				Q = Q.loc
 			Qs = Q.view(N, G, -1)

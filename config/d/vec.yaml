@@ -18,6 +18,9 @@ dataset:
     dout: <>out-dim
     hidden: [128,128,128]
 
+force-viz: True
+fid: None
+
 info:
   dataset_type: random-net
 
