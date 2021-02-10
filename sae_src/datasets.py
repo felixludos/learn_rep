@@ -9,31 +9,6 @@ from omnilearn.op.datasets import MPI3D, Shapes3D, CelebA
 from omnilearn.data import Dataset, JointFactorSampler, InterventionSampler, DatasetBase, Batchable, Deviced
 from omnilearn.util import Configurable, InitWall
 
-@Dataset('full-mpi3d')
-class Full_MPI3D(MPI3D):
-	
-	def __init__(self, A, sort=None, **kwargs):
-		
-		if sort is None:
-			sort = A.pull('sort', True)
-		
-		super().__init__(A, mode='train', **kwargs)
-		
-		img1, idx1 = self.images, self.indices
-		
-		with A.silenced():
-			super().__init__(A, mode='test', **kwargs)
-		
-		self.images = torch.cat([img1, self.images])
-		self.indices = torch.cat([idx1, self.indices])
-	
-		self.order = self.indices.argsort() if sort else None
-	
-	def __getitem__(self, item):
-		if self.order is not None:
-			item = self.order[item]
-		return super().__getitem__(item)
-		
 
 class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
 	
@@ -180,27 +155,4 @@ class SCMSampler(InterventionSampler):
 		
 	
 	pass
-
-
-# # @Dataset('random-scm')
-# class SCMDataset(DatasetBase, Configurable, InitWall, SCM_Simul):
-# 	def __init__(self, A, num_nodes=None, num_samples=None, device=None, **kwargs):
-#
-# 		if num_nodes is None:
-# 			num_nodes = A.pull('num-nodes', 8)
-#
-# 		if num_samples is None:
-# 			num_samples = A.pull('num-samples', 100000)
-#
-# 		if device is None:
-# 			device = A.pull('device')
-#
-# 		super().__init__(A, _req_kwargs={'num_nodes':num_nodes,
-# 		                                 'num_samples':num_samples, 'device': device},
-# 		                 device=device, **kwargs)
-#
-# 		self.din, self.dout = self.samples.shape[-1], self.samples.shape[-1]
-#
-# 	def __len__(self):
-# 		return len(self.samples)
 

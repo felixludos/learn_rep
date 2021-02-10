@@ -22,5 +22,5 @@ force-viz: True
 fid: None
 
 info:
-  dataset_type: random-net
+  dataset_type: vec
 

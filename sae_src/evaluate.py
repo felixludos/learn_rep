@@ -479,7 +479,7 @@ class LatentResponses(Disentanglement_Evaluator):
 	
 	
 	
-@fig.Script('eval-metrics')
+@fig.Script('eval-metrics', 'Compute disentanglement metrics of a trained model')
 def _eval_run(A, run=None, metrics=None, mode=None,
               force_run=None, force_save=None, log_stats=unspecified_argument,
               save_ident=unspecified_argument, pbar=unspecified_argument):
@@ -505,7 +505,7 @@ def _eval_run(A, run=None, metrics=None, mode=None,
 		pbar = A.pull('pbar', None)
 	
 	if run is None:
-		run = A.pull('run')
+		run = fig.run('load-run', A)
 	
 	if not force_run and (save_ident is None or run.has_results(save_ident)):
 		print(f'  skipping: {run.get_name()}')

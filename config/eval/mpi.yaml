@@ -20,7 +20,9 @@ override.model._print_model: False
 dataset:
   _type: dataset
   _dataset_mod.joint-sampler: None
-  name: full-mpi3d
+#  name: full-mpi3d
+  name: mpi3d
+  mode: full
   labeled: True
   to_numpy: True
 
