@@ -42,8 +42,11 @@ class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
 		device = A.pull('device')
 		seed = A.pull('seed')
 		mode = A.pull('mode', 'train')
-		seed += zlib.adler32(mode.encode()) # deterministically change seed depending on train/test split
-		seed %= 2**32
+		# if mode == 'test':
+		# 	seed += 1
+		# seed += zlib.adler32(mode.encode()) # deterministically change seed depending on train/test split
+		# seed %= 2**32
+		print(f'Vector dataset seed: {seed}')
 
 		labeled = A.pull('labeled', False)
 
@@ -95,12 +98,12 @@ class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
 @Dataset('random-net')
 class RandomNetDataset(SimpleVectorDataset):
 	def __init__(self, A, net=unspecified_argument, **kwargs):
-
+		seed = A.pull('seed')
 		num_nodes = A.pull('num-nodes', 8)
 		
 		if net is unspecified_argument:
+			torch.manual_seed(seed) # should not change in testset
 			net = A.pull('net', None)
-		if net is not None:
 			for param in net.parameters():
 				param.requires_grad = False
 		

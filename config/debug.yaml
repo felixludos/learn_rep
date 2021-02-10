@@ -9,13 +9,12 @@
 #budget: 1000
 #dataset.net: None
 
-parents: [eval/scm]
-##run-name: random-net_ae_e-c12_d-s12_mish_210209-222008
-##run-name: random-net_ae_e-c12_d-s12_210209-203706
-#run-name: random-net_vae0p0001_e-c12_d-c12_210209-214350
-run-name: scm_ae_e-c12_d-s12_mish_210210-011012
-force-run: True
+#seed: 1
 
+parents: [eval/scm]
+run-name: test-pycharm_210210-042053
+force-run: True
+#
 figure_dir: 'C:\Users\anwan\OneDrive\Khan\research\learn_rep\figures\icml\scm'
 
 
