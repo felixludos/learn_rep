@@ -2,7 +2,7 @@
 import omnifig as fig
 import random
 import torch
-
+import zlib
 from omnibelt import unspecified_argument
 
 from omnilearn.op.datasets import MPI3D, Shapes3D, CelebA
@@ -42,7 +42,7 @@ class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
 		device = A.pull('device')
 		seed = A.pull('seed')
 		mode = A.pull('mode', 'train')
-		seed += hash(mode) # deterministically change seed depending on train/test split
+		seed += zlib.adler32(mode.encode()) # deterministically change seed depending on train/test split
 		seed %= 2**32
 
 		labeled = A.pull('labeled', False)

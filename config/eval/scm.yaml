@@ -16,7 +16,9 @@ log-stats: yes
 #num_test: 100
 
 
-override.model._print_model: False
+override:
+  model._print_model: False
+  sampler._type: scm-interventions
 
 dataset: None
 #  _type: dataset
