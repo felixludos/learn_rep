@@ -11,7 +11,7 @@
 #print(os.getcwd())
 #print(sys.path)
 # from . import src
-import sae_src
+import src
 #print(src.__file__)
 #print('finished importing src')
 

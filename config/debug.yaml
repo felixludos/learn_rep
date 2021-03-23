@@ -1,23 +1,23 @@
 
 #_meta.script_name: train
-#_meta.script_name: eval
+_meta.script_name: eval
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
 #parents: [demo]
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, d/scm]
-#budget: 1000
+#budget: 10
 #dataset.net: None
 
 #seed: 1000
-
-parents: [eval/mpi]
+load: scm_ae_e-c12_d-s12_210210-044938
+#parents: [eval/scm]
 #run-name: scm_ae_e-c12_d-s12_210210-044938
-run-name: sim_vae1_e-c12_d-c12_210126-035851
-force-run: True
+#run-name: sim_vae1_e-c12_d-c12_210126-035851
+#force-run: True
 #
 #figure_dir: 'C:\Users\anwan\OneDrive\Khan\research\learn_rep\figures\icml\scm'
-saveroot: C:\Users\anwan\Documents\workspace\sae\trained_nets
+#saveroot: C:\Users\anwan\Documents\workspace\sae\trained_nets
 
 
 #parents: [ coord, nosplit, hybrid, a/e/conv12, a/d/strc/12, m/vae, d/3ds]

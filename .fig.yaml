@@ -9,5 +9,6 @@ license: MIT
 
 #description: "Universal configuration system for common execution environments"
 
-src: startup.py
+#src: startup.py
 
+package: src
