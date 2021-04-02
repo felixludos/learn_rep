@@ -1,6 +1,9 @@
 
-#_meta.script_name: train
-_meta.script_name: eval
+_meta.script_name: train
+#_meta.script_name: eval
+#_meta.script_name: load-model
+
+parents: [hybrid, a/e/pretrained, a/d/dislib, m/ae, d/3ds]
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
 #parents: [demo]
@@ -10,7 +13,7 @@ _meta.script_name: eval
 #dataset.net: None
 
 #seed: 1000
-load: scm_ae_e-c12_d-s12_210210-044938
+#load: scm_ae_e-c12_d-s12_210210-044938
 #parents: [eval/scm]
 #run-name: scm_ae_e-c12_d-s12_210210-044938
 #run-name: sim_vae1_e-c12_d-c12_210126-035851
