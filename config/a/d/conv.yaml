@@ -1,0 +1,14 @@
+parents: [a/_base]
+
+info.dec_type: conv
+
+model.decoder:
+
+  up: 2
+
+  layers:
+    - _type: <>conv_type
+    - _type: <>conv_type
+    - _type: <>conv_type
+    - _type: <>conv_type
+
