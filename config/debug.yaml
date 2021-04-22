@@ -6,11 +6,17 @@ _meta.script_name: train
 #parents: [hybrid, a/e/pretrained, a/d/conv, m/ae, d/3ds]
 #parents: [extra/angle, hybrid, a/conv, m/vae, d/3ds]
 #parents: [ hybrid, a/conv, m/vae, extra/angle ]
-parents: [ hybrid, a/conv, m/vae, d/cppn ]
+#parents: [ hybrid, a/conv, m/vae, d/syn/cppn ]
+parents: [ hybrid, a/conv, m/vae, d/syn/scm, d/syn/vec ]
+#parents: [demo]
+
+num-nodes: 8
 
 #ident: ese_vovnet39b_evos
 
-dataset.num: 200
+#dataset.num: 200
+
+#viz.freq: 50
 
 #latent-dim: 24
 #reg-wt: 4

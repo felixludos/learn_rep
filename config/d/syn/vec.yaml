@@ -1,0 +1,12 @@
+parents: [d/syn/_vec]
+
+dataset:
+
+  nonlin: tanh
+  function.hidden: [32,32,32]
+
+
+info:
+  dataset_type: vec
+
+

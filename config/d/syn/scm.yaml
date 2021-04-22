@@ -1,0 +1,23 @@
+
+#parents: [d/vec]
+#
+#dataset.name: random-scm
+#
+#info.dataset_type: scm
+
+
+#parents: [d/syn/_vec]
+
+scm-seed: None
+
+dataset.sampler:
+  _type: scm
+  seed: <>scm-seed
+  equation:
+    hidden: [30]
+    nonlin: tanh
+
+
+#info:
+#  dataset_type: scm
+

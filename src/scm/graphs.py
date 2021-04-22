@@ -47,7 +47,12 @@ class StructuralModel(util.Seed, Function):
 		
 		# TODO: config to specify graph
 		
-		super().__init__(A, din=num_nodes, dout=num_nodes, **kwargs)
+		if din is None:
+			din = num_nodes
+		if dout is None:
+			dout = num_nodes
+		
+		super().__init__(A, din=din, dout=dout, **kwargs)
 		
 		if num_nodes == 2:
 			exp_edges = 0.8
