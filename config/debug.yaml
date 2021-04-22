@@ -3,11 +3,23 @@ _meta.script_name: train
 #_meta.script_name: eval
 #_meta.script_name: load-model
 
-#parents: [hybrid, a/e/pretrained, a/d/dislib, m/ae, d/3ds]
-parents: [hybrid, a/conv, m/vae, d/3ds]
+#parents: [hybrid, a/e/pretrained, a/d/conv, m/ae, d/3ds]
+#parents: [extra/angle, hybrid, a/conv, m/vae, d/3ds]
+#parents: [ hybrid, a/conv, m/vae, extra/angle ]
+parents: [ hybrid, a/conv, m/vae, d/cppn ]
 
+#ident: ese_vovnet39b_evos
 
-model.optim.lr: 0.001
+dataset.num: 200
+
+#latent-dim: 24
+#reg-wt: 4
+
+#model.optim:
+#  lr: 0.001
+#  _type: rmsprop
+#  weight_decay: 0.0001
+#  momentum: 0.9
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
 #parents: [demo]
 

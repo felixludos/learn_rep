@@ -1,0 +1,21 @@
+
+parents: [a/size/64, base]
+
+dataset:
+  name: function
+
+  num: 10000
+  in-memory: True
+
+  function:
+    _type: cppn
+
+    feature-dim: 8
+    dout: [3, 64, 64]
+
+    hidden: [16, 16, 16]
+
+    include-radial: False
+
+
+

@@ -9,7 +9,7 @@ from omnilearn import util
 
 
 
-def compute_response(Q, encode, decode, include_q2=False,
+def compute_response(Q, encode, decode, include_q2=False, mag=None,
                      force_different=False, skip_shuffle=False):
 	N, D = Q.size()
 	
@@ -23,10 +23,16 @@ def compute_response(Q, encode, decode, include_q2=False,
 	if force_different and not skip_shuffle:
 		Q = Q[torch.randperm(len(Q))]
 	
+	if mag is not None and isinstance(mag, (int, float)):
+		mag = [mag]*D
+	
 	for idx in range(D):
 
 		V = Q[:, idx]
-		if force_different:
+		if mag is not None:
+			m = mag[idx]
+			U = V + m*(-1)**torch.randint(2, size=(len(V),), device=V.device)
+		elif force_different:
 			U = V.clone()
 			U[:-1] = V[1:]
 			U[-1] = V[0]
@@ -68,9 +74,12 @@ def compute_response(Q, encode, decode, include_q2=False,
 	return out
 
 
-def response_mat(Q, encode, decode, scales=None, dist_type='rms', **resp_kwargs):
+def response_mat(Q, encode, decode, scales=None, dist_type='rms', mag=None, **resp_kwargs):
 	
-	H, Y, Q2 = compute_response(Q, encode, decode, include_q2=True, **resp_kwargs)
+	if isinstance(mag, (float, int)) and scales is not None:
+		mag = mag * scales
+	
+	H, Y, Q2 = compute_response(Q, encode, decode, include_q2=True, mag=mag, **resp_kwargs)
 	
 	R = Y - Q2.unsqueeze(0)
 	

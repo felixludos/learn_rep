@@ -6,11 +6,11 @@ import zlib
 from omnibelt import unspecified_argument
 
 from omnilearn.op.datasets import MPI3D, Shapes3D, CelebA
-from omnilearn.data import Dataset, JointFactorSampler, InterventionSampler, DatasetBase, Batchable, Deviced
+from omnilearn.data import register_dataset, JointFactorSampler, InterventionSampler, Dataset, Batchable, Deviced
 from omnilearn.util import Configurable, InitWall
 
 
-class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
+class SimpleVectorDataset(Deviced, Batchable, Dataset):
 	
 	def __init__(self, A, num_samples=None, num_nodes=None, out_dim=None, **kwargs):
 		
@@ -70,7 +70,7 @@ class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
 		return self.samples[item]
 
 
-@Dataset('random-net')
+@register_dataset('random-net')
 class RandomNetDataset(SimpleVectorDataset):
 	def __init__(self, A, net=unspecified_argument, **kwargs):
 		seed = A.pull('seed')
@@ -98,20 +98,23 @@ class RandomNetDataset(SimpleVectorDataset):
 from .scm import SCM_Simul
 from .scm.data import erdos_renyi
 
-@Dataset('random-scm')
-class RandomSCMDataset(RandomNetDataset):
-	def __init__(self, A, **kwargs):
-		super().__init__(A, **kwargs)
-		
-		self.er = erdos_renyi.ER(self.num_nodes, num_samples=self.num_samples, seed=self.seed)
-		self.prior = self.er.samples.to(self.get_device())
+# @Dataset('linear-scm')
+# class LinearSCMDataset(RandomNetDataset):
+# 	def __init__(self, A, **kwargs):
+# 		super().__init__(A, **kwargs)
+#
+# 		self.er = erdos_renyi.ER(self.num_nodes, num_samples=self.num_samples, seed=self.seed)
+# 		self.prior = self.er.samples.to(self.get_device())
+#
+# 	def get_factor_order(self):
+# 		return list(map(str,range(self.num_nodes)))
+#
+# 	def get_adjacency_matrix(self):
+# 		return self.er.adjacency_matrix.copy()
 
-	def get_factor_order(self):
-		return list(map(str,range(self.num_nodes)))
-	
-	def get_adjacency_matrix(self):
-		return self.er.adjacency_matrix.copy()
 
+# @Dataset('complex-scm')
+# class ComplexSCMDataset(RandomNetDataset)
 
 
 @fig.Component('scm-interventions')

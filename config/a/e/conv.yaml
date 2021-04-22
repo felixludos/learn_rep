@@ -1,6 +1,6 @@
 parents: [a/_base]
 
-info.dec_type: conv
+info.enc_type: conv
 
 model.encoder:
 
