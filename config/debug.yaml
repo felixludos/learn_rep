@@ -7,8 +7,11 @@ _meta.script_name: train
 #parents: [extra/angle, hybrid, a/conv, m/vae, d/3ds]
 #parents: [ hybrid, a/conv, m/vae, extra/angle ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/cppn ]
-parents: [ hybrid, a/conv, m/vae, d/syn/scm, d/syn/vec ]
+#parents: [ hybrid, a/conv, m/vae, d/syn/scm, d/syn/vec ]
+parents: [ hybrid, a/conv, m/ae, extra/angle-shape ]
 #parents: [demo]
+
+#freeze-decoder: yes
 
 num-nodes: 8
 
@@ -16,7 +19,7 @@ num-nodes: 8
 
 #dataset.num: 200
 
-#viz.freq: 50
+viz.freq: 50
 
 #latent-dim: 24
 #reg-wt: 4

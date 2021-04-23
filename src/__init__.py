@@ -8,3 +8,4 @@ from .responses import sample_full_interventions, response_mat, compute_response
 from . import evaluate
 from . import metrics
 from . import datasets
+from . import frozen
