@@ -14,7 +14,7 @@ dataset.sampler:
   _type: scm
   seed: <>scm-seed
   equation:
-    hidden: [30]
+#    hidden: [30]
     nonlin: tanh
 
 

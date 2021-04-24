@@ -1,0 +1,16 @@
+
+parents: [extra/_common, d/3ds]
+
+remove-cut: 0.5
+
+dataset:
+  _mod.selected: 1
+
+#  reject:
+##    5: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+##    5: [ 3, 4, 5, 6, 7, 8, 9, 10, 11]
+#    5: [ 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ]
+
+  ordered:
+    4: <>remove-cut
+    5: <>remove-cut

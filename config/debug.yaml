@@ -8,7 +8,7 @@ _meta.script_name: train
 #parents: [ hybrid, a/conv, m/vae, extra/angle ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/cppn ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/scm, d/syn/vec ]
-parents: [ hybrid, a/conv, m/ae, extra/angle-shape ]
+parents: [ hybrid, a/conv, m/ae, ex/angle-shape ]
 #parents: [demo]
 
 #freeze-decoder: yes
