@@ -1,5 +1,5 @@
 
-parents: [extra/_common, d/3ds]
+parents: [ex/_common, d/3ds]
 
 remove-cut: 0.5
 
