@@ -8,10 +8,15 @@ _meta.script_name: train
 #parents: [ hybrid, a/conv, m/vae, extra/angle ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/cppn ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/scm, d/syn/vec ]
-parents: [ hybrid, a/conv, m/ae, ex/angle-shape ]
+#parents: [ hybrid, a/conv, m/ae, ex/angle-shape ]
+parents: [ ex/load-3ds ]
 #parents: [demo]
 
 #freeze-decoder: yes
+
+load-model: C:/Users/anwan/Documents/workspace/exts/3ds_vae2_e-c12_d-c12_xa_210424-022637
+
+model-override.freeze-encoder: yes
 
 num-nodes: 8
 
