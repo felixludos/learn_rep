@@ -1,7 +1,7 @@
 
-_meta.script_name: train
+#_meta.script_name: train
 #_meta.script_name: eval
-#_meta.script_name: load-model
+_meta.script_name: load-model
 
 #parents: [hybrid, a/e/pretrained, a/d/conv, m/ae, d/3ds]
 #parents: [extra/angle, hybrid, a/conv, m/vae, d/3ds]
@@ -14,9 +14,11 @@ parents: [ ex/load-3ds ]
 
 #freeze-decoder: yes
 
-load-model: C:/Users/anwan/Documents/workspace/exts/3ds_vae2_e-c12_d-c12_xa_210424-022637
+#root: C:\Users\anwan\Documents\workspace\exts
+#load: 3ds_model_xa-ae-enc_210426-160409
 
-model-override.freeze-encoder: yes
+load-model: C:/Users/anwan/Documents/workspace/exts/3ds_vae2_e-c12_d-c12_xa_210424-022637
+#model-override.freeze-encoder: yes
 
 num-nodes: 8
 

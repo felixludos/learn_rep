@@ -4,3 +4,5 @@ budget: 80000
 
 model._model_mod.freezable: 8
 
+dataset._mod.selected: 1
+
