@@ -2,3 +2,7 @@
 model.decoder:
   split-style: no
   style-dim: <>latent-dim
+
+
+info:
+  nosplit: yes
