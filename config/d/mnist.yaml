@@ -1,4 +1,4 @@
-parents: [base]
+parents: [a/size/32, base]
 
 
 dataset:
