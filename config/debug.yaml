@@ -14,6 +14,8 @@ parents: [ hybrid, a/conv, m/vae, d/mnist ]
 #parents: [ ex/load-3ds ]
 #parents: [demo]
 
+dataset.name: fmnist
+
 #freeze-decoder: yes
 
 #root: C:\Users\anwan\Documents\workspace\exts

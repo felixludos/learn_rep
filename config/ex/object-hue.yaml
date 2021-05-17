@@ -1,0 +1,7 @@
+
+parents: [ex/_common, d/3ds]
+
+dataset:
+
+  reject:
+    1: [7, 8, 9]
