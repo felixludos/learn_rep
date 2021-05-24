@@ -1,12 +1,13 @@
 
-_meta.script_name: train
-#_meta.script_name: eval
+#_meta.script_name: train
+_meta.script_name: eval
 #_meta.script_name: load-model
+#_meta.script_name: compute-fid
 
 #parents: [hybrid, a/e/pretrained, a/d/conv, m/ae, d/3ds]
 #parents: [extra/angle, hybrid, a/conv, m/vae, d/3ds]
 #parents: [ hybrid, a/conv, m/vae, extra/angle ]
-parents: [ hybrid, a/conv, m/vae, d/mnist ]
+#parents: [ hybrid, a/conv, m/vae, d/mnist ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/cppn ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/scm, d/syn/vec ]
 #parents: [ hybrid, a/conv, m/ae, ex/angle-shape ]
@@ -14,7 +15,28 @@ parents: [ hybrid, a/conv, m/vae, d/mnist ]
 #parents: [ ex/load-3ds ]
 #parents: [demo]
 
-dataset.name: fmnist
+root: C:\Users\anwan\Documents\workspace\rfd_models\good_rfd_models
+load: rfd_vae1_e-l16_d-l16_lrp00005-bs64_210514-181523
+#load: rfd_vae1_e-l16_d-l16_d16-lrp00005-bs64_210514-181525
+
+#load: rfd_ae_e-c16_d-s16_lrp00005-bs64_210513-150430
+#load: rfd_ae_e-c16_d-s16_d16-nosplit-lrp00005-bs64_210513-233109
+
+#load: rfd_ae_e-c16_d-s16_lrp00005-bs64_210513-233108
+#load: rfd_ae_e-c16_d-s16_d16-lrp00005-bs64_210513-233108
+
+#load: rfd_vae1_e-c16_d-c16_d16-lrp00005-bs64_210514-181523
+#load: rfd_vae1_e-c16_d-c16_lrp00005-bs64_210514-181524
+
+#load: rfd_vae2_e-c16_d-c16_lrp00005-bs64_210514-181524
+#load: rfd_vae2_e-c16_d-c16_d16-lrp00005-bs64_210514-181524
+
+novel: yes
+skip-expensive: yes
+dataset.batch_size: 16
+evaluation: None
+
+#dataset.name: fmnist
 
 #freeze-decoder: yes
 
@@ -40,6 +62,24 @@ num-nodes: 8
 #  _type: rmsprop
 #  weight_decay: 0.0001
 #  momentum: 0.9
+
+###############################
+
+
+#_meta.script_name: compute-fid
+#
+#parents: [d/rfd]
+#
+#dim: 2048
+#mode: train
+
+
+############################
+
+
+
+
+
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
 #parents: [demo]
 
@@ -127,10 +167,10 @@ name: test-pycharm
 inline: True
 #device: cuda:1
 
-#fid.dim: 2048
+fid.dim: 2048
 #fid.dim: 64
-#fid.n_samples: 1000
-#fid.batch_size: 20
+fid.n_samples: 1000
+fid.batch_size: 16
 
 #dataset:
 #  device: cpu

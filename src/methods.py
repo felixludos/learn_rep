@@ -49,9 +49,15 @@ MY_PATH = os.path.dirname(os.path.abspath(__file__))
 @fig.Component('ae')
 class Autoencoder(SimpleAutoencoder):
 	
-	def __init__(self, A, **kwargs):
+	def __init__(self, A, skip_expensive=None, **kwargs):
+		
+		if skip_expensive is None:
+			skip_expensive = A.pull('skip-expensive', False)
 		
 		super().__init__(A, **kwargs)
+		
+		if skip_expensive:
+			self._viz_settings.add('skip-expensive')
 		
 		self._viz_settings.add('gen-prior')
 		if A.pull('force-viz', False):
@@ -125,7 +131,7 @@ class Autoencoder(SimpleAutoencoder):
 		
 		x = info.original
 		
-		if self.get_mode() != 'train': # expensive visualizations
+		if self.get_mode() != 'train' and 'skip-expensive' not in self._viz_settings: # expensive visualizations
 			
 			n = 16
 			steps = 20
