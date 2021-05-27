@@ -392,7 +392,8 @@ class LatentResponses(Disentanglement_Evaluator):
 		bs = self.batch_size
 		loader = self.dataset.get_loader(infinite=True, shuffle=True, seed=0, batch_size=bs)
 		loader = iter(loader)
-		pbar = self.pbar(total=total)
+		if self.pbar is not None:
+			pbar = self.pbar(total=total)
 		while len(fullQ) < total // bs:
 			batch = next(loader)
 			x = model._process_batch(batch).original
@@ -401,7 +402,8 @@ class LatentResponses(Disentanglement_Evaluator):
 				if isinstance(q, distrib.Distribution):
 					q = q.loc
 				fullQ.append(q)
-			pbar.update(bs)
+			if pbar is not None:
+				pbar.update(bs)
 		del loader
 		fullQ = torch.cat(fullQ)
 
