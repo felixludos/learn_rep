@@ -17,7 +17,7 @@ from omnilearn.op import get_save_dir
 from omnilearn.eval import Evaluator
 from omnilearn.data import InterventionSamplerBase
 
-from .responses import sample_full_interventions, response_mat, factor_reponses
+from .responses import sample_full_interventions, response_mat, conditioned_reponses
 from .metrics import metric_beta_vae, metric_factor_vae, mig, dci, irs, sap, \
 	modularity_explicitness, unsupervised_metrics, fairness
 
@@ -339,11 +339,11 @@ class LatentResponses(Disentanglement_Evaluator):
 		
 		num_groups = A.pull('num_groups', 50)
 		num_q = A.pull('num_latent', 10000)
-		num_resp = A.pull('num_response', 100)
+		num_resp = A.pull('num_response', 256)
 		batch_size = A.pull('batch_size', 64)
 		
 		dist_type = A.pull('dist-type', 'rms')
-		force_different = A.pull('force-different', True)
+		# force_different = A.pull('force-different', True)
 
 		normalize = A.pull('normalize', True)
 		include_q = A.pull('include-q', True)
@@ -368,7 +368,7 @@ class LatentResponses(Disentanglement_Evaluator):
 		self.pbar = pbar
 		
 		self.dist_type = dist_type
-		self.force_different = force_different
+		# self.force_different = force_different
 		self.normalize = normalize
 		
 		self.include_q = include_q
@@ -405,7 +405,7 @@ class LatentResponses(Disentanglement_Evaluator):
 		del loader
 		fullQ = torch.cat(fullQ)
 
-		scales = fullQ.std(0) if self.normalize else None
+		# scales = fullQ.std(0) if self.normalize else None
 		
 		C = np.cov(fullQ.cpu().t().numpy())
 		if self.figure_dir is not None:
@@ -413,8 +413,9 @@ class LatentResponses(Disentanglement_Evaluator):
 			plt.tight_layout()
 			util.save_figure(f'{run_name}_cov', root=self.figure_dir)
 		
-		R = response_mat(fullQ[:self.num_resp], model.encode, model.decode, scales=scales,
-		                 dist_type='rms', force_different=True)
+		R = response_mat(fullQ, model.encode, model.decode, n_interv=self.num_resp, max_batch_size=self.batch_size)
+		#scales=scales,
+		# dist_type='rms', force_different=True)
 
 		if self.figure_dir is not None:
 			util.plot_mat(R, val_fmt=1)  # responses
@@ -443,9 +444,12 @@ class LatentResponses(Disentanglement_Evaluator):
 			return {}, \
 			       {'response_mat': R, 'covariance': C, }
 		
-		out = factor_reponses(model.encode, model.decode, self.interventions, pbar=self.pbar,
+		out = conditioned_reponses(model.encode, model.decode, self.interventions, pbar=self.pbar,
 		                            include_q=self.include_q,
-		                            resp_kwargs=dict(scales=scales, force_different=self.force_different))
+		                           resp_kwargs=dict( max_batch_size=self.batch_size,
+			                           # scales=scales,
+			                           # force_different=self.force_different
+		                           ))
 
 		if self.include_q:
 			mats, lts = out
@@ -592,7 +596,7 @@ def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecifie
 				for metric in metrics.values():
 					metric.set_dataset(run.get_dataset())
 			
-			_eval_run(A, run=run, metrics=metrics)
+			eval_metrics(A, run=run, metrics=metrics)
 			#
 			# path = root / name
 			#
