@@ -15,21 +15,14 @@ _meta.script_name: eval
 #parents: [ ex/load-3ds ]
 #parents: [demo]
 
-root: C:\Users\anwan\Documents\workspace\rfd_models\good_rfd_models
-load: rfd_vae1_e-l16_d-l16_lrp00005-bs64_210514-181523
-#load: rfd_vae1_e-l16_d-l16_d16-lrp00005-bs64_210514-181525
+root: C:\Users\anwan\Documents\workspace\rfd_models
+#load: rfd_wae10_e-c16_d-c16_d16-strd-trans-lrp00005-bs64-ch256_210524-215009
+load: rfd_ae_e-c16_d-s16_d16-strd-trans-lrp00005-bs64-ch256_210524-161708
+#load: rfd_vae1_e-l16_d-l16_d16-strd-trans-lrp00005-bs64-ch256_210524-214809
 
-#load: rfd_ae_e-c16_d-s16_lrp00005-bs64_210513-150430
-#load: rfd_ae_e-c16_d-s16_d16-nosplit-lrp00005-bs64_210513-233109
+#model-override.model._model_mod.hybrid: 1
 
-#load: rfd_ae_e-c16_d-s16_lrp00005-bs64_210513-233108
-#load: rfd_ae_e-c16_d-s16_d16-lrp00005-bs64_210513-233108
-
-#load: rfd_vae1_e-c16_d-c16_d16-lrp00005-bs64_210514-181523
-#load: rfd_vae1_e-c16_d-c16_lrp00005-bs64_210514-181524
-
-#load: rfd_vae2_e-c16_d-c16_lrp00005-bs64_210514-181524
-#load: rfd_vae2_e-c16_d-c16_d16-lrp00005-bs64_210514-181524
+#use-model: yes
 
 novel: yes
 skip-expensive: yes

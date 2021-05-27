@@ -606,3 +606,29 @@ def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecifie
 			#
 			# 	print(f'Running: {run.get_name()} ({i+1}/{len(runs)})')
 			# 	_eval_run(A, run=run, metrics=metrics)
+
+
+@fig.Script('eval-fix-hybrid')
+def _eval_metrics(A):
+	run = fig.run('load-run', A)
+	
+	model = run.get_model()
+	
+	if model._latent is None:
+		
+		dataset = run.get_dataset()
+		batch = dataset.get_batch(batch_size=128, shuffle=True)
+		with torch.no_grad():
+			Q = model.encode(batch)
+			if isinstance(Q, distrib.Normal):
+				Q = Q.loc
+			if model._latent is None:
+				model._latent = Q
+	
+	return run.evaluate(config=A)
+	
+	A.push('model-override.model._model_mod.hybrid', 1)
+	
+
+
+
