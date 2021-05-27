@@ -8,6 +8,6 @@ fid.n_samples: 50000
 
 novel: yes
 skip-expensive: yes
-evaluation: None
+#evaluation: None
 
 

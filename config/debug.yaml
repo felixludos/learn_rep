@@ -1,8 +1,9 @@
 
 #_meta.script_name: train
-_meta.script_name: eval
+#_meta.script_name: eval
 #_meta.script_name: load-model
 #_meta.script_name: compute-fid
+_meta.script_name: eval-fix-hybrid
 
 #parents: [hybrid, a/e/pretrained, a/d/conv, m/ae, d/3ds]
 #parents: [extra/angle, hybrid, a/conv, m/vae, d/3ds]
@@ -14,20 +15,26 @@ _meta.script_name: eval
 #parents: [ hybrid, a/conv16, m/ae, d/rfd ]
 #parents: [ ex/load-3ds ]
 #parents: [demo]
+parents: [eval/rfd-fid]
 
 root: C:\Users\anwan\Documents\workspace\rfd_models
 #load: rfd_wae10_e-c16_d-c16_d16-strd-trans-lrp00005-bs64-ch256_210524-215009
 load: rfd_ae_e-c16_d-s16_d16-strd-trans-lrp00005-bs64-ch256_210524-161708
 #load: rfd_vae1_e-l16_d-l16_d16-strd-trans-lrp00005-bs64-ch256_210524-214809
 
-#model-override.model._model_mod.hybrid: 1
+#mode: test
+#ident: final
+#  overwrite: True
+#step-limit: 1000
+
+model-override.model._model_mod.hybrid: 1
 
 #use-model: yes
 
-novel: yes
-skip-expensive: yes
+#novel: yes
+#skip-expensive: yes
 dataset.batch_size: 16
-evaluation: None
+#evaluation: None
 
 #dataset.name: fmnist
 
