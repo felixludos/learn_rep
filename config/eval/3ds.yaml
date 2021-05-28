@@ -40,11 +40,11 @@ dataset:
 
 metrics._list:
   - _type: metric/irs
-  - _type: metric/fairness
-  - _type: metric/unsupervised
-  - _type: metric/modularity-explicitness
-  - _type: metric/sap
-  - _type: metric/mig
+#  - _type: metric/fairness
+#  - _type: metric/unsupervised
+#  - _type: metric/modularity-explicitness
+#  - _type: metric/sap
+#  - _type: metric/mig
   - _type: metric/dci
 #  - _type: metric/factor-vae
 #  - _type: metric/beta-vae

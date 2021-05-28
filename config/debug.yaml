@@ -30,7 +30,8 @@ parents: [eval/3ds]
 
 #model-override.model._model_mod.hybrid: 1
 
-run-name: 3ds_vae2_e-c12_d-c12_b2_210411-165936
+#run-name: 3ds_vae2_e-c12_d-c12_b2_210411-165936
+run-name: 3ds_vae4_d-conv_b4-d24_210411-165936
 
 #use-model: yes
 
