@@ -1,5 +1,5 @@
 
-#_meta.script_name: train
+_meta.script_name: train
 #_meta.script_name: eval
 #_meta.script_name: load-model
 #_meta.script_name: compute-fid
@@ -9,16 +9,33 @@
 #parents: [hybrid, a/e/pretrained, a/d/conv, m/ae, d/3ds]
 #parents: [extra/angle, hybrid, a/conv, m/vae, d/3ds]
 #parents: [ hybrid, a/conv, m/vae, extra/angle ]
-#parents: [ hybrid, a/conv, m/vae, d/mnist ]
+parents: [ hybrid, a/conv, m/vae, d/mnist ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/cppn ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/scm, d/syn/vec ]
 #parents: [ hybrid, a/conv, m/ae, ex/angle-shape ]
 #parents: [ hybrid, a/conv16, m/ae, d/rfd ]
 #parents: [ ex/load-3ds ]
 #parents: [demo]
-parents: [eval/3ds]
+#parents: [eval/mpi]
 
-#root: C:\Users\anwan\Documents\workspace\rfd_models
+#model.optim:
+##  _type: rmsprop
+#  lr: 0.0001
+##  weight_decay: 0.001
+
+model.decoder:
+  _mod.distrib: 3
+  last.nonlin: None
+
+  src-distrib: beta
+  autosample: best
+
+#model.criterion:
+#  _type: distrib-nll
+#  mn_lim: 0.00001
+#  mx_lim: 0.99999
+
+#saveroot: C:\Users\anwan\Documents\workspace\lat_resp_models
 #load: rfd_wae10_e-c16_d-c16_d16-strd-trans-lrp00005-bs64-ch256_210524-215009
 #load: rfd_ae_e-c16_d-s16_d16-strd-trans-lrp00005-bs64-ch256_210524-161708
 #load: rfd_vae1_e-l16_d-l16_d16-strd-trans-lrp00005-bs64-ch256_210524-214809
@@ -31,13 +48,26 @@ parents: [eval/3ds]
 #model-override.model._model_mod.hybrid: 1
 
 #run-name: 3ds_vae2_e-c12_d-c12_b2_210411-165936
-run-name: 3ds_vae4_d-conv_b4-d24_210411-165936
+#run-name: 3ds_vae4_d-conv_b4-d24_210411-165936
+#overwrite: True
+
+#run-name: toy_vae1_d-conv_strd-trans-lrp001-ch128_210531-001123
+#run-name: toy_vae2_d-conv_strd-trans-lrp001-ch128_210531-005632
+#run-name: toy_vae4_d-conv_strd-trans-lrp001-ch128_210531-005630
+#run-name: toy_vae8_d-conv_strd-trans-lrp001-ch128_210531-001122
+
+#run-name: real_vae1_d-conv_strd-trans-lrp001-ch128_210531-005631
+#run-name: real_vae2_d-conv_strd-trans-lrp001-ch128_210531-005631
+#run-name: real_vae4_d-conv_strd-trans-lrp001-ch128_210531-005631
+#run-name: real_vae8_d-conv_strd-trans-lrp001-ch128_210531-005632
+
+cat: toy
 
 #use-model: yes
 
 #novel: yes
 #skip-expensive: yes
-dataset.batch_size: 16
+#dataset.batch_size: 16
 #evaluation: None
 
 #dataset.name: fmnist
@@ -50,7 +80,7 @@ dataset.batch_size: 16
 #load-model: C:/Users/anwan/Documents/workspace/exts/3ds_vae2_e-c12_d-c12_xa_210424-022637
 #model-override.freeze-encoder: yes
 
-num-nodes: 8
+#num-nodes: 8
 
 #ident: ese_vovnet39b_evos
 
@@ -127,8 +157,8 @@ num-nodes: 8
 #model.nonlin: mish
 #model.norm: None
 #model.residual: True
-#reg-wt: 4
-cat: toy
+##reg-wt: 4
+#cat: toy
 
 #latent-dim: 24
 

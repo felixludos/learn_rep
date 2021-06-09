@@ -333,6 +333,85 @@ class Fairness(Disentanglement_Evaluator):
 		return ['importance_matrix']
 
 
+@fig.Component('metric/structure')
+class StructureScore(Disentanglement_Evaluator):
+	def __init__(self, A, num_q=None, batch_size=None, **kwargs):
+		
+		if num_q is None:
+			num_q = A.pull('num_q', 10000)
+		
+		
+		if batch_size is None:
+			batch_size = A.pull('batch_size', 64)
+
+		pbar = A.pull('pbar', None)
+		
+		super().__init__(A, **kwargs)
+
+		self.pbar = pbar
+		self.num_q = num_q
+		self.batch_size = batch_size
+	
+	def _compute(self, info=None):
+		
+		# run_name = info.get_name()
+		
+		model = self.model
+		
+		fullQ = []
+		total = self.num_q
+		bs = self.batch_size
+		loader = self.dataset.get_loader(infinite=True, shuffle=True, seed=0, batch_size=bs)
+		loader = iter(loader)
+		if self.pbar is not None:
+			self.pbar(total=total)
+		while len(fullQ) < total // bs:
+			batch = next(loader)
+			x = model._process_batch(batch).original
+			with torch.no_grad():
+				q = model.encode(x)
+				if isinstance(q, distrib.Distribution):
+					q = q.loc
+				fullQ.append(q)
+			if self.pbar is not None:
+				self.pbar.update(bs)
+		del loader
+		fullQ = torch.cat(fullQ)
+		
+		@torch.no_grad()
+		def response_function(q):
+			# q = q.to(device)
+			r = model.encode(model.decode(q))
+			if isinstance(r, distrib.Normal):
+				r = r.loc
+			return r
+		
+		@torch.no_grad()
+		def encode(x):
+			with torch.no_grad():
+				q = model.encode(x)
+				if isinstance(q, distrib.Normal):
+					q = q.loc
+			return q
+		
+		prior = model.sample_prior(total)
+		rprior = util.process_in_batches(response_function, prior, batch_size=self.batch_size)
+		
+		score = util.MMD(prior.cpu(), rprior.cpu()).item()
+		
+		return {'structure_score': score}, {
+            'p-r': score,
+            'p-q': util.MMD(prior.cpu(), fullQ.cpu()).item(),
+            'q-r': util.MMD(fullQ.cpu(), rprior.cpu()).item(),
+                                     }
+	
+	def get_results(self):
+		return ['p-r', 'p-q', 'q-r']
+	
+	def get_scores(self):
+		return ['structure_score']
+
+
 @fig.Component('metric/responses')
 class LatentResponses(Disentanglement_Evaluator):
 	def __init__(self, A, **kwargs):

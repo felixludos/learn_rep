@@ -47,9 +47,9 @@ model:
 #  reg: pow2    # not needed
 
   criterion:
-    _type: criterion
+    _type: loss
     ident: bce
-    kwargs.reduction: sum
+    kwargs.reduction: batch-mean
 
   optim:
     _type: adam
