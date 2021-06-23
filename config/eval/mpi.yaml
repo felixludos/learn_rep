@@ -1,21 +1,9 @@
 
 _meta.script_name: eval-multiple-metrics
 
-pbar._type: progress-bar
-mode: eval
-save-ident: metrics
-log-stats: yes
+parents: [eval/_metrics]
 
-
-#saveroot: C:\Users\anwan\Documents\workspace\sae\trained_nets
-
-#num_groups: 10
-#num_latent: 100
-#num_train: 100
-#num_test: 100
-
-
-override.model._print_model: False
+#num_groups: 40
 
 dataset:
   _type: dataset
@@ -25,17 +13,3 @@ dataset:
   mode: full
   labeled: True
   to_numpy: True
-
-metrics._list:
-  - _type: metric/irs
-#  - _type: metric/fairness
-#  - _type: metric/unsupervised
-#  - _type: metric/modularity-explicitness
-#  - _type: metric/sap
-  - _type: metric/mig
-  - _type: metric/dci
-#  - _type: metric/factor-vae
-#  - _type: metric/beta-vae
-  - _type: metric/structure
-  - _type: metric/responses
-

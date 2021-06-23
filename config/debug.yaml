@@ -1,5 +1,5 @@
 
-_meta.script_name: train
+#_meta.script_name: train
 #_meta.script_name: eval
 #_meta.script_name: load-model
 #_meta.script_name: compute-fid
@@ -9,26 +9,33 @@ _meta.script_name: train
 #parents: [hybrid, a/e/pretrained, a/d/conv, m/ae, d/3ds]
 #parents: [extra/angle, hybrid, a/conv, m/vae, d/3ds]
 #parents: [ hybrid, a/conv, m/vae, extra/angle ]
-parents: [ hybrid, a/conv, m/vae, d/mnist ]
+#parents: [ distrib-loss, hybrid, a/conv, m/vae, d/mnist ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/cppn ]
 #parents: [ hybrid, a/conv, m/vae, d/syn/scm, d/syn/vec ]
 #parents: [ hybrid, a/conv, m/ae, ex/angle-shape ]
-#parents: [ hybrid, a/conv16, m/ae, d/rfd ]
+#parents: [ hybrid, a/conv, m/vae, d/3ds ]
 #parents: [ ex/load-3ds ]
 #parents: [demo]
-#parents: [eval/mpi]
+
+#viz.freq: 50
+#records.freq: 10
+#budget: 100
+#validation.step-limit: 10
+#evaluation.step-limit: 10
+#load: test-pycharm_210622-135130
 
 #model.optim:
 ##  _type: rmsprop
 #  lr: 0.0001
 ##  weight_decay: 0.001
 
-model.decoder:
-  _mod.distrib: 3
-  last.nonlin: None
-
-  src-distrib: beta
-  autosample: best
+#model.decoder:
+##  _mod.distrib: 3
+##  last.nonlin: None
+#
+##  src-distrib: normal
+#  src-distrib: continuousbernoulli
+##  autosample: best
 
 #model.criterion:
 #  _type: distrib-nll
@@ -96,6 +103,17 @@ cat: toy
 #  _type: rmsprop
 #  weight_decay: 0.0001
 #  momentum: 0.9
+
+###############################
+
+parents: [eval/3ds]
+
+#root: C:\Users\anwan\Documents\workspace\exts
+#run-name: 3ds_vae2_e-c12_d-c12_b2_210411-165936
+run-name: test-pycharm_210623-145858
+
+#force-run: True
+#force-save: True
 
 ###############################
 

@@ -156,14 +156,14 @@ class Autoencoder(SimpleAutoencoder):
 					def decode(q):
 						B = q.size(0)
 						r = self.decode(q)
-						if isinstance(r, util.DistributionBase):
+						if isinstance(r, util.Distribution):
 							r = r.bsample()
 						r = r.view(B, 1, H, W).sigmoid()
 						return r
 				else:
 					def decode(q):
 						r = self.decode(q)
-						if isinstance(r, util.DistributionBase):
+						if isinstance(r, util.Distribution):
 							r = r.bsample()
 						return r
 						
@@ -288,7 +288,7 @@ class Hybrid(Autoencoder, Generative_AE):
 		if prior is None:
 			prior = self.sample_hybrid(N=N, prior=prior)
 		imgs = self.decode(prior)
-		if isinstance(imgs, util.DistributionBase):
+		if isinstance(imgs, util.Distribution):
 			imgs = imgs.bsample()
 		return imgs
 
@@ -337,7 +337,7 @@ class Prior(Autoencoder, Generative_AE):
 		if prior is None:
 			prior = self.sample_prior(N)
 		imgs = self.decode(prior)
-		if isinstance(imgs, util.DistributionBase):
+		if isinstance(imgs, util.Distribution):
 			imgs = imgs.bsample()
 		return imgs
 

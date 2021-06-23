@@ -9,7 +9,7 @@ dataset:
 
     batch_size: 128
 
-    splt.val: 0.166666
+    split.val: 0.166666
 
 
 info:

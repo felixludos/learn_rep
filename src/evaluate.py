@@ -10,9 +10,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import torch
-from torch import distributions as distrib
+# from torch import distributions as distrib
 
 from omnilearn import util
+from omnilearn.util import distributions as distrib
 from omnilearn.op import get_save_dir
 from omnilearn.eval import Evaluator
 from omnilearn.data import InterventionSamplerBase
@@ -75,7 +76,7 @@ class Disentanglement_Evaluator(Evaluator, util.Seed, util.Switchable, util.Devi
 	def _representation_function(self, images):
 		with torch.no_grad():
 			output = self.model.encode(images.to(self.get_device()))
-		if isinstance(output, distrib.Normal):
+		if isinstance(output, distrib.Distribution):
 			output = output.loc
 		return output.detach().cpu().numpy()
 
@@ -371,7 +372,7 @@ class StructureScore(Disentanglement_Evaluator):
 			with torch.no_grad():
 				q = model.encode(x)
 				if isinstance(q, distrib.Distribution):
-					q = q.loc
+					q = q.sample()
 				fullQ.append(q)
 			if self.pbar is not None:
 				self.pbar.update(bs)
@@ -382,16 +383,16 @@ class StructureScore(Disentanglement_Evaluator):
 		def response_function(q):
 			# q = q.to(device)
 			r = model.encode(model.decode(q))
-			if isinstance(r, distrib.Normal):
-				r = r.loc
+			if isinstance(r, distrib.Distribution):
+				r = r.sample()
 			return r
 		
 		@torch.no_grad()
 		def encode(x):
 			with torch.no_grad():
 				q = model.encode(x)
-				if isinstance(q, distrib.Normal):
-					q = q.loc
+				if isinstance(q, distrib.Distribution):
+					q = q.sample()
 			return q
 		
 		prior = model.sample_prior(total)
@@ -706,7 +707,7 @@ def _eval_metrics(A):
 	batch = dataset.get_batch(batch_size=128, shuffle=True)
 	with torch.no_grad():
 		Q = model.encode(batch)
-		if isinstance(Q, distrib.Normal):
+		if isinstance(Q, distrib.Distribution):
 			Q = Q.loc
 		model._latent = Q
 	

@@ -91,15 +91,22 @@ def conditioned_reponses(encode, decode, factor_samples, resp_kwargs={}, include
 	Fs = []
 	allQs = [] if include_q else None
 	
+	def _encode(x):
+		q = encode(x)
+		if isinstance(q, util.Distribution):
+			q = q.bsample()
+		return q
+	
 	for i, groups in enumerate(factor_samples):
 		
 		N, G, C, *other = groups.size()
 		
 		with torch.no_grad():
 			
-			Q = encode(groups.view(N*G, C, *other))
-			if isinstance(Q, distrib.Distribution):
-				Q = Q.loc
+			Q = util.process_in_batches(_encode, groups.view(N*G, C, *other), batch_size=64)
+			# Q = encode(groups.view(N*G, C, *other))
+			# if isinstance(Q, util.Distribution):
+			# 	Q = Q.bsample()
 			Qs = Q.view(N, G, -1)
 			if allQs is not None:
 				allQs.append(Qs)
@@ -113,7 +120,7 @@ def conditioned_reponses(encode, decode, factor_samples, resp_kwargs={}, include
 					todo.set_description(factor_names[i])
 			
 			for group, q in todo:
-				Ms.append(response_mat(q, encode, decode, force_different=True, **resp_kwargs))
+				Ms.append(response_mat(q, encode, decode, force_different=True, **resp_kwargs).cpu())
 		
 		Fs.append(torch.stack(Ms))
 	
