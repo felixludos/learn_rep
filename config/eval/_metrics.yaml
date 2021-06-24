@@ -19,16 +19,16 @@ override.model._print_model: False
 
 
 metrics._list:
-  #  - _type: metric/fairness
-  #  - _type: metric/unsupervised
-  #  - _type: metric/modularity-explicitness
-  #  - _type: metric/sap
-  #  - _type: metric/factor-vae
-  #  - _type: metric/beta-vae
+  - _type: metric/fairness
+  - _type: metric/unsupervised
+  - _type: metric/modularity-explicitness
+  - _type: metric/sap
+  - _type: metric/factor-vae
+  - _type: metric/beta-vae
 
-#  - _type: metric/mig
-#  - _type: metric/irs
-#  - _type: metric/dci
+  - _type: metric/mig
+  - _type: metric/irs
+  - _type: metric/dci
 
   - _type: metric/structure
   - _type: metric/responses
