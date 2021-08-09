@@ -4,7 +4,7 @@ import omnifig as fig
 
 
 def test_demo():
-	fig.initialize('sae')
+	fig.initialize()
 
 	A = fig.get_config('demo')
 
