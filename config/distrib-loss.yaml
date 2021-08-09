@@ -1,0 +1,8 @@
+
+parents: [a/d/beta]
+
+model.criterion:
+  _type: distrib-nll
+  mn_lim: 0.00001
+  mx_lim: 0.99999
+

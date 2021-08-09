@@ -1,0 +1,13 @@
+parents: [a/size/128, base128]
+
+dataset:
+  name: rfd
+
+  batch_size: 32
+
+  split.val: 0.1
+
+info:
+  dataset_type: rfd
+
+

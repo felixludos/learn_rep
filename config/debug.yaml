@@ -2,6 +2,7 @@
 #_meta.script_name: train
 #_meta.script_name: eval
 
+
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
 parents: [demo]
 
@@ -45,8 +46,8 @@ parents: [demo]
 #model.nonlin: mish
 #model.norm: None
 #model.residual: True
-#reg-wt: 4
-cat: toy
+##reg-wt: 4
+#cat: toy
 
 #latent-dim: 24
 
@@ -89,10 +90,10 @@ name: test-pycharm
 inline: True
 #device: cuda:1
 
-#fid.dim: 2048
+fid.dim: 2048
 #fid.dim: 64
-#fid.n_samples: 1000
-#fid.batch_size: 20
+fid.n_samples: 1000
+fid.batch_size: 16
 
 #dataset:
 #  device: cpu

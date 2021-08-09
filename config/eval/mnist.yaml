@@ -1,0 +1,67 @@
+
+_meta.script_name: eval-multiple-metrics
+
+
+#runs:
+#- 3ds_vae2_e-c12_d-c12_b2_210411-165936
+#- 3ds_vae1_e-c12_d-c12_mish_210125-140254
+#- 3ds_vae2_e-c12_d-c12_mish_210125-140255
+#- 3ds_wae10_e-c12_d-c12_mish_210125-140253
+#- 3ds_wae100_e-c12_d-c12_mish_210125-221143
+#- 3ds_wae1000_e-c12_d-c12_mish_210125-221142
+#- 3ds_ae0_e-c12_d-s4_mish_210125-140253
+#- 3ds_ae0_e-c12_d-s6_mish_210125-140253
+#- 3ds_ae0_e-c12_d-s12_mish_210125-050335
+#- 3ds_vae1_e-l4_d-l4_mish_210125-134914
+#- 3ds_vae1_e-l6_d-l6_mish_210125-140021
+#- 3ds_vae1_e-l12_d-l12_mish_210125-140249
+
+#saveroot: C:\Users\anwan\Documents\workspace\sae\trained_nets
+
+#num_groups: 10
+#num_latent: 100
+#num_train: 100
+#num_test: 100
+
+
+dataset:
+  _type: dataset
+  name: mnist
+  mode: full
+  labeled: True
+  to_numpy: True
+
+
+
+pbar._type: progress-bar
+mode: eval
+save-ident: metrics
+log-stats: yes
+
+
+#saveroot: C:\Users\anwan\Documents\workspace\sae\trained_nets
+
+#num_groups: 10
+#num_latent: 100
+#num_train: 100
+#num_test: 100
+
+
+override.model._print_model: False
+
+
+metrics._list:
+#  - _type: metric/fairness
+#  - _type: metric/unsupervised
+#  - _type: metric/modularity-explicitness
+#  - _type: metric/sap
+#  - _type: metric/factor-vae
+#  - _type: metric/beta-vae
+
+#  - _type: metric/mig
+#  - _type: metric/irs
+#  - _type: metric/dci
+
+  - _type: metric/structure
+#  - _type: metric/responses
+

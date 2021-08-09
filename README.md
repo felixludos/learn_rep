@@ -87,31 +87,31 @@ Provided the demo runs without issue, you can specify the config combination of 
 
 ```bash
 # SAE-12
-fig train hybrid a/e/conv12 a/d/strc/12 m/ae d/vec
+fig train hybrid a/e/conv12 a/d/strc/12 m/ae d/syn/vec
 
 # SAE-6
-fig train hybrid a/e/conv12 a/d/strc/6 m/ae d/vec
+fig train hybrid a/e/conv12 a/d/strc/6 m/ae d/syn/vec
 
 # AdaAE-12
-fig train hybrid nosplit a/e/conv12 a/d/strc/12 m/ae d/vec
+fig train hybrid nosplit a/e/conv12 a/d/strc/12 m/ae d/syn/vec
 
 # VLAE-12
-fig train hybrid a/ladder/12 m/vae d/vec
+fig train hybrid a/ladder/12 m/vae d/syn/vec
 
 # VLAE-6
-fig train hybrid a/ladder/6 m/vae d/vec
+fig train hybrid a/ladder/6 m/vae d/syn/vec
 
 # AE
-fig train hybrid a/conv12 m/ae d/vec
+fig train hybrid a/conv12 m/ae d/syn/vec
 
 # VAE
-fig train hybrid a/conv12 m/vae d/vec
+fig train hybrid a/conv12 m/vae d/syn/vec
 
 # beta-VAE
-fig train hybrid a/conv12 m/vae d/vec --reg-wt 2
+fig train hybrid a/conv12 m/vae d/syn/vec --reg-wt 2
 
 # WAE
-fig train hybrid a/conv12 m/wae d/vec
+fig train hybrid a/conv12 m/wae d/syn/vec
 ```
 
 All the above commands use a toy dataset generated on the fly using a randomly initialized network called `d/vec`, but to run the more interesting image datasets discussed in the paper, they must be downloaded and formatted as expected by `omnilearn`. 

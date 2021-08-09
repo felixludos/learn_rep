@@ -1,0 +1,13 @@
+
+
+model-override.model._model_mod.hybrid: 1
+
+fid.dim: 2048
+#fid.dim: 64
+fid.n_samples: 50000
+
+novel: yes
+skip-expensive: yes
+#evaluation: None
+
+

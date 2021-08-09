@@ -1,0 +1,30 @@
+parents: [a/_base]
+
+
+extractor: efficientnet_b0
+
+model.encoder:
+
+  pretrained: yes
+  fine-tune: no
+
+  process: [512, 512]
+
+  first:
+    _type: feature-extractor
+
+    _dout: None
+
+    ident: <>extractor
+
+    feature-sel: -1
+    reshape: yes
+
+  layers:
+    - _type: mlp
+      hidden: <>process
+      _dout: 512
+      out_nonlin: <>nonlin
+
+
+info.enc_type: pre

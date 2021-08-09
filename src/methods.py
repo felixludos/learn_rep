@@ -49,9 +49,15 @@ MY_PATH = os.path.dirname(os.path.abspath(__file__))
 @fig.Component('ae')
 class Autoencoder(SimpleAutoencoder):
 	
-	def __init__(self, A, **kwargs):
+	def __init__(self, A, skip_expensive=None, **kwargs):
+		
+		if skip_expensive is None:
+			skip_expensive = A.pull('skip-expensive', False)
 		
 		super().__init__(A, **kwargs)
+		
+		if skip_expensive:
+			self._viz_settings.add('skip-expensive')
 		
 		self._viz_settings.add('gen-prior')
 		if A.pull('force-viz', False):
@@ -125,7 +131,7 @@ class Autoencoder(SimpleAutoencoder):
 		
 		x = info.original
 		
-		if self.get_mode() != 'train': # expensive visualizations
+		if self.get_mode() != 'train' and 'skip-expensive' not in self._viz_settings: # expensive visualizations
 			
 			n = 16
 			steps = 20
@@ -146,14 +152,21 @@ class Autoencoder(SimpleAutoencoder):
 				                                   mnmx=(Q.min(0)[0].unsqueeze(-1), Q.max(0)[0].unsqueeze(-1))).contiguous()
 				# deltas = torch.diagonal(vecs, dim1=-3, dim2=-1)
 				
-				decode = self.decode
 				if 'force' in settings:
 					def decode(q):
 						B = q.size(0)
 						r = self.decode(q)
+						if isinstance(r, util.Distribution):
+							r = r.bsample()
 						r = r.view(B, 1, H, W).sigmoid()
 						return r
-				
+				else:
+					def decode(q):
+						r = self.decode(q)
+						if isinstance(r, util.Distribution):
+							r = r.bsample()
+						return r
+						
 				walks = viz_util.get_traversals(vecs, decode, device=self.device).cpu()
 				diffs = viz_util.compute_diffs(walks)
 				
@@ -274,7 +287,10 @@ class Hybrid(Autoencoder, Generative_AE):
 	def generate_hybrid(self, N=1, prior=None):
 		if prior is None:
 			prior = self.sample_hybrid(N=N, prior=prior)
-		return self.decode(prior)
+		imgs = self.decode(prior)
+		if isinstance(imgs, util.Distribution):
+			imgs = imgs.bsample()
+		return imgs
 
 @fig.Component('hybrid')
 class Hybrid_Autoencoder(Hybrid):
@@ -320,7 +336,10 @@ class Prior(Autoencoder, Generative_AE):
 	def generate_prior(self, N=1, prior=None):
 		if prior is None:
 			prior = self.sample_prior(N)
-		return self.decode(prior)
+		imgs = self.decode(prior)
+		if isinstance(imgs, util.Distribution):
+			imgs = imgs.bsample()
+		return imgs
 
 
 @fig.Component('vae')

@@ -1,0 +1,6 @@
+
+parents: [a/size/64, d/syn/_function]
+
+dataset:
+
+  batch_size: 64
