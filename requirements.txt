@@ -1,5 +1,5 @@
 networkx
-omnibelt==0.4.3
-omnifig==0.5.12
-omnilearn==0.5.10
+omnibelt>=0.5.1
+omnifig>=0.6.2
+omnilearn>=0.5.14
 pytest
