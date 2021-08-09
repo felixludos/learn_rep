@@ -1,0 +1,15 @@
+
+parents: [a/size/vec, d/syn/_function]
+
+force-viz: True
+fid: None
+
+dataset:
+
+  batch_size: 128
+
+  function:
+    _type: mlp
+    din: <>num-nodes
+    dout: 100
+

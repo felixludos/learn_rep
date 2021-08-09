@@ -3,7 +3,7 @@
 model.optim.lr:
   _type: scheduler/cos
   value: 0.0005
-  end: 0.0001
+  end: 0.00001
   freq: 1000
   skew: 0.5
   limit: <>budget

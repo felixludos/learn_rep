@@ -10,14 +10,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import torch
-from torch import distributions as distrib
+# from torch import distributions as distrib
 
 from omnilearn import util
+from omnilearn.util import distributions as distrib
 from omnilearn.op import get_save_dir
 from omnilearn.eval import Evaluator
 from omnilearn.data import InterventionSamplerBase
 
-from .responses import sample_full_interventions, response_mat, factor_reponses
+from .responses import sample_full_interventions, response_mat, conditioned_reponses
 from .metrics import metric_beta_vae, metric_factor_vae, mig, dci, irs, sap, \
 	modularity_explicitness, unsupervised_metrics, fairness
 
@@ -75,7 +76,7 @@ class Disentanglement_Evaluator(Evaluator, util.Seed, util.Switchable, util.Devi
 	def _representation_function(self, images):
 		with torch.no_grad():
 			output = self.model.encode(images.to(self.get_device()))
-		if isinstance(output, distrib.Normal):
+		if isinstance(output, distrib.Distribution):
 			output = output.loc
 		return output.detach().cpu().numpy()
 
@@ -333,17 +334,96 @@ class Fairness(Disentanglement_Evaluator):
 		return ['importance_matrix']
 
 
+@fig.Component('metric/structure')
+class StructureScore(Disentanglement_Evaluator):
+	def __init__(self, A, num_q=None, batch_size=None, **kwargs):
+		
+		if num_q is None:
+			num_q = A.pull('num_q', 10000)
+		
+		
+		if batch_size is None:
+			batch_size = A.pull('batch_size', 64)
+
+		pbar = A.pull('pbar', None)
+		
+		super().__init__(A, **kwargs)
+
+		self.pbar = pbar
+		self.num_q = num_q
+		self.batch_size = batch_size
+	
+	def _compute(self, info=None):
+		
+		# run_name = info.get_name()
+		
+		model = self.model
+		
+		fullQ = []
+		total = self.num_q
+		bs = self.batch_size
+		loader = self.dataset.get_loader(infinite=True, shuffle=True, seed=0, batch_size=bs)
+		loader = iter(loader)
+		if self.pbar is not None:
+			self.pbar(total=total)
+		while len(fullQ) < total // bs:
+			batch = next(loader)
+			x = model._process_batch(batch).original
+			with torch.no_grad():
+				q = model.encode(x)
+				if isinstance(q, distrib.Distribution):
+					q = q.sample()
+				fullQ.append(q)
+			if self.pbar is not None:
+				self.pbar.update(bs)
+		del loader
+		fullQ = torch.cat(fullQ)
+		
+		@torch.no_grad()
+		def response_function(q):
+			# q = q.to(device)
+			r = model.encode(model.decode(q))
+			if isinstance(r, distrib.Distribution):
+				r = r.sample()
+			return r
+		
+		@torch.no_grad()
+		def encode(x):
+			with torch.no_grad():
+				q = model.encode(x)
+				if isinstance(q, distrib.Distribution):
+					q = q.sample()
+			return q
+		
+		prior = model.sample_prior(total)
+		rprior = util.process_in_batches(response_function, prior, batch_size=self.batch_size)
+		
+		score = util.MMD(prior.cpu(), rprior.cpu()).item()
+		
+		return {'structure_score': score}, {
+            'p-r': score,
+            'p-q': util.MMD(prior.cpu(), fullQ.cpu()).item(),
+            'q-r': util.MMD(fullQ.cpu(), rprior.cpu()).item(),
+                                     }
+	
+	def get_results(self):
+		return ['p-r', 'p-q', 'q-r']
+	
+	def get_scores(self):
+		return ['structure_score']
+
+
 @fig.Component('metric/responses')
 class LatentResponses(Disentanglement_Evaluator):
 	def __init__(self, A, **kwargs):
 		
 		num_groups = A.pull('num_groups', 50)
 		num_q = A.pull('num_latent', 10000)
-		num_resp = A.pull('num_response', 100)
+		num_resp = A.pull('num_response', 256)
 		batch_size = A.pull('batch_size', 64)
 		
 		dist_type = A.pull('dist-type', 'rms')
-		force_different = A.pull('force-different', True)
+		# force_different = A.pull('force-different', True)
 
 		normalize = A.pull('normalize', True)
 		include_q = A.pull('include-q', True)
@@ -368,7 +448,7 @@ class LatentResponses(Disentanglement_Evaluator):
 		self.pbar = pbar
 		
 		self.dist_type = dist_type
-		self.force_different = force_different
+		# self.force_different = force_different
 		self.normalize = normalize
 		
 		self.include_q = include_q
@@ -392,7 +472,8 @@ class LatentResponses(Disentanglement_Evaluator):
 		bs = self.batch_size
 		loader = self.dataset.get_loader(infinite=True, shuffle=True, seed=0, batch_size=bs)
 		loader = iter(loader)
-		pbar = self.pbar(total=total)
+		if self.pbar is not None:
+			self.pbar(total=total)
 		while len(fullQ) < total // bs:
 			batch = next(loader)
 			x = model._process_batch(batch).original
@@ -401,11 +482,12 @@ class LatentResponses(Disentanglement_Evaluator):
 				if isinstance(q, distrib.Distribution):
 					q = q.loc
 				fullQ.append(q)
-			pbar.update(bs)
+			if self.pbar is not None:
+				self.pbar.update(bs)
 		del loader
 		fullQ = torch.cat(fullQ)
 
-		scales = fullQ.std(0) if self.normalize else None
+		# scales = fullQ.std(0) if self.normalize else None
 		
 		C = np.cov(fullQ.cpu().t().numpy())
 		if self.figure_dir is not None:
@@ -413,8 +495,9 @@ class LatentResponses(Disentanglement_Evaluator):
 			plt.tight_layout()
 			util.save_figure(f'{run_name}_cov', root=self.figure_dir)
 		
-		R = response_mat(fullQ[:self.num_resp], model.encode, model.decode, scales=scales,
-		                 dist_type='rms', force_different=True)
+		R = response_mat(fullQ, model.encode, model.decode, n_interv=self.num_resp, max_batch_size=self.batch_size)
+		#scales=scales,
+		# dist_type='rms', force_different=True)
 
 		if self.figure_dir is not None:
 			util.plot_mat(R, val_fmt=1)  # responses
@@ -443,9 +526,12 @@ class LatentResponses(Disentanglement_Evaluator):
 			return {}, \
 			       {'response_mat': R, 'covariance': C, }
 		
-		out = factor_reponses(model.encode, model.decode, self.interventions, pbar=self.pbar,
+		out = conditioned_reponses(model.encode, model.decode, self.interventions, pbar=self.pbar,
 		                            include_q=self.include_q,
-		                            resp_kwargs=dict(scales=scales, force_different=self.force_different))
+		                           resp_kwargs=dict( max_batch_size=self.batch_size,
+			                           # scales=scales,
+			                           # force_different=self.force_different
+		                           ))
 
 		if self.include_q:
 			mats, lts = out
@@ -480,7 +566,7 @@ class LatentResponses(Disentanglement_Evaluator):
 	
 	
 @fig.Script('eval-metrics', 'Compute disentanglement metrics of a trained model')
-def _eval_run(A, run=None, metrics=None, mode=None,
+def eval_metrics(A, run=None, metrics=None, mode=None,
               force_run=None, force_save=None, log_stats=unspecified_argument,
               save_ident=unspecified_argument, pbar=unspecified_argument):
 	
@@ -592,7 +678,7 @@ def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecifie
 				for metric in metrics.values():
 					metric.set_dataset(run.get_dataset())
 			
-			_eval_run(A, run=run, metrics=metrics)
+			eval_metrics(A, run=run, metrics=metrics)
 			#
 			# path = root / name
 			#
@@ -606,3 +692,27 @@ def _eval_metrics(A, runs=None, dataset=unspecified_argument, metrics=unspecifie
 			#
 			# 	print(f'Running: {run.get_name()} ({i+1}/{len(runs)})')
 			# 	_eval_run(A, run=run, metrics=metrics)
+
+
+@fig.Script('eval-fix-hybrid')
+def _eval_metrics(A):
+	run = fig.run('load-run', A)
+	
+	model = run.get_model()
+	
+	# if model._latent is None:
+		
+	dataset = run.get_dataset()
+	dataset.switch_to('train')
+	batch = dataset.get_batch(batch_size=128, shuffle=True)
+	with torch.no_grad():
+		Q = model.encode(batch)
+		if isinstance(Q, distrib.Distribution):
+			Q = Q.loc
+		model._latent = Q
+	
+	return run.evaluate(config=A)
+	
+
+
+

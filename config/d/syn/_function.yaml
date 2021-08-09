@@ -1,0 +1,15 @@
+
+parents: [base]
+
+num-nodes: 2
+
+dataset:
+  name: function
+
+  num: 100000
+
+#  in-memory: True
+
+  run-device: <>step_device
+
+  split.val: 0.1

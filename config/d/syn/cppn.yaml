@@ -1,0 +1,17 @@
+
+parents: [d/syn/_img]
+
+dataset.function:
+  _type: cppn
+
+  feature-dim: <>num-nodes
+  dout: [3, 64, 64]
+
+  hidden: [16, 16, 16]
+
+  include-radial: False
+
+
+info:
+  dataset_type: cppn
+

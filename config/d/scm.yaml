@@ -1,8 +1,0 @@
-
-parents: [d/vec]
-
-dataset.name: random-scm
-
-info.dataset_type: scm
-
-

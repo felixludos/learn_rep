@@ -2,7 +2,10 @@ parents: [origin]
 
 run:
   _type: sae-run
-  _mod.timed-run: 1
+  _mod:
+    timed-run: 1
+    cls-run: 3
+    smart-results: 5
 
 #name: test-learn_rep
 

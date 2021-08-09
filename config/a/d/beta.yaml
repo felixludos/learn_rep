@@ -1,0 +1,8 @@
+
+
+model.decoder:
+  _mod.distrib: 3
+  last.nonlin: None
+
+  src-distrib: beta
+#  autosample: best
