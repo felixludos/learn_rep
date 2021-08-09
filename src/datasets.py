@@ -6,7 +6,7 @@ import zlib
 from omnibelt import unspecified_argument
 
 from omnilearn.op.datasets import MPI3D, Shapes3D, CelebA
-from omnilearn.data import Dataset, JointFactorSampler, InterventionSampler, DatasetBase, Batchable, Deviced
+from omnilearn.data import register_dataset, JointFactorSampler, InterventionSampler, DatasetBase, Batchable, Deviced
 from omnilearn.util import Configurable, InitWall
 
 
@@ -70,7 +70,7 @@ class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
 		return self.samples[item]
 
 
-@Dataset('random-net')
+@register_dataset('random-net')
 class RandomNetDataset(SimpleVectorDataset):
 	def __init__(self, A, net=unspecified_argument, **kwargs):
 		seed = A.pull('seed')
@@ -98,7 +98,7 @@ class RandomNetDataset(SimpleVectorDataset):
 from .scm import SCM_Simul
 from .scm.data import erdos_renyi
 
-@Dataset('random-scm')
+@register_dataset('random-scm')
 class RandomSCMDataset(RandomNetDataset):
 	def __init__(self, A, **kwargs):
 		super().__init__(A, **kwargs)
