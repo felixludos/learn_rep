@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.com/felixludos/learn_rep.svg?branch=master)](https://travis-ci.com/felixludos/learn_rep)
 
-This code implements Structural Autoencoders and the latent response framework to learn and analyze disentangled representations for generative modeling. The paper associated with this project will be available soon.
+This code implements Structural Autoencoders to learn and analyze disentangled representations for generative modeling. The paper associated with this project will be available soon.
 
 ## Setup
 
