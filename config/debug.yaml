@@ -1,14 +1,17 @@
 
-#_meta.script_name: train
+_meta.script_name: train
 #_meta.script_name: eval
 
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
-parents: [demo]
+parents: [hybrid, a/conv, m/vae, d/3ds]
+#parents: [demo]
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, d/scm]
 #budget: 10
 #dataset.net: None
+
+soft-constraint-transform: True
 
 #seed: 1000
 #load: scm_ae_e-c12_d-s12_210210-044938

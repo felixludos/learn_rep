@@ -3,4 +3,5 @@ numpy>=1.19.5
 omnibelt>=0.5.1
 omnifig>=0.6.2
 omnilearn>=0.5.14
+gsutil
 pytest
