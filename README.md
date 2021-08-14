@@ -1,4 +1,4 @@
-# Structural Autoencoders and Latent Responses
+# Structural Autoencoders
 
 [![Build Status](https://travis-ci.com/felixludos/learn_rep.svg?branch=master)](https://travis-ci.com/felixludos/learn_rep)
 
@@ -19,7 +19,7 @@ pip install -r requirements
 
 ## Contents
 
-All the code is contained in the `sae_src/` directory:
+All the code is contained in the `src/` directory:
 
 - `datasets.py` - while the main datasets (3dshapes, mpi3d, celeba) we use are already implemented in `omnilearn`, this file implements a few simple datasets that don't require any downloads for demos.
 
