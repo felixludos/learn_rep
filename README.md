@@ -1,6 +1,8 @@
-# Structural Autoencoders
+# Autoencoder Evaluations
 
 [![Build Status](https://travis-ci.com/felixludos/learn_rep.svg?branch=master)](https://travis-ci.com/felixludos/learn_rep)
+
+# [this readme is out of date]
 
 This code implements Structural Autoencoders to learn and analyze disentangled representations for generative modeling. The paper associated with this project will be available soon.
 

@@ -1,7 +1,0 @@
-parents: ['m/cae', 'm/vae']
-
-model:
-  _type: 'cvae'
-
-info:
-  model_type: 'cvae'

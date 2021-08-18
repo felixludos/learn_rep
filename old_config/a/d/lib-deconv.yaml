@@ -1,8 +1,0 @@
-parents: ['basics']
-
-model:
-  decoder:
-    _type: 'dislib-dec'
-
-    nonlin: 'relu'
-

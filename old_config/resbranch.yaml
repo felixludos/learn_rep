@@ -1,7 +1,0 @@
-
-parents: ['a/d/prebranch']
-
-model:
-  decoder:
-    layers:
-      residual: True

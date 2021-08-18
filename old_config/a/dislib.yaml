@@ -1,5 +1,0 @@
-
-parents: [a/e/lib-conv, a/d/lib-conv]
-
-model.nonlin: relu
-

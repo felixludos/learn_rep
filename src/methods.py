@@ -201,6 +201,7 @@ class Autoencoder(SimpleAutoencoder):
 				print('WARNING: visualizing traversals failed')
 				
 
+
 @fig.AutoModifier('hybrid')
 class Hybrid(Autoencoder, Generative_AE):
 	def __init__(self, A, **kwargs):
@@ -292,9 +293,13 @@ class Hybrid(Autoencoder, Generative_AE):
 			imgs = imgs.bsample()
 		return imgs
 
+
+
 @fig.Component('hybrid')
 class Hybrid_Autoencoder(Hybrid):
 	pass
+
+
 
 @fig.AutoModifier('prior')
 class Prior(Autoencoder, Generative_AE):
@@ -342,13 +347,18 @@ class Prior(Autoencoder, Generative_AE):
 		return imgs
 
 
+
 @fig.Component('vae')
 class VAE(Prior, Variational_Autoencoder):
 	pass
 
+
+
 @fig.Component('wae')
 class WAE(Prior, Wasserstein_Autoencoder):
 	pass
+
+
 
 @fig.Component('swae')
 class Slice_WAE(WAE):

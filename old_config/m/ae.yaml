@@ -1,9 +1,0 @@
-parents: ['basics']
-
-model:
-  _model_type: 'ae'
-
-  reg_wt: 0
-
-info:
-  model_type: 'ae'
