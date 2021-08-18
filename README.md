@@ -25,13 +25,9 @@ All the code is contained in the `src/` directory:
 
 - `decoders.py` - this implements a generalized structural decoder architecture used for the SAE, AdaAE, and VLAE decoders.
 
-- `evaluate.py` - includes scripts (`eval-metrics` and `eval-multiple-metrics`) to computes the disentanglement metrics given one or multiple completed runs, respectively.
-
 - `ladder.py` - implements the necessary components for the VLAE baseline, including the ladder encoder (`ladder-enc`), the "inference rung" used by the encoder (`rung-infer`), and the "generative rung" used by the decoder (`rung-gen`) (here the `style-dec` from `decoders.py` decoder is used for the decoder).
 
 - `methods.py` - this contains the different regularization methods, most importantly the autoencoder (AE), variational autoencoder (VAE), and the wasserstein autoencoder (WAE)
-
-- `responses.py` - contains the code used to compute the latent response and latent factor-response matrix (by `metric/responses` in `evaluate.py`).
 
 - `run.py` - defines the default naming convention used for trained models based on the model regularization and architecture.
 

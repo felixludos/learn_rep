@@ -4,7 +4,10 @@ _meta.script_name: train
 
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
-parents: [hybrid, a/conv, m/vae, d/3ds]
+#parents: [hybrid, a/ladder/12, m/vae, d/3ds]
+#parents: [hybrid, a/d/beta, a/conv, m/vae, d/mnist]
+
+parents: [hybrid, a/e/conv, a/d/strc/6, m/ae, d/mnist]
 #parents: [demo]
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, d/scm]
@@ -12,6 +15,8 @@ parents: [hybrid, a/conv, m/vae, d/3ds]
 #dataset.net: None
 
 soft-constraint-transform: True
+
+
 
 #seed: 1000
 #load: scm_ae_e-c12_d-s12_210210-044938
