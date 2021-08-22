@@ -5,6 +5,9 @@ import omnifig as fig
 
 import numpy as np
 
+import gym
+from gym.spaces import Discrete, MultiDiscrete
+
 import torch
 # from torch import distributions as distrib
 from torch.utils.data import DataLoader, TensorDataset
@@ -16,6 +19,7 @@ from omnilearn.util import distributions as distrib
 from omnilearn.op import get_save_dir, framework as fm
 from omnilearn.eval import Evaluator
 from omnilearn.data import Memory_Dataset
+
 
 
 @fig.AutoModifier('encoded')
@@ -85,13 +89,17 @@ class Task(Evaluator, fm.Fitable):
 
 @fig.Component('inference')
 class Inference_Task(Task):
-	def __init__(self, A, inference=unspecified_argument, **kwargs):
+	def __init__(self, A, inference=unspecified_argument, solver_types=unspecified_argument, **kwargs):
 		if inference is unspecified_argument:
 			inference = A.pull('inference', None)
+		
+		if solver_types is unspecified_argument:
+			solver_types = A.pull('solver-types', [])
 		
 		super().__init__(A, **kwargs)
 		
 		self.inference = inference
+		self.solver_types = solver_types
 		self.solvers = None
 		
 		self._scores = []
@@ -103,36 +111,48 @@ class Inference_Task(Task):
 	
 		A = self._A
 		
-		# ltypes = []
+		ltypes = []
 		solvers = []
 		
 		for lbl in labels.t():
 			
 			if lbl.float() == lbl.int(): # classification
-				# ltypes.append('classifier')
+				ltypes.append('classifier')
 				classifer = A.pull('classifier', None)
 				if classifer is None:
 					classifer = GradientBoostingClassifier()
 				solvers.append(classifer)
 			else: # regression
-				# ltypes.append('regressor')
+				ltypes.append('regressor')
 				regressor = A.pull('regressor', None)
 				if regressor is None:
 					regressor = GradientBoostingRegressor()
 				solvers.append(regressor)
 			
+		self._label_types = ltypes
+		
+		scores = []
+		results = []
+		
+		if 'classifier' in ltypes:
+			scores.extend(['f1-score', 'precision', 'recall', 'accuracy'])
+			results.extend(['confusion-matrix'])
+		
+		if 'regressor' in ltypes:
+			scores.append(['mse-loss'])
+		
 		return solvers
 		
 	
 	def fit(self, data, targets=None):
 		assert targets is not None, 'No labels provided'
 		
-		solvers = self.build_model_from_labels(targets)
+		if self.solvers is None:
+			self.solvers = self.build_model_from_labels(targets)
 
-		for solver, lbl in zip(solvers, targets.t().unsqueeze(-1)):
+		for solver, lbl in zip(self.solvers, targets.t().unsqueeze(-1)):
 			solver.fit(data, lbl)
 			
-		self.solvers = solvers
 		return self
 	
 	
@@ -157,12 +177,17 @@ class Inference_Task(Task):
 			if self.dataset is None:
 				self.dataset = info.get_dataset()
 		
+			if self.solvers is None:
+				self.build_model_from_dataset(self.dataset)
 		
-		
-			samples = self.get_observations()
-			labels = self.get_labels()
+			samples = self.dataset.get_observations()
+			labels = self.dataset.get_labels()
 			if len(labels.shape) == 1:
 				labels = labels.unsqueeze(-1)
+				
+			self.fit(samples, labels)
+			
+		
 		
 		
 		

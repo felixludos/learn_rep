@@ -16,7 +16,7 @@ from omnilearn.op import get_save_dir
 from omnilearn.eval import Evaluator
 from omnilearn.data import InterventionSamplerBase
 
-from src.responses import sample_full_interventions, response_mat, conditioned_reponses
+# from .responses import sample_full_interventions, response_mat, conditioned_reponses
 from .metrics import metric_beta_vae, metric_factor_vae, mig, dci, irs, sap, \
 	modularity_explicitness, unsupervised_metrics, fairness
 
