@@ -71,7 +71,7 @@ class Encoded(Memory_Dataset):
 
 
 
-class Task(Evaluator, fm.Fitable):
+class Task(Evaluator, fm.Learner):
 	def __init__(self, A, dataset=unspecified_argument, **kwargs):
 		
 		if dataset is unspecified_argument:
@@ -129,8 +129,6 @@ class Inference_Task(Task):
 					regressor = GradientBoostingRegressor()
 				solvers.append(regressor)
 			
-		self._label_types = ltypes
-		
 		scores = []
 		results = []
 		
@@ -141,7 +139,20 @@ class Inference_Task(Task):
 		if 'regressor' in ltypes:
 			scores.append(['mse-loss'])
 		
+		self._label_types = ltypes
+		self._scores = scores
+		self._results = results
+		
 		return solvers
+		
+		
+	def build_model_from_dataset(self, dataset):
+		
+		A = self._A
+		
+		
+		
+		pass
 		
 	
 	def fit(self, data, targets=None):
