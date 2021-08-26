@@ -72,22 +72,51 @@ class Encoded(Memory_Dataset):
 
 
 class Task(Evaluator, fm.Learner):
-	def __init__(self, A, dataset=unspecified_argument, **kwargs):
-		
+	def __init__(self, A, model=unspecified_argument, dataset=unspecified_argument, metrics=None, **kwargs):
+
+		if model is unspecified_argument:
+			model = A.pull('model', None, ref=True)
+
 		if dataset is unspecified_argument:
 			dataset = A.pull('dataset', None, ref=True)
-		
+
+		# if metrics is None:
+		# 	metrics = A.pull('metrics', 'all')
+		# if metrics == 'all':
+		# 	metrics = list(self.KNOWN_METRICS.keys())
+
 		super().__init__(A, **kwargs)
-		
+
+		self.set_model(model)
+		self.set_dataset(dataset)
+
+	def set_model(self, model):
+		self.model = model
+
+	def set_dataset(self, dataset):
 		self.dataset = dataset
-		
-		
-	# def encode(self, x):
-	# 	return self.model.encode(x)
-	
+
+	def build_estimator(self):
+		pass
+
+	def _compute(self, run):
+
+
+
+		model = run.get_model()
+		dataset = run.get_dataset()
+
+
+
+		pass
+
+
+
+
+
 		
 
-@fig.Component('inference')
+@fig.Component('task/inference')
 class Inference_Task(Task):
 	def __init__(self, A, inference=unspecified_argument, solver_types=unspecified_argument, **kwargs):
 		if inference is unspecified_argument:
