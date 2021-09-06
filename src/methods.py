@@ -87,15 +87,22 @@ class Autoencoder(SimpleAutoencoder):
 		dist = out[key]
 		return dist
 		
-	def _evaluate(self, info, config, out=None):
+	def evaluate(self, dataset=None, info=None, config=None, **kwargs):
+		if dataset is None:
+			assert info is not None  # should be a run
+			dataset = info.get_dataset()
+		if config is None:
+			config = info.get_config()
+		return self._evaluate(dataset, config=config, **kwargs)
 		
-		out = super()._evaluate(info, config, out=out)
+		
+	def _evaluate(self, dataset, config, out=None):
+		if out is None:
+			out = super()._evaluate(dataset, config=config, out=out)
 		
 		fid = config.pull('fid', None, ref=True)
 		
 		if fid is not None:
-			
-			dataset = info.get_dataset()
 			
 			try:
 				base_stats = dataset.get_fid_stats(fid.dim, dataset.get_mode(), 'train')
@@ -105,7 +112,7 @@ class Autoencoder(SimpleAutoencoder):
 				fid.set_baseline_stats(base_stats)
 		
 		if not config.pull('skip-rec-fid', False) and fid is not None:
-			loader = info.get_loader(infinite=True)
+			loader = dataset.get_loader(infinite=True)
 			def _rec_gen(N):
 				img = self._process_batch(loader.demand(N)).original
 				return self(img)
@@ -217,9 +224,9 @@ class Hybrid(Autoencoder, Generative_AE):
 		if viz_gen_hybrid:
 			self._viz_settings.add('gen-hybrid')
 	
-	def _evaluate(self, info, config, out=None):
+	def _evaluate(self, dataset, config, out=None):
 		
-		out = super()._evaluate(info, config, out=out)
+		out = super()._evaluate(dataset, config, out=out)
 		
 		if not config.pull('skip-hyb-fid', False):
 		
@@ -312,9 +319,9 @@ class Prior(Autoencoder, Generative_AE):
 		if viz_gen_prior:
 			self._viz_settings.add('gen-prior')
 	
-	def _evaluate(self, info, config, out=None):
+	def _evaluate(self, dataset, config, out=None):
 		
-		out = super()._evaluate(info, config, out=out)
+		out = super()._evaluate(dataset, config, out=out)
 		
 		fid = config.pull('fid', None, ref=True, silent=True)
 		if fid is not None:

@@ -19,6 +19,8 @@
 _meta.script_name: train
 #_meta.script_name: eval
 
+budget: 10
+dataset.batch_size: 64
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
 parents: [hybrid, a/conv, m/vae, d/mnist]
@@ -110,8 +112,8 @@ name: test-pycharm
 inline: True
 #device: cuda:1
 
-fid.dim: 2048
-#fid.dim: 64
+#fid.dim: 2048
+fid.dim: 64
 fid.n_samples: 1000
 fid.batch_size: 16
 
