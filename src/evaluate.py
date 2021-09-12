@@ -13,7 +13,7 @@ import torch
 from omnilearn import util
 from omnilearn.util import distributions as distrib
 from omnilearn.op import get_save_dir
-from omnilearn.eval import Evaluator
+from omnilearn.eval import Metric
 from omnilearn.data import InterventionSamplerBase
 
 # from .responses import sample_full_interventions, response_mat, conditioned_reponses
@@ -21,7 +21,7 @@ from .metrics import metric_beta_vae, metric_factor_vae, mig, dci, irs, sap, \
 	modularity_explicitness, unsupervised_metrics, fairness
 
 
-class Disentanglement_Evaluator(Evaluator, util.Seed, util.Switchable, util.Deviced):
+class Disentanglement_Evaluator(Metric, util.Seed, util.Switchable, util.Deviced):
 	# TODO: turn into an alert and stats client
 	
 	# KNOWN_METRICS = {

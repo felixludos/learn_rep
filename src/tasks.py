@@ -16,15 +16,17 @@ from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegress
 
 from omnilearn import util
 from omnilearn.util import distributions as distrib
-from omnilearn.op import get_save_dir, framework as fm
-from omnilearn.eval import Evaluator
-from omnilearn.data import Memory_Dataset
+from omnilearn.op import get_save_dir, framework as fm#, scikit as sk
+from omnilearn.eval import Metric
+from omnilearn.data import Memory_Dataset, Dataset, Deviced
 
 
 
 @fig.AutoModifier('encoded')
 class Encoded(Memory_Dataset):
-	def __init__(self, A, encoder=unspecified_argument, sample_best=None, batch_size=None, **kwargs):
+	def __init__(self, A, encoder=unspecified_argument, sample_best=None, batch_size=None,
+	             pbar=unspecified_argument,
+	             **kwargs):
 		
 		if encoder is unspecified_argument:
 			encoder = A.pull('encoder', '<>model', None, ref=True)
@@ -34,30 +36,41 @@ class Encoded(Memory_Dataset):
 		
 		if batch_size is None:
 			batch_size = A.pull('batch-size', 64)
-		
+
+		if pbar is unspecified_argument:
+			pbar = A.pull('progress-bar', None)
+
 		super().__init__(A, **kwargs)
 		
 		self.encoder = encoder
 		self._sample_best = sample_best
 		self._batch_size = batch_size
-		
-		self._process_observations(A)
-	
-	
-	def _process_observations(self, A):
+		self._pbar = pbar
+
+		if self.encoder is not None:
+			self.set_encoder(encoder)
+
+
+	def set_encoder(self, encoder):
+		self.encoder = encoder
+		self.din = getattr(self.encoder, 'latent_dim', getattr(self.encoder, 'dout', None))
+		self._process_observations()
+
+
+	def _process_observations(self):
 		
 		loader = DataLoader(TensorDataset(self.get_observations()), batch_size=self._batch_size)
-		
-		pbar = A.pull('progress-bar', None)
-		pbar.set_description('Encoding observations')
-		if pbar is not None:
-			loader = pbar(loader)
+
+		if self._pbar is not None:
+			self._pbar.set_description('Encoding observations')
+			loader = self._pbar(loader)
 		
 		Q = []
 		with torch.no_grad():
-			for x in loader:
+			for x, *other in loader:
+				x = x.to(self.get_device())
 				q = self._encode_observation(x)
-				Q.append(q)
+				Q.append(q.cpu())
 		Q = torch.cat(Q)
 		
 		self._replace_observations(Q)
@@ -71,40 +84,31 @@ class Encoded(Memory_Dataset):
 
 
 
-class Task(Evaluator, fm.Learner):
-	def __init__(self, A, model=unspecified_argument, dataset=unspecified_argument, metrics=None, **kwargs):
+class Task(Metric, fm.Learnable):
+	# def __init__(self, A, model=unspecified_argument, dataset=unspecified_argument, metrics=None, **kwargs):
+	#
+	# 	if model is unspecified_argument:
+	# 		model = A.pull('model', None, ref=True)
+	#
+	# 	if dataset is unspecified_argument:
+	# 		dataset = A.pull('dataset', None, ref=True)
+	#
+	# 	# if metrics is None:
+	# 	# 	metrics = A.pull('metrics', 'all')
+	# 	# if metrics == 'all':
+	# 	# 	metrics = list(self.KNOWN_METRICS.keys())
+	#
+	# 	super().__init__(A, **kwargs)
 
-		if model is unspecified_argument:
-			model = A.pull('model', None, ref=True)
+		# self.set_model(model)
+		# self.set_dataset(dataset)
 
-		if dataset is unspecified_argument:
-			dataset = A.pull('dataset', None, ref=True)
-
-		# if metrics is None:
-		# 	metrics = A.pull('metrics', 'all')
-		# if metrics == 'all':
-		# 	metrics = list(self.KNOWN_METRICS.keys())
-
-		super().__init__(A, **kwargs)
-
-		self.set_model(model)
-		self.set_dataset(dataset)
-
-	def set_model(self, model):
-		self.model = model
-
-	def set_dataset(self, dataset):
-		self.dataset = dataset
-
-	def build_estimator(self):
-		pass
 
 	def _compute(self, run):
 
+		A = run.get_config()
 
 
-		model = run.get_model()
-		dataset = run.get_dataset()
 
 
 
@@ -112,125 +116,77 @@ class Task(Evaluator, fm.Learner):
 
 
 
+class EstimatorBuilder(util.Builder):
+	def __init__(self, A, use_mechanisms=None, **kwargs):
+		if use_mechanisms is None:
+			use_mechanisms = A.pull('use-mechanisms', False)
+		A.push('default-regressor', 'gbt-regressor', overwrite=False)
+		A.push('default-classifier', 'gbt-classifier', overwrite=False)
+		super().__init__(A, **kwargs)
+		self._use_mechanisms = use_mechanisms
 
 
-		
+	def _build(self, config, space):
+		if isinstance(space, Dataset):
+			space = space.get_mechanism_space() if self._use_mechanisms else space.get_label_space()
+
+		estimator = None
+
+		if isinstance(space, util.JointSpace):
+			config.push('joint._type', 'joint-estimator', overwrite=False, silent=True)
+			estimator = config.pull('joint')
+			estimator.include_estimators(*[self._build(config, dim) for dim in space])
+
+		if isinstance(space, util.PeriodicDim):
+			config.push('periodic._type', '<>default-regressor', overwrite=False, silent=True)
+			config.push('periodic._mod.periodized', 1, overwrite=False, silent=True)
+			key = 'periodic'
+
+		if isinstance(space, util.DenseDim):
+			config.push('continuous._type', '<>default-regressor', overwrite=False, silent=True)
+			key = 'continuous'
+
+		if isinstance(space, util.CategoricalDim):
+			config.push('categorical._type', '<>default-classifier', overwrite=False, silent=True)
+			key = 'categorical'
+
+		if estimator is None:
+			estimator = config.pull(key)
+			estimator.register_out_space(space)
+		return estimator
+
+
 
 @fig.Component('task/inference')
 class Inference_Task(Task):
-	def __init__(self, A, inference=unspecified_argument, solver_types=unspecified_argument, **kwargs):
-		if inference is unspecified_argument:
-			inference = A.pull('inference', None)
-		
-		if solver_types is unspecified_argument:
-			solver_types = A.pull('solver-types', [])
-		
-		super().__init__(A, **kwargs)
-		
-		self.inference = inference
-		self.solver_types = solver_types
-		self.solvers = None
-		
-		self._scores = []
-		self._results = []
-		self._A = A
-		
-	
-	def build_model_from_labels(self, labels):
-	
-		A = self._A
-		
-		ltypes = []
-		solvers = []
-		
-		for lbl in labels.t():
-			
-			if lbl.float() == lbl.int(): # classification
-				ltypes.append('classifier')
-				classifer = A.pull('classifier', None)
-				if classifer is None:
-					classifer = GradientBoostingClassifier()
-				solvers.append(classifer)
-			else: # regression
-				ltypes.append('regressor')
-				regressor = A.pull('regressor', None)
-				if regressor is None:
-					regressor = GradientBoostingRegressor()
-				solvers.append(regressor)
-			
-		scores = []
-		results = []
-		
-		if 'classifier' in ltypes:
-			scores.extend(['f1-score', 'precision', 'recall', 'accuracy'])
-			results.extend(['confusion-matrix'])
-		
-		if 'regressor' in ltypes:
-			scores.append(['mse-loss'])
-		
-		self._label_types = ltypes
-		self._scores = scores
-		self._results = results
-		
-		return solvers
-		
-		
-	def build_model_from_dataset(self, dataset):
-		
-		A = self._A
-		
-		
-		
-		pass
-		
-	
-	def fit(self, data, targets=None):
-		assert targets is not None, 'No labels provided'
-		
-		if self.solvers is None:
-			self.solvers = self.build_model_from_labels(targets)
+	def __init__(self, A, estimator_builder=unspecified_argument, **kwargs):
 
-		for solver, lbl in zip(self.solvers, targets.t().unsqueeze(-1)):
-			solver.fit(data, lbl)
-			
-		return self
-	
-	
-	def predict(self, data):
-		assert self.solvers is not None
-		
-		return torch.stack([solver.predict(data).view(-1) for solver in self.solvers])
-	
-	
+		if estimator_builder is unspecified_argument:
+			estimator_builder = A.pull('estimator-builder', None)
+
+		super().__init__(A, **kwargs)
+
+		self.estimator_builder = estimator_builder
+		self.estimator = None
+
+
 	def get_scores(self):
-		return self._scores
+		if self.estimator is not None:
+			return self.estimator.get_scores()
 	
 	
 	def get_results(self):
-		return self._results
+		if self.estimator is not None:
+			return self.estimator.get_results()
 	
 	
-	def _compute(self, info=None):
+	def _compute(self, info=None, dataset=None):
+		if dataset is None:
+			dataset = info.get_dataset()
+		if self.estimator is None:
+			self.estimator = self.estimator_builder.resolve()
+		return self.estimator.compute(info, dataset=dataset)
 		
-		if self.solvers is None:
-		
-			if self.dataset is None:
-				self.dataset = info.get_dataset()
-		
-			if self.solvers is None:
-				self.build_model_from_dataset(self.dataset)
-		
-			samples = self.dataset.get_observations()
-			labels = self.dataset.get_labels()
-			if len(labels.shape) == 1:
-				labels = labels.unsqueeze(-1)
-				
-			self.fit(samples, labels)
-			
-		
-		
-		
-		
-		pass
-		
-		
+
+
+

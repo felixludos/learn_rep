@@ -1,10 +1,27 @@
 
+#_meta.script_name: load-data
+#
+#device: cuda
+#
+#model:
+#  _type: model
+#  load: mnist_ae_e-conv_d-s6_210818-091603
+#
+#_dataset_mod.encoded: 1
+#name: mnist
+#labeled: True
+#shuffle: False
+#seed: 10
+
+
+####################################
+
 _meta.script_name: train
 #_meta.script_name: eval
 
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
-parents: [hybrid, a/conv, m/vae, d/3ds]
+parents: [hybrid, a/conv, m/vae, d/mnist]
 #parents: [demo]
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, d/scm]
