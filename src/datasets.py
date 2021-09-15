@@ -10,7 +10,7 @@ from omnilearn.data import register_dataset, JointFactorSampler, InterventionSam
 from omnilearn.util import Configurable, InitWall
 
 
-class SimpleVectorDataset(Deviced, Batchable, DatasetBase):
+class SimpleVectorDataset(Batchable, DatasetBase):
 
 	def __init__(self, A, num_samples=None, num_nodes=None, out_dim=None, **kwargs):
 

@@ -96,7 +96,7 @@ class Autoencoder(SimpleAutoencoder):
 		return self._evaluate(dataset, config=config, **kwargs)
 		
 		
-	def _evaluate(self, dataset, config, out=None):
+	def _evaluate(self, dataset, config=None, out=None):
 		if out is None:
 			out = super()._evaluate(dataset, config=config, out=out)
 		

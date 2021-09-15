@@ -18,12 +18,12 @@ from omnilearn import util
 from omnilearn.util import distributions as distrib
 from omnilearn.op import get_save_dir, framework as fm#, scikit as sk
 from omnilearn.eval import Metric
-from omnilearn.data import Memory_Dataset, Dataset, Deviced
+from omnilearn.data import Supervised, Dataset, Deviced
 
 
 
 @fig.AutoModifier('encoded')
-class Encoded(Memory_Dataset):
+class Encoded(Supervised):
 	def __init__(self, A, encoder=unspecified_argument, sample_best=None, batch_size=None,
 	             pbar=unspecified_argument,
 	             **kwargs):
@@ -116,6 +116,7 @@ class Task(Metric, fm.Learnable):
 
 
 
+@fig.Component('estimator-builder')
 class EstimatorBuilder(util.Builder):
 	def __init__(self, A, use_mechanisms=None, **kwargs):
 		if use_mechanisms is None:

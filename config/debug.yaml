@@ -1,5 +1,5 @@
 
-#_meta.script_name: load-data
+#_meta.script_name: load-model
 #
 #device: cuda
 #
@@ -13,14 +13,20 @@
 #shuffle: False
 #seed: 10
 
+#model:
+#  _type: model
+#  _model_type: gbt-classifier
+#  _model_mod:
+#    periodized: 1
+
 
 ####################################
 
 _meta.script_name: train
 #_meta.script_name: eval
 
-budget: 10
-dataset.batch_size: 64
+#budget: 10
+#dataset.batch_size: 64
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
 parents: [hybrid, a/conv, m/vae, d/mnist]
