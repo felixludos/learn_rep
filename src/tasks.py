@@ -58,8 +58,9 @@ class Encoded(Supervised):
 
 
 	def _process_observations(self):
+		print(self.__class__.__name__, len(self))
 		
-		loader = DataLoader(TensorDataset(self.get_observations()), batch_size=self._batch_size)
+		loader = DataLoader(self, batch_size=self._batch_size, shuffle=False)
 
 		if self._pbar is not None:
 			self._pbar.set_description('Encoding observations')
@@ -68,7 +69,6 @@ class Encoded(Supervised):
 		Q = []
 		with torch.no_grad():
 			for x, *other in loader:
-				x = x.to(self.get_device())
 				q = self._encode_observation(x)
 				Q.append(q.cpu())
 		Q = torch.cat(Q)
@@ -77,7 +77,7 @@ class Encoded(Supervised):
 		
 	
 	def _encode_observation(self, x, **kwargs):
-		q = self.encoder.encode(x, **kwargs)
+		q = self.encoder.encode(x.to(self.encoder.get_device()), **kwargs)
 		if isinstance(q, distrib.Distribution):
 			q = q.bsample() if self._sample_best else q.rsample()
 		return q

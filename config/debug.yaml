@@ -1,5 +1,7 @@
 
-#_meta.script_name: load-model
+_meta.script_name: load-data
+
+parents: [d/mpi]
 #
 #device: cuda
 #
@@ -22,15 +24,16 @@
 
 ####################################
 
-_meta.script_name: train
+#_meta.script_name: train
 #_meta.script_name: eval
 
 #budget: 10
 #dataset.batch_size: 64
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
-parents: [hybrid, a/conv, m/vae, d/mnist]
+#parents: [hybrid, a/conv12, m/vae, d/3ds]
 #parents: [demo]
+
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, d/scm]
 #budget: 10
