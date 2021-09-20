@@ -1,7 +1,7 @@
 
 _meta.script_name: load-data
 
-parents: [d/mpi]
+parents: [d/3ds]
 #
 #device: cuda
 #

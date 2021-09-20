@@ -18,15 +18,14 @@ from omnilearn import util
 from omnilearn.util import distributions as distrib
 from omnilearn.op import get_save_dir, framework as fm#, scikit as sk
 from omnilearn.eval import Metric
-from omnilearn.data import Supervised, Dataset, Deviced
+from omnilearn.data import Supervised, Dataset, Deviced, DatasetWrapper
 
 
 
 @fig.AutoModifier('encoded')
 class Encoded(Supervised):
 	def __init__(self, A, encoder=unspecified_argument, sample_best=None, batch_size=None,
-	             pbar=unspecified_argument,
-	             **kwargs):
+	             pbar=unspecified_argument, **kwargs):
 		
 		if encoder is unspecified_argument:
 			encoder = A.pull('encoder', '<>model', None, ref=True)
