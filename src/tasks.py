@@ -18,13 +18,13 @@ from omnilearn import util
 from omnilearn.util import distributions as distrib
 from omnilearn.op import get_save_dir, framework as fm#, scikit as sk
 from omnilearn.eval import Metric
-from omnilearn.data import Supervised, Dataset, Deviced, DatasetWrapper
+from omnilearn.data import Supervised, Dataset, Batchable, Deviced, Observation, DatasetWrapper
 
 
 
-@fig.AutoModifier('encoded')
-class Encoded(Supervised):
-	def __init__(self, A, encoder=unspecified_argument, sample_best=None, batch_size=None,
+@DatasetWrapper('encoded')
+class Encoded(Observation):
+	def __init__(self, A, encoder=unspecified_argument, sample_best=None, batch_size=None, auto_process=None,
 	             pbar=unspecified_argument, **kwargs):
 		
 		if encoder is unspecified_argument:
@@ -39,10 +39,19 @@ class Encoded(Supervised):
 		if pbar is unspecified_argument:
 			pbar = A.pull('progress-bar', None)
 
+		if auto_process is None:
+			auto_process = A.pull('auto-process', True)
+
 		super().__init__(A, **kwargs)
-		
+		self.__activate__(encoder=encoder, sample_best=sample_best, batch_size=batch_size, auto_process=auto_process,
+		                  pbar=pbar)
+
+
+	def __activate__(self, encoder=None, sample_best=True, batch_size=64, auto_process=True, pbar=None):
 		self.encoder = encoder
 		self._sample_best = sample_best
+		self._auto_process = auto_process
+		self._observations_encoded = False
 		self._batch_size = batch_size
 		self._pbar = pbar
 
@@ -53,11 +62,11 @@ class Encoded(Supervised):
 	def set_encoder(self, encoder):
 		self.encoder = encoder
 		self.din = getattr(self.encoder, 'latent_dim', getattr(self.encoder, 'dout', None))
-		self._process_observations()
+		if self._auto_process:
+			self._process_observations()
 
 
 	def _process_observations(self):
-		print(self.__class__.__name__, len(self))
 		
 		loader = DataLoader(self, batch_size=self._batch_size, shuffle=False)
 
@@ -71,15 +80,37 @@ class Encoded(Supervised):
 				q = self._encode_observation(x)
 				Q.append(q.cpu())
 		Q = torch.cat(Q)
-		
-		self._replace_observations(Q)
-		
-	
+
+		self._observations_encoded = True
+		if isinstance(self, Batchable):
+			self._replace_observations(Q)
+		if isinstance(self, Deviced):
+			self.register_buffer('observations', Q)
+		else:
+			self.observations = Q
+
+
+	# @DatasetWrapper.condition(Observation)
+	def get_observation(self):
+		if self._observations_encoded and not isinstance(self, Batchable):
+			return self.observations
+		return super().get_observations()
+
+
 	def _encode_observation(self, x, **kwargs):
 		q = self.encoder.encode(x.to(self.encoder.get_device()), **kwargs)
 		if isinstance(q, distrib.Distribution):
 			q = q.bsample() if self._sample_best else q.rsample()
 		return q
+
+
+	def __getitem__(self, item):
+		if self._observations_encoded and not isinstance(self, Batchable):
+			return self.observations
+		x, *other = super().__getitem__(item)
+		if not self._observations_encoded:
+			x = self._encode_observation(x)
+		return x, *other
 
 
 

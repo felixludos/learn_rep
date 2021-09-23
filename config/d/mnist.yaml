@@ -5,7 +5,7 @@ dataset:
     name: mnist
 
     download: False
-    labeled: False
+#    labeled: False
 
     batch_size: 128
 
