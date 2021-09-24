@@ -1,7 +1,10 @@
 
 _meta.script_name: load-data
 
-parents: [d/3ds]
+parents: [d/celeba]
+
+supervised: True
+#slim: True
 #
 #device: cuda
 #
