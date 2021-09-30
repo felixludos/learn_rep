@@ -1,9 +1,49 @@
 
-_meta.script_name: load-data
+_meta.script_name: test-estimator
 
-parents: [d/celeba]
+parents: [hybrid, m/ae, a/conv, d/mnist]
 
-supervised: True
+#cat: toy
+
+dataset:
+  _dataset_mod:
+    encoded: 3
+    subset: 2
+#    shuffled: 1
+
+  name: kmnist
+
+  split: None
+  num: 400
+
+  progress-bar: <>pbar
+
+#  wrappers:
+#    - ident: subset
+#      kwargs.num: 100
+
+  supervised: True
+
+model:
+#  din: [3, 128, 128]
+  din: [1, 32, 32]
+
+  dout: <>din
+
+
+
+
+
+
+####################################
+
+#_meta.script_name: load-data
+#
+#parents: [d/celeba]
+#supervised: True
+#model: None
+#dataset._dataset_mod.encoded: 1
+
 #slim: True
 #
 #device: cuda

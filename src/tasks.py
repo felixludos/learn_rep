@@ -21,9 +21,38 @@ from omnilearn.eval import Metric
 from omnilearn.data import Supervised, Dataset, Batchable, Deviced, Observation, DatasetWrapper
 
 
+@fig.Script('test-estimator')
+def _train_estimator(A):
+
+	seed = A.pull('seed', util.gen_random_seed())
+
+	dataset = fig.run('load-data', A)
+	# dataset.register_wrapper('subset', kwargs={'num': 100, 'update_data': False})
+
+	# model = fig.run('load-model', A)
+	# dataset.set_encoder(model)
+
+	print(dataset.get_target_space())
+
+	builder = fig.quick_create('estimator-builder')
+	est = builder.build(dataset.get_target_space())
+
+	obs = dataset.get('observations')
+	print(obs.shape, )
+
+	out = est.fit(dataset)
+
+	pred = est.predict(obs)
+
+	out = est.evaluate(dataset=dataset)
+
+	print(out.keys())
+
+	pass
+
 
 @DatasetWrapper('encoded')
-class Encoded(Observation):
+class Encoded(Batchable, Observation):
 	def __init__(self, A, encoder=unspecified_argument, sample_best=None, batch_size=None, auto_process=None,
 	             pbar=unspecified_argument, **kwargs):
 		
@@ -54,9 +83,20 @@ class Encoded(Observation):
 		self._observations_encoded = False
 		self._batch_size = batch_size
 		self._pbar = pbar
+		self._skip_encoder = False
 
 		if self.encoder is not None:
 			self.set_encoder(encoder)
+
+
+	def allow_batched_get(self):
+		return self._observations_encoded
+
+
+	def collate(self, samples):
+		if self.allow_batched_get():
+			return super().collate(samples)
+		return super(Batchable, self).collate(samples)
 
 
 	def set_encoder(self, encoder):
@@ -66,9 +106,9 @@ class Encoded(Observation):
 			self._process_observations()
 
 
-	def _process_observations(self):
-		
-		loader = DataLoader(self, batch_size=self._batch_size, shuffle=False)
+	def _process_observations(self): # TODO: replace with "process_in_batches"
+		loader = self.to_loader(format='observations', batch_size=self._batch_size, shuffle=False)
+		self._skip_encoder = True
 
 		if self._pbar is not None:
 			self._pbar.set_description('Encoding observations')
@@ -76,41 +116,49 @@ class Encoded(Observation):
 		
 		Q = []
 		with torch.no_grad():
-			for x, *other in loader:
+			for x in loader:
+				# print(len(x))
 				q = self._encode_observation(x)
 				Q.append(q.cpu())
 		Q = torch.cat(Q)
 
 		self._observations_encoded = True
-		if isinstance(self, Batchable):
-			self._replace_observations(Q)
+		self._available_data['observations'] = None
+		self._skip_encoder = False
 		if isinstance(self, Deviced):
 			self.register_buffer('observations', Q)
 		else:
-			self.observations = Q
+			self.register_data('observations', data=Q)
 
 
 	# @DatasetWrapper.condition(Observation)
-	def get_observation(self):
-		if self._observations_encoded and not isinstance(self, Batchable):
-			return self.observations
-		return super().get_observations()
+	def get_observations(self, idx=None):
+		if self._observations_encoded:
+			return self.observations if idx is None else self.observations[idx]
+		obs = super().get_observations(idx=idx)
+		if self._skip_encoder:
+			return obs
+		if self.encoder is not None:
+			obs = self._encode_observation(obs)
+		return obs
 
 
 	def _encode_observation(self, x, **kwargs):
-		q = self.encoder.encode(x.to(self.encoder.get_device()), **kwargs)
-		if isinstance(q, distrib.Distribution):
-			q = q.bsample() if self._sample_best else q.rsample()
-		return q
+		# print(x.shape)
+		encode = getattr(self.encoder, 'encode', self.encoder)
+		z = encode(x.to(self.encoder.get_device()), **kwargs)
+		if isinstance(z, distrib.Distribution):
+			z = z.bsample() if self._sample_best else z.rsample()
+		return z
 
 
-	def __getitem__(self, item):
-		if self._observations_encoded and not isinstance(self, Batchable):
-			return self.observations
-		x, *other = super().__getitem__(item)
-		if not self._observations_encoded:
-			x = self._encode_observation(x)
-		return x, *other
+	# def __getitem__(self, item):
+	# 	if self._observations_encoded and not isinstance(self, Batchable):
+	# 		return self.observations
+	# 	x, *other = super().__getitem__(item)
+	# 	if not self._observations_encoded:
+	# 		x = self._encode_observation(x)
+	# 	return x, *other
 
 
 
