@@ -1,7 +1,9 @@
 
 _meta.script_name: test-estimator
 
-parents: [hybrid, m/ae, a/conv, d/mnist]
+parents: [hybrid, m/ae, a/conv, d/3ds]
+
+estimator._type: estimator-builder
 
 #cat: toy
 
@@ -10,8 +12,6 @@ dataset:
     encoded: 3
     subset: 2
 #    shuffled: 1
-
-  name: kmnist
 
   split: None
   num: 400
@@ -26,8 +26,7 @@ dataset:
 
 model:
 #  din: [3, 128, 128]
-  din: [1, 32, 32]
-
+  din: [3, 64, 64]
   dout: <>din
 
 

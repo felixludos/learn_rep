@@ -18,7 +18,7 @@ from omnilearn import util
 from omnilearn.util import distributions as distrib
 from omnilearn.op import get_save_dir, framework as fm#, scikit as sk
 from omnilearn.eval import Metric
-from omnilearn.data import Supervised, Dataset, Batchable, Deviced, Observation, DatasetWrapper
+from omnilearn.data import Supervised, Dataset, Batchable, Deviced, Observation, DatasetWrapper, DataLike
 
 
 @fig.Script('test-estimator')
@@ -34,8 +34,8 @@ def _train_estimator(A):
 
 	print(dataset.get_target_space())
 
-	builder = fig.quick_create('estimator-builder')
-	est = builder.build(dataset.get_target_space())
+	builder = A.pull('estimator')
+	est = builder.build(dataset)
 
 	obs = dataset.get('observations')
 	print(obs.shape, )
@@ -43,6 +43,7 @@ def _train_estimator(A):
 	out = est.fit(dataset)
 
 	pred = est.predict(obs)
+	y = dataset.get('targets')
 
 	out = est.evaluate(dataset=dataset)
 
@@ -206,7 +207,7 @@ class EstimatorBuilder(util.Builder):
 
 
 	def _build(self, config, space):
-		if isinstance(space, Dataset):
+		if isinstance(space, DataLike):
 			space = space.get_mechanism_space() if self._use_mechanisms else space.get_label_space()
 
 		estimator = None
@@ -216,16 +217,16 @@ class EstimatorBuilder(util.Builder):
 			estimator = config.pull('joint')
 			estimator.include_estimators(*[self._build(config, dim) for dim in space])
 
-		if isinstance(space, util.PeriodicDim):
+		elif isinstance(space, util.PeriodicDim):
 			config.push('periodic._type', '<>default-regressor', overwrite=False, silent=True)
 			config.push('periodic._mod.periodized', 1, overwrite=False, silent=True)
 			key = 'periodic'
 
-		if isinstance(space, util.DenseDim):
+		elif isinstance(space, util.DenseDim):
 			config.push('continuous._type', '<>default-regressor', overwrite=False, silent=True)
 			key = 'continuous'
 
-		if isinstance(space, util.CategoricalDim):
+		elif isinstance(space, util.CategoricalDim):
 			config.push('categorical._type', '<>default-classifier', overwrite=False, silent=True)
 			key = 'categorical'
 
