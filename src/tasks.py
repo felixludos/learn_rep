@@ -32,20 +32,26 @@ def _train_estimator(A):
 	# model = fig.run('load-model', A)
 	# dataset.set_encoder(model)
 
-	print(dataset.get_target_space())
+	space = dataset.get_target_space()
+	print(space)
 
 	builder = A.pull('estimator')
 	est = builder.build(dataset)
 
-	obs = dataset.get('observations')
-	print(obs.shape, )
+	# obs = dataset.get('observations')
+	# print(obs.shape, )
 
-	out = est.fit(dataset)
+	# out = est.fit(dataset)
 
-	pred = est.predict(obs)
-	y = dataset.get('targets')
+	# pred = est.predict(obs)
+	# y = dataset.get('targets')
 
-	out = est.evaluate(dataset=dataset)
+	dataset.switch_to('val')
+
+	out = est.compute(dataset=dataset)
+
+	# print(pred[:4])
+	# print(y[:4])
 
 	print(out.keys())
 
@@ -124,7 +130,7 @@ class Encoded(Batchable, Observation):
 		Q = torch.cat(Q)
 
 		self._observations_encoded = True
-		self._available_data['observations'] = None
+		self._available_data_keys['observations'] = None
 		self._skip_encoder = False
 		if isinstance(self, Deviced):
 			self.register_buffer('observations', Q)
@@ -198,8 +204,6 @@ class Task(Metric, fm.Learnable):
 @fig.Component('estimator-builder')
 class EstimatorBuilder(util.Builder):
 	def __init__(self, A, use_mechanisms=None, **kwargs):
-		if use_mechanisms is None:
-			use_mechanisms = A.pull('use-mechanisms', False)
 		A.push('default-regressor', 'gbt-regressor', overwrite=False)
 		A.push('default-classifier', 'gbt-classifier', overwrite=False)
 		super().__init__(A, **kwargs)
@@ -208,7 +212,7 @@ class EstimatorBuilder(util.Builder):
 
 	def _build(self, config, space):
 		if isinstance(space, DataLike):
-			space = space.get_mechanism_space() if self._use_mechanisms else space.get_label_space()
+			space = space.get_target_space()
 
 		estimator = None
 

@@ -5,7 +5,9 @@ parents: [hybrid, m/ae, a/conv, d/3ds]
 
 estimator._type: estimator-builder
 
-#cat: toy
+
+
+cat: real
 
 dataset:
   _dataset_mod:
@@ -13,8 +15,14 @@ dataset:
     subset: 2
 #    shuffled: 1
 
-  split: None
+#  name: cifar10
+
   num: 400
+#  split: None
+  split:
+    val: 0.25
+
+  use-mechanisms: True
 
   progress-bar: <>pbar
 
@@ -27,6 +35,8 @@ dataset:
 model:
 #  din: [3, 128, 128]
   din: [3, 64, 64]
+#  din: [3, 32, 32]
+
   dout: <>din
 
 
