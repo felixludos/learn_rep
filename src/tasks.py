@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from omnibelt import unspecified_argument
+from omnibelt import unspecified_argument, get_printer
 import omnifig as fig
 
 import numpy as np
@@ -16,13 +16,15 @@ from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegress
 
 from omnilearn import util
 from omnilearn.util import distributions as distrib
+from omnilearn.models import get_loss_type
 from omnilearn.op import get_save_dir, framework as fm#, scikit as sk
-from omnilearn.eval import Metric
 from omnilearn.data import Supervised, Dataset, Batchable, Deviced, Observation, DatasetWrapper, DataLike
+
+prt = get_printer(__file__)
 
 
 @fig.Script('test-estimator')
-def _train_estimator(A):
+def _test_estimator(A):
 
 	seed = A.pull('seed', util.gen_random_seed())
 
@@ -169,38 +171,6 @@ class Encoded(Batchable, Observation):
 
 
 
-class Task(Metric, fm.Learnable):
-	# def __init__(self, A, model=unspecified_argument, dataset=unspecified_argument, metrics=None, **kwargs):
-	#
-	# 	if model is unspecified_argument:
-	# 		model = A.pull('model', None, ref=True)
-	#
-	# 	if dataset is unspecified_argument:
-	# 		dataset = A.pull('dataset', None, ref=True)
-	#
-	# 	# if metrics is None:
-	# 	# 	metrics = A.pull('metrics', 'all')
-	# 	# if metrics == 'all':
-	# 	# 	metrics = list(self.KNOWN_METRICS.keys())
-	#
-	# 	super().__init__(A, **kwargs)
-
-		# self.set_model(model)
-		# self.set_dataset(dataset)
-
-
-	def _compute(self, run):
-
-		A = run.get_config()
-
-
-
-
-
-		pass
-
-
-
 @fig.Component('estimator-builder')
 class EstimatorBuilder(util.Builder):
 	def __init__(self, A, use_mechanisms=None, **kwargs):
@@ -241,9 +211,77 @@ class EstimatorBuilder(util.Builder):
 
 
 
+class Task(fig.Configurable, fm.Computable):
+	def __init__(self, A, model=unspecified_argument, dataset=unspecified_argument, **kwargs):
+
+		if model is unspecified_argument:
+			model = A.pull('model', None, ref=True)
+
+		if dataset is unspecified_argument:
+			dataset = A.pull('dataset', None, ref=True)
+
+		super().__init__(A, **kwargs)
+
+		self.model = model
+		self.dataset = dataset
+
+
+	def _compute(self, dataset=None, model=None, **kwargs):
+		if dataset is None:
+			dataset = self.dataset
+		if model is None:
+			model = self.model
+		return self.run(dataset, model, **kwargs)
+
+
+	@classmethod
+	def run(cls, dataset, model, out=None, **kwargs):
+		return cls._run(dataset, model, out=out, **kwargs)
+
+
+	@staticmethod
+	def _run(dataset, model, **kwargs):
+		raise NotImplementedError
+
+
+
+class _EncoderTask(Task):
+	def __init__(self, A, encoder=unspecified_argument, **kwargs):
+		if encoder is unspecified_argument:
+			encoder = A.pull('encoder', None, ref=True)
+		if encoder is not None:
+			kwargs['model'] = encoder
+		super().__init__(A, **kwargs)
+		self.encoder = encoder
+
+
+	def _compute(self, dataset=None, model=None, encoder=None, **kwargs):
+		if encoder is None:
+			encoder = self.encoder
+		return super()._compute(dataset=dataset, model=model, encoder=encoder, **kwargs)
+
+
+	@classmethod
+	def run(cls, dataset, model, encoder=None, **kwargs):
+		if encoder is None and hasattr(model, 'encode'):
+			encoder = model
+		return super().run(dataset=dataset, encoder=encoder, **kwargs)
+
+
+	def _run(self, dataset, encoder, **kwargs):
+		raise NotImplementedError
+
+
+
 @fig.Component('task/inference')
-class Inference_Task(Task):
-	def __init__(self, A, estimator_builder=unspecified_argument, **kwargs):
+class InferenceTask(_EncoderTask):
+	def __init__(self, A, estimator=unspecified_argument,
+	             estimator_builder=unspecified_argument, **kwargs):
+
+		if estimator is unspecified_argument:
+			estimator = A.pull('estimator', None)
+		if estimator is not None:
+			estimator_builder = None
 
 		if estimator_builder is unspecified_argument:
 			estimator_builder = A.pull('estimator-builder', None)
@@ -251,7 +289,7 @@ class Inference_Task(Task):
 		super().__init__(A, **kwargs)
 
 		self.estimator_builder = estimator_builder
-		self.estimator = None
+		self.estimator = estimator
 
 
 	def get_scores(self):
@@ -262,15 +300,292 @@ class Inference_Task(Task):
 	def get_results(self):
 		if self.estimator is not None:
 			return self.estimator.get_results()
-	
-	
-	def _compute(self, info=None, dataset=None):
+
+
+	def _compute(self, dataset=None, estimator=None, **kwargs):
 		if dataset is None:
-			dataset = info.get_dataset()
-		if self.estimator is None:
-			self.estimator = self.estimator_builder.resolve()
-		return self.estimator.compute(info, dataset=dataset)
-		
+			dataset = self.dataset
+		if estimator is None:
+			estimator = self.estimator_builder.build(dataset) if self.estimator is None else self.estimator
+		return super()._compute(dataset=dataset, estimator=estimator, **kwargs)
+
+
+	@classmethod
+	def run(cls, dataset, model, estimator=None, **kwargs):
+		if estimator is None and hasattr(model, 'predict'):
+			estimator = model
+		return super()._run(dataset=dataset, model=model, estimator=estimator, **kwargs)
+
+
+	def _run(self, dataset, estimator, encoder=None, **kwargs):
+		if encoder is not None:
+			dataset.register_wrapper('encoded', encoder=encoder)
+		return estimator.compute(dataset=dataset)
+
+
+
+@fig.Component('task/clustering')
+class ClusteringTask(InferenceTask): # TODO: specify cluster centers
+	pass
+
+
+
+@fig.Component('task/generation')
+class GenerationTask(Task):
+	def __init__(self, A, model=unspecified_argument, extractor=unspecified_argument,
+	             dataset=unspecified_argument, criterion=unspecified_argument,
+	             use_dataset_len=None, compute_missing_reference=None,
+	             batch_size=None, n_samples=None, pbar=unspecified_argument, **kwargs):
+
+		if model is unspecified_argument:
+			model = A.pull('model', None, ref=True)
+
+		if dataset is unspecified_argument:
+			dataset = A.pull('dataset', None, ref=True)
+
+		if extractor is unspecified_argument:
+			extractor = A.pull('extractor', None, ref=True)
+
+		if criterion is unspecified_argument:
+			criterion = A.pull('criterion', None, ref=True)
+
+		if use_dataset_len is None:
+			use_dataset_len = A.pull('use_dataset_len', False)
+
+		if n_samples is None:
+			n_samples = A.pull('n_samples', 50000, silent=use_dataset_len)
+
+		if compute_missing_reference is None:
+			compute_missing_reference = A.pull('compute_missing_reference', True)
+
+		if batch_size is None:
+			batch_size = A.pull('batch_size', 50)
+
+		if pbar is unspecified_argument:
+			pbar = A.pull('pbar', None)
+
+		super().__init__(A, **kwargs)
+
+		self.set_model(model)
+		self.set_dataset(dataset)
+
+		if extractor is None:
+			prt.warning('No features extractor for generative task')
+		self.extractor = extractor
+		self.criterion = get_loss_type(criterion)
+
+		self._use_dataset_len = use_dataset_len
+		self._compute_missing_reference = compute_missing_reference
+		self._accumulation = None
+		self.batch_size = batch_size
+		self.n_samples = n_samples
+		self.pbar = pbar
+		self._gen_fn = None
+
+
+	def set_model(self, model):
+		self.model = model
+
+
+	def get_scores(self):
+		return ['score']
+
+
+	def get_results(self):
+		return ['stats', 'reference']
+
+
+	def _get_title(self):
+		return 'Evaluating Generative Task'
+
+
+	def generate(self, N, **kwargs):
+		return self._gen_fn(N, **kwargs)
+
+
+	def judge(self, samples):
+		if self.extractor is not None:
+			samples = self.extractor.encode(samples)
+		return samples
+
+
+	def _prep_collection(self):
+		self._gen_fn = self.model.generate if hasattr(self.model, 'generate') else self.model
+
+		if self.model is None:
+			self._gen_fn = self.dataset.to_loader(infinite=True, sample_format='observation',
+			                                      batch_size=self.batch_size)
+			self._gen_fn = self._gen_fn.demand
+
+		if self._use_dataset_len:
+			self.n_samples = len(self.dataset)
+
+		return []
+
+
+	def aggregate(self, scores, out=None):
+		if out is None:
+			out = util.TensorDict()
+		if 'stats' not in out:
+			out.stats = self._aggregate_scores(scores)
+		if self.model is not None:
+			out = self._compare_to_reference(out)
+		return out
+
+
+	def _collect(self):
+		title = self._get_title()
+
+		pbar = self.pbar
+		if pbar is not None:
+			pbar = pbar(total=self.n_samples)
+			pbar.set_description(title)
+		elif title is not None:
+			print(title)
+
+		scores = self._prep_collection()
+
+		with torch.no_grad():
+			j = 0
+			while j < self.n_samples:
+				N = min(self.batch_size, self.n_samples - j)
+
+				samples = self.generate(N)
+				score = self.judge(samples)
+				if scores is not None:
+					scores.append(score)
+
+				j += N
+				if pbar is not None:
+					pbar.update(N)
+
+		if pbar is not None:
+			pbar.close()
+
+		return self.aggregate(scores)
+
+
+	def set_dataset(self, dataset=None):
+		self.dataset = dataset
+
+
+	def _aggregate_scores(self, scores):
+		X = torch.cat(scores)
+		return X.mean(0), util.cov(X)
+
+
+	def _reference_props(self):
+		props = dict(n_samples=self.n_samples)
+		if self.extractor is not None:
+			props.update(self.extractor.get_hparams())
+		return props
+
+
+	def _find_reference_scores(self, info):
+		props = self._reference_props()
+		try:
+			return self.dataset.load_stats(props)
+		except FileNotFoundError:
+			if self._compute_missing_reference:
+				_model = self.model
+				self.model = None
+				ref_stats = self._collect().stats
+				self.dataset.save_stats(props, ref_stats)
+				self.model = _model
+				return ref_stats
+
+
+	def _compare_to_reference(self, info):
+		if 'reference' not in info:
+			info.reference = self._find_reference_scores(info)
+		if self.criterion is None:
+			info.score = sum(batch.sum(-1) for batch in info.stats) / self.n_samples
+		else:
+			info.score = info.stats[0]
+		return info
+
+
+@fig.Component('task/metric')
+class MetricTask(Task):
+	def __init__(self, A, model=unspecified_argument, metric=unspecified_argument,
+	             dataset=unspecified_argument, criterion=unspecified_argument,
+	             batch_size=None, n_samples=None, pbar=unspecified_argument, **kwargs):
+
+		if model is unspecified_argument:
+			model = A.pull('model', None, ref=True)
+
+		if dataset is unspecified_argument:
+			dataset = A.pull('dataset', None, ref=True)
+
+		if metric is unspecified_argument:
+			metric = A.pull('metric', None, ref=True)
+
+		if criterion is unspecified_argument:
+			criterion = A.pull('criterion', None, ref=True)
+
+		if n_samples is None:
+			n_samples = A.pull('n_samples', 50000)
+
+		if batch_size is None:
+			batch_size = A.pull('batch_size', 50)
+
+		if pbar is unspecified_argument:
+			pbar = A.pull('pbar', None)
+
+		super().__init__(A, **kwargs)
+
+		self.set_model(model)
+		self.set_dataset(dataset)
+
+		if metric is None:
+			prt.warning('No metric provided')
+		self.metric = metric
+		self.criterion = get_loss_type(criterion)
+
+		self.batch_size = batch_size
+		self.n_samples = n_samples
+		self.pbar = pbar
+		self._gen_fn = None
+
+
+	def learned_distance(self, a, b):
+		return (self.model if self.metric is None else self.metric).distance(a, b)
+
+
+	def true_distance(self, a, b):
+		return self.dataset.distance(a, b)
+
+
+	def _compute(self, info=None, model=None, dataset=None):
+
+
+
+
+@fig.Component('task/creativity')
+class CreativityTask(Task):
+	pass
+
+
+
+@fig.Component('task/interpolation')
+class InterpolationTask(Task):
+	def __init__(self, A, **kwargs):
+
+		super().__init__(A, **kwargs)
+
+
+	def _prep_collection(self):
+		assert self.model is not None
+		return super()._prep_collection()
+
+
+	def sample_points(self, N, **kwargs):
+
+		pass
+
+	def interpolate(self):
+		pass
+
 
 
 

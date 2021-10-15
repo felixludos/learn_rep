@@ -1,0 +1,6 @@
+
+
+infer-task:
+  _type: task/inference
+
+

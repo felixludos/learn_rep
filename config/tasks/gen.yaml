@@ -1,0 +1,16 @@
+
+
+fid-dim: 2048
+
+gen-task:
+  _type: task/generation
+
+  extractor:
+    _type: inception-fid
+    dim: <>fid-dim
+
+  criterion: frechet-distance
+
+
+
+
