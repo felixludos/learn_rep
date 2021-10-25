@@ -211,84 +211,62 @@ class EstimatorBuilder(util.Builder):
 
 
 
-class Task(fig.Configurable, fm.Computable):
-	def __init__(self, A, model=unspecified_argument, dataset=unspecified_argument, **kwargs):
-
-		if model is unspecified_argument:
-			model = A.pull('model', None, ref=True)
-
-		if dataset is unspecified_argument:
-			dataset = A.pull('dataset', None, ref=True)
-
-		super().__init__(A, **kwargs)
-
-		self.model = model
+class Task(fm.Computable):
+	def __init__(self, dataset, **kwargs):
+		super().__init__(**kwargs)
 		self.dataset = dataset
 
+	# def compute(self): # compute() should have not args
+	# 	pass
 
-	def _compute(self, dataset=None, model=None, **kwargs):
-		if dataset is None:
-			dataset = self.dataset
-		if model is None:
-			model = self.model
-		return self.run(dataset, model, **kwargs)
-
-
-	@classmethod
-	def run(cls, dataset, model, out=None, **kwargs):
-		return cls._run(dataset, model, out=out, **kwargs)
+	def _compute(self, dataset=unspecified_argument, **kwargs):
+		if dataset is not unspecified_argument:
+			self.dataset = dataset
+		return self._run(**kwargs)
 
 
-	@staticmethod
-	def _run(dataset, model, **kwargs):
+	def _run(self, **kwargs):
 		raise NotImplementedError
+
+
+
+class TaskC(fig.Configurable, Task):
+	def __init__(self, A, dataset=unspecified_argument, **kwargs):
+		if dataset is unspecified_argument:
+			dataset = A.pull('dataset', None, ref=True)
+		super().__init__(A, dataset=dataset, **kwargs)
 
 
 
 class _EncoderTask(Task):
-	def __init__(self, A, encoder=unspecified_argument, **kwargs):
-		if encoder is unspecified_argument:
-			encoder = A.pull('encoder', None, ref=True)
-		if encoder is not None:
-			kwargs['model'] = encoder
-		super().__init__(A, **kwargs)
+	def __init__(self, encoder=None, **kwargs):
+		super().__init__(**kwargs)
 		self.encoder = encoder
 
 
-	def _compute(self, dataset=None, model=None, encoder=None, **kwargs):
-		if encoder is None:
-			encoder = self.encoder
-		return super()._compute(dataset=dataset, model=model, encoder=encoder, **kwargs)
-
-
-	@classmethod
-	def run(cls, dataset, model, encoder=None, **kwargs):
-		if encoder is None and hasattr(model, 'encode'):
-			encoder = model
-		return super().run(dataset=dataset, encoder=encoder, **kwargs)
-
-
-	def _run(self, dataset, encoder, **kwargs):
-		raise NotImplementedError
+	def _compute(self, encoder=unspecified_argument, **kwargs):
+		if encoder is not unspecified_argument:
+			self.encoder = encoder
+		return super()._compute(**kwargs)
 
 
 
-@fig.Component('task/inference')
+class _GeneratorTask(Task):
+	def __init__(self, generator=None, **kwargs):
+		super().__init__(**kwargs)
+		self.generator = generator
+
+
+	def _compute(self, generator=unspecified_argument, **kwargs):
+		if generator is not unspecified_argument:
+			self.generator = generator
+		return super()._compute(**kwargs)
+
+
+
 class InferenceTask(_EncoderTask):
-	def __init__(self, A, estimator=unspecified_argument,
-	             estimator_builder=unspecified_argument, **kwargs):
-
-		if estimator is unspecified_argument:
-			estimator = A.pull('estimator', None)
-		if estimator is not None:
-			estimator_builder = None
-
-		if estimator_builder is unspecified_argument:
-			estimator_builder = A.pull('estimator-builder', None)
-
-		super().__init__(A, **kwargs)
-
-		self.estimator_builder = estimator_builder
+	def __init__(self, estimator=None, **kwargs):
+		super().__init__(**kwargs)
 		self.estimator = estimator
 
 
@@ -302,25 +280,50 @@ class InferenceTask(_EncoderTask):
 			return self.estimator.get_results()
 
 
-	def _compute(self, dataset=None, estimator=None, **kwargs):
+	def _compute(self, estimator=None, **kwargs): # self.estimator_builder.build(dataset)
+		if estimator is None:
+			estimator = self.estimator
+		return super()._compute(estimator=estimator, **kwargs)
+
+
+	def _run(self, dataset, encoder, estimator, **kwargs):
+		if encoder is not None:
+			dataset.register_wrapper('encoded', encoder=encoder)
+		if self.estimator is None:
+			self.estimator = self.estimator_builder.build(dataset)
+		return estimator.compute(dataset=dataset)
+
+
+
+@fig.Component('task/inference')
+class InferenceTaskC(TaskC, InferenceTask):
+	def __init__(self, A, encoder=unspecified_argument,
+	             estimator=unspecified_argument, estimator_builder=unspecified_argument,
+	             **kwargs):
+		if encoder is unspecified_argument:
+			encoder = A.pull('encoder', None, ref=True)
+		if estimator is unspecified_argument:
+			estimator = A.pull('estimator', None, ref=True) \
+				if estimator_builder in {unspecified_argument, None} \
+				else None
+		if estimator is not None:
+			estimator_builder = None
+		elif estimator_builder is unspecified_argument:
+			estimator_builder = A.pull('estimator-builder', None, ref=True)
+		super().__init__(A, encoder=encoder, estimator=estimator, **kwargs)
+		self.estimator_builder = estimator_builder
+
+
+	def _compute(self, dataset=None, estimator=None, estimator_builder=None, **kwargs):
 		if dataset is None:
 			dataset = self.dataset
 		if estimator is None:
-			estimator = self.estimator_builder.build(dataset) if self.estimator is None else self.estimator
+			estimator = self.estimator
+		if estimator_builder is None:
+			estimator_builder = self.estimator_builder
+		if estimator is None:
+			estimator = estimator_builder.build(dataset)
 		return super()._compute(dataset=dataset, estimator=estimator, **kwargs)
-
-
-	@classmethod
-	def run(cls, dataset, model, estimator=None, **kwargs):
-		if estimator is None and hasattr(model, 'predict'):
-			estimator = model
-		return super()._run(dataset=dataset, model=model, estimator=estimator, **kwargs)
-
-
-	def _run(self, dataset, estimator, encoder=None, **kwargs):
-		if encoder is not None:
-			dataset.register_wrapper('encoded', encoder=encoder)
-		return estimator.compute(dataset=dataset)
 
 
 
@@ -331,44 +334,11 @@ class ClusteringTask(InferenceTask): # TODO: specify cluster centers
 
 
 @fig.Component('task/generation')
-class GenerationTask(Task):
-	def __init__(self, A, model=unspecified_argument, extractor=unspecified_argument,
-	             dataset=unspecified_argument, criterion=unspecified_argument,
-	             use_dataset_len=None, compute_missing_reference=None,
-	             batch_size=None, n_samples=None, pbar=unspecified_argument, **kwargs):
-
-		if model is unspecified_argument:
-			model = A.pull('model', None, ref=True)
-
-		if dataset is unspecified_argument:
-			dataset = A.pull('dataset', None, ref=True)
-
-		if extractor is unspecified_argument:
-			extractor = A.pull('extractor', None, ref=True)
-
-		if criterion is unspecified_argument:
-			criterion = A.pull('criterion', None, ref=True)
-
-		if use_dataset_len is None:
-			use_dataset_len = A.pull('use_dataset_len', False)
-
-		if n_samples is None:
-			n_samples = A.pull('n_samples', 50000, silent=use_dataset_len)
-
-		if compute_missing_reference is None:
-			compute_missing_reference = A.pull('compute_missing_reference', True)
-
-		if batch_size is None:
-			batch_size = A.pull('batch_size', 50)
-
-		if pbar is unspecified_argument:
-			pbar = A.pull('pbar', None)
-
-		super().__init__(A, **kwargs)
-
-		self.set_model(model)
-		self.set_dataset(dataset)
-
+class GenerationTask(_GeneratorTask):
+	def __init__(self, criterion, extractor=None,
+	             use_dataset_len=False, compute_missing_reference=True,
+	             batch_size=50, n_samples=50000, pbar=None, **kwargs):
+		super().__init__(**kwargs)
 		if extractor is None:
 			prt.warning('No features extractor for generative task')
 		self.extractor = extractor
@@ -383,12 +353,26 @@ class GenerationTask(Task):
 		self._gen_fn = None
 
 
-	def set_model(self, model):
-		self.model = model
-
-
 	def get_scores(self):
 		return ['score']
+
+
+	def _compute(self, criterion=None, extractor=None, **kwargs):
+		if criterion is None:
+			criterion = self.criterion
+		if extractor is None:
+			extractor = self.extractor
+		return super()._compute(criterion=criterion, extractor=extractor, **kwargs)
+
+
+	def _run(self, dataset, generator, criterion, extractor=None, **kwargs):
+
+
+
+		# if encoder is not None:
+		# 	dataset.register_wrapper('encoded', encoder=encoder)
+		# return estimator.compute(dataset=dataset)
+		pass
 
 
 	def get_results(self):
@@ -505,6 +489,51 @@ class GenerationTask(Task):
 		return info
 
 
+
+class GenerationTaskC(TaskC, GenerationTask):
+	def __init__(self, A, criterion=unspecified_argument, extractor=unspecified_argument,
+	             use_dataset_len=None, compute_missing_reference=None,
+	             batch_size=None, n_samples=None, pbar=unspecified_argument, **kwargs):
+
+		if extractor is unspecified_argument:
+			extractor = A.pull('extractor', None, ref=True)
+
+		if criterion is unspecified_argument:
+			criterion = A.pull('criterion', None, ref=True)
+
+		if use_dataset_len is None:
+			use_dataset_len = A.pull('use_dataset_len', False)
+
+		if n_samples is None:
+			n_samples = A.pull('n_samples', 50000, silent=use_dataset_len)
+
+		if compute_missing_reference is None:
+			compute_missing_reference = A.pull('compute_missing_reference', True)
+
+		if batch_size is None:
+			batch_size = A.pull('batch_size', 50)
+
+		if pbar is unspecified_argument:
+			pbar = A.pull('pbar', None)
+
+		super().__init__(A, **kwargs)
+
+		if extractor is None:
+			prt.warning('No features extractor for generative task')
+		self.extractor = extractor
+		self.criterion = get_loss_type(criterion)
+
+		self._use_dataset_len = use_dataset_len
+		self._compute_missing_reference = compute_missing_reference
+		self._accumulation = None
+		self.batch_size = batch_size
+		self.n_samples = n_samples
+		self.pbar = pbar
+		self._gen_fn = None
+
+
+
+
 @fig.Component('task/metric')
 class MetricTask(Task):
 	def __init__(self, A, model=unspecified_argument, metric=unspecified_argument,
@@ -557,7 +586,7 @@ class MetricTask(Task):
 
 
 	def _compute(self, info=None, model=None, dataset=None):
-
+		pass
 
 
 
