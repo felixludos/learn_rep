@@ -265,9 +265,12 @@ class _GeneratorTask(Task):
 
 
 class InferenceTask(_EncoderTask):
-	def __init__(self, estimator=None, **kwargs):
+	def __init__(self, estimator=None, estimator_builder=None, **kwargs):
+		if estimator is not None:
+			estimator_builder = None
 		super().__init__(**kwargs)
 		self.estimator = estimator
+		self.estimator_builder = estimator_builder
 
 
 	def get_scores(self):
@@ -280,18 +283,18 @@ class InferenceTask(_EncoderTask):
 			return self.estimator.get_results()
 
 
-	def _compute(self, estimator=None, **kwargs): # self.estimator_builder.build(dataset)
-		if estimator is None:
-			estimator = self.estimator
-		return super()._compute(estimator=estimator, **kwargs)
+	def _compute(self, estimator=unspecified_argument, **kwargs):
+		if estimator is not unspecified_argument:
+			self.estimator = estimator
+		return super()._compute(**kwargs)
 
 
-	def _run(self, dataset, encoder, estimator, **kwargs):
-		if encoder is not None:
-			dataset.register_wrapper('encoded', encoder=encoder)
+	def _run(self, **kwargs):
+		if self.encoder is not None:
+			self.dataset.register_wrapper('encoded', encoder=self.encoder)
 		if self.estimator is None:
-			self.estimator = self.estimator_builder.build(dataset)
-		return estimator.compute(dataset=dataset)
+			self.estimator = self.estimator_builder.build(self.dataset)
+		return self.estimator.compute(dataset=self.dataset)
 
 
 
@@ -302,38 +305,18 @@ class InferenceTaskC(TaskC, InferenceTask):
 	             **kwargs):
 		if encoder is unspecified_argument:
 			encoder = A.pull('encoder', None, ref=True)
-		if estimator is unspecified_argument:
-			estimator = A.pull('estimator', None, ref=True) \
-				if estimator_builder in {unspecified_argument, None} \
-				else None
-		if estimator is not None:
-			estimator_builder = None
-		elif estimator_builder is unspecified_argument:
+		if estimator_builder is unspecified_argument:
 			estimator_builder = A.pull('estimator-builder', None, ref=True)
-		super().__init__(A, encoder=encoder, estimator=estimator, **kwargs)
-		self.estimator_builder = estimator_builder
-
-
-	def _compute(self, dataset=None, estimator=None, estimator_builder=None, **kwargs):
-		if dataset is None:
-			dataset = self.dataset
-		if estimator is None:
-			estimator = self.estimator
-		if estimator_builder is None:
-			estimator_builder = self.estimator_builder
-		if estimator is None:
-			estimator = estimator_builder.build(dataset)
-		return super()._compute(dataset=dataset, estimator=estimator, **kwargs)
+		super().__init__(A, encoder=encoder, estimator=estimator, estimator_builder=estimator_builder, **kwargs)
 
 
 
-@fig.Component('task/clustering')
+# @fig.Component('task/clustering')
 class ClusteringTask(InferenceTask): # TODO: specify cluster centers
 	pass
 
 
 
-@fig.Component('task/generation')
 class GenerationTask(_GeneratorTask):
 	def __init__(self, criterion, extractor=None,
 	             use_dataset_len=False, compute_missing_reference=True,
@@ -346,78 +329,27 @@ class GenerationTask(_GeneratorTask):
 
 		self._use_dataset_len = use_dataset_len
 		self._compute_missing_reference = compute_missing_reference
-		self._accumulation = None
+		self._count = None
+		self._gen_fn = None
 		self.batch_size = batch_size
 		self.n_samples = n_samples
 		self.pbar = pbar
-		self._gen_fn = None
 
 
 	def get_scores(self):
 		return ['score']
 
 
-	def _compute(self, criterion=None, extractor=None, **kwargs):
-		if criterion is None:
-			criterion = self.criterion
-		if extractor is None:
-			extractor = self.extractor
+	def _compute(self, criterion=unspecified_argument, extractor=unspecified_argument, **kwargs):
+		if criterion is not unspecified_argument:
+			self.criterion = criterion
+		if extractor is not unspecified_argument:
+			self.extractor = extractor
 		return super()._compute(criterion=criterion, extractor=extractor, **kwargs)
 
 
-	def _run(self, dataset, generator, criterion, extractor=None, **kwargs):
+	def _run(self, **kwargs):
 
-
-
-		# if encoder is not None:
-		# 	dataset.register_wrapper('encoded', encoder=encoder)
-		# return estimator.compute(dataset=dataset)
-		pass
-
-
-	def get_results(self):
-		return ['stats', 'reference']
-
-
-	def _get_title(self):
-		return 'Evaluating Generative Task'
-
-
-	def generate(self, N, **kwargs):
-		return self._gen_fn(N, **kwargs)
-
-
-	def judge(self, samples):
-		if self.extractor is not None:
-			samples = self.extractor.encode(samples)
-		return samples
-
-
-	def _prep_collection(self):
-		self._gen_fn = self.model.generate if hasattr(self.model, 'generate') else self.model
-
-		if self.model is None:
-			self._gen_fn = self.dataset.to_loader(infinite=True, sample_format='observation',
-			                                      batch_size=self.batch_size)
-			self._gen_fn = self._gen_fn.demand
-
-		if self._use_dataset_len:
-			self.n_samples = len(self.dataset)
-
-		return []
-
-
-	def aggregate(self, scores, out=None):
-		if out is None:
-			out = util.TensorDict()
-		if 'stats' not in out:
-			out.stats = self._aggregate_scores(scores)
-		if self.model is not None:
-			out = self._compare_to_reference(out)
-		return out
-
-
-	def _collect(self):
 		title = self._get_title()
 
 		pbar = self.pbar
@@ -434,7 +366,7 @@ class GenerationTask(_GeneratorTask):
 			while j < self.n_samples:
 				N = min(self.batch_size, self.n_samples - j)
 
-				samples = self.generate(N)
+				samples = self._generate_batch(N)
 				score = self.judge(samples)
 				if scores is not None:
 					scores.append(score)
@@ -447,6 +379,50 @@ class GenerationTask(_GeneratorTask):
 			pbar.close()
 
 		return self.aggregate(scores)
+
+
+	def get_results(self):
+		return ['stats', 'reference']
+
+
+	def _get_title(self):
+		return 'Evaluating Generative Task'
+
+
+	def _generate_batch(self, N):
+		return self._gen_fn(N)
+
+
+	def judge(self, samples):
+		if self.extractor is not None:
+			samples = self.extractor.encode(samples)
+		return samples
+
+
+	def _prep_collection(self):
+		self._count = 0
+
+		if self.generator is None:
+			self._gen_fn = self.dataset.to_loader(infinite=True, sample_format='observation',
+			                                      batch_size=self.batch_size)
+			self._gen_fn = self._gen_fn.demand
+		else:
+			self._gen_fn = self.generator.generate if hasattr(self.generator, 'generate') else self.generator
+
+		if self._use_dataset_len:
+			self.n_samples = len(self.dataset)
+
+		return []
+
+
+	def aggregate(self, scores, out=None):
+		if out is None:
+			out = util.TensorDict()
+		if 'stats' not in out:
+			out.stats = self._aggregate_scores(scores)
+		if self.generator is not None:
+			out = self._compare_to_reference(out)
+		return out
 
 
 	def set_dataset(self, dataset=None):
@@ -490,6 +466,7 @@ class GenerationTask(_GeneratorTask):
 
 
 
+@fig.Component('task/generation')
 class GenerationTaskC(TaskC, GenerationTask):
 	def __init__(self, A, criterion=unspecified_argument, extractor=unspecified_argument,
 	             use_dataset_len=None, compute_missing_reference=None,
@@ -516,26 +493,19 @@ class GenerationTaskC(TaskC, GenerationTask):
 		if pbar is unspecified_argument:
 			pbar = A.pull('pbar', None)
 
-		super().__init__(A, **kwargs)
-
-		if extractor is None:
-			prt.warning('No features extractor for generative task')
-		self.extractor = extractor
-		self.criterion = get_loss_type(criterion)
-
-		self._use_dataset_len = use_dataset_len
-		self._compute_missing_reference = compute_missing_reference
-		self._accumulation = None
-		self.batch_size = batch_size
-		self.n_samples = n_samples
-		self.pbar = pbar
-		self._gen_fn = None
+		super().__init__(A, extractor=extractor, criterion=criterion, use_dataset_len=use_dataset_len,
+		                 compute_missing_reference=compute_missing_reference, n_samples=n_samples,
+		                 batch_size=batch_size, pbar=pbar, **kwargs)
 
 
+
+class MetricTask(Task):
+	
+	pass
 
 
 @fig.Component('task/metric')
-class MetricTask(Task):
+class MetricTaskC(TaskC, MetricTask):
 	def __init__(self, A, model=unspecified_argument, metric=unspecified_argument,
 	             dataset=unspecified_argument, criterion=unspecified_argument,
 	             batch_size=None, n_samples=None, pbar=unspecified_argument, **kwargs):
