@@ -12,6 +12,8 @@ import torch
 # from torch import distributions as distrib
 from torch.utils.data import DataLoader, TensorDataset
 
+
+
 from sklearn.ensemble import GradientBoostingClassifier, GradientBoostingRegressor
 
 from omnilearn import util
@@ -21,6 +23,12 @@ from omnilearn.op import get_save_dir, framework as fm#, scikit as sk
 from omnilearn.data import Supervised, Dataset, Batchable, Deviced, Observation, DatasetWrapper, DataLike
 
 prt = get_printer(__file__)
+
+try:
+	import faiss
+except ImportError:
+	prt.warning('Failed to import faiss')
+
 
 
 @fig.Script('test-estimator')
@@ -140,6 +148,10 @@ class Encoded(Batchable, Observation):
 			self.register_data('observations', data=Q)
 
 
+	# def get_features(self, idx=None): # TODO: instead of replacing observations, just link them to "features"
+	# 	pass
+
+
 	# @DatasetWrapper.condition(Observation)
 	def get_observations(self, idx=None):
 		if self._observations_encoded:
@@ -212,9 +224,10 @@ class EstimatorBuilder(util.Builder):
 
 
 class Task(fm.Computable):
-	def __init__(self, dataset, **kwargs):
+	def __init__(self, dataset, slim=False, **kwargs):
 		super().__init__(**kwargs)
 		self.dataset = dataset
+		self._slim = slim
 
 	# def compute(self): # compute() should have not args
 	# 	pass
@@ -233,10 +246,12 @@ class Task(fm.Computable):
 
 
 class TaskC(fig.Configurable, Task):
-	def __init__(self, A, dataset=unspecified_argument, **kwargs):
+	def __init__(self, A, dataset=unspecified_argument, slim=None, **kwargs):
 		if dataset is unspecified_argument:
 			dataset = A.pull('dataset', None, ref=True)
-		super().__init__(A, dataset=dataset, **kwargs)
+		if slim is None:
+			slim = A.pull('slim', False)
+		super().__init__(A, dataset=dataset, slim=slim, **kwargs)
 
 
 
@@ -286,6 +301,108 @@ class _DecoderTaskC(TaskC, _DecoderTask):
 		if decoder is unspecified_argument:
 			decoder = A.pull('decoder', None, ref=True)
 		super().__init__(A, decoder=decoder, **kwargs)
+
+
+
+class MissingReferenceError(Exception):
+	def __init__(self, props):
+		super().__init__(f'Could not find reference stats with the correct properties (set "compute_missing_reference" '
+		                 f'to automatically compute')
+		self.props = props
+
+
+
+class _ExtractionTask(Task):
+	def __init__(self, criterion, extractor=None,
+	             compute_missing_reference=True, reference_props={}, **kwargs):
+		super().__init__(**kwargs)
+		self.extractor = extractor
+		self.criterion = get_loss_type(criterion)
+		self._compute_missing_reference = compute_missing_reference
+		self._base_reference_props = reference_props
+
+
+	def get_scores(self):
+		return ['score']
+
+
+	def get_results(self):
+		return ['stats', 'reference']
+
+
+	def _get_reference_props(self):
+		props = self._base_reference_props.copy()
+		if self.extractor is not None:
+			props.update(self.extractor.get_hparams())
+		return props
+
+
+	def find_reference_stats(self, props=None):
+		if props is None:
+			props = self._get_reference_props()
+		try:
+			return self.dataset.load_stats(props)
+		except FileNotFoundError:
+			if self._compute_missing_reference:
+				stats = self._compute_reference(props)
+				self.dataset.save_stats(props, stats)
+				return stats
+			raise MissingReferenceError(props)
+
+
+	def _compute_reference(self, props):
+		raise NotImplementedError
+
+
+	def _compute(self, extractor=unspecified_argument, criterion=unspecified_argument, **kwargs):
+		if extractor is not unspecified_argument:
+			self.extractor = extractor
+		if criterion is not unspecified_argument:
+			self.criterion = criterion
+		return super()._compute(**kwargs)
+
+
+	def _compare_to_reference(self, info):
+		if 'stats' not in info:
+			if 'features' not in info:
+				assert 'samples' in info
+				info.features = info.samples if self.extractor is None else self.extractor.encode(info.samples)
+			info.stats = self._compute_stats(info)
+		assert 'stats' in info, 'no stats to compare to reference'
+		if 'reference' not in info:
+			info.reference = self.find_reference_stats()
+		info.score = self.criterion(info.stats, info.reference)
+		return info
+
+
+	def _compute_stats(self, info):
+		assert 'features' in info
+		if isinstance(info.features, list):
+			info.features = torch.cat(info.features)
+		return info.features.mean(0), util.cov(info.features)
+
+
+
+class _ExtractionTaskC(TaskC, _ExtractionTask):
+	def __init__(self, A, criterion=unspecified_argument, extractor=unspecified_argument,
+	             aggregator=unspecified_argument,
+	             reference_props=None, compute_missing_reference=None, **kwargs):
+
+		if criterion is unspecified_argument:
+			criterion = A.pull('criterion', None, ref=True)
+		if extractor is unspecified_argument:
+			extractor = A.pull('extractor', None, ref=True)
+		if aggregator is unspecified_argument:
+			aggregator = A.pull('aggregator', None, ref=True)
+
+		if reference_props is None:
+			reference_props = A.pull('reference-props', {})
+		if compute_missing_reference is None:
+			compute_missing_reference = A.pull('compute_missing_reference', True)
+
+		super().__init__(A, criterion=criterion, extractor=extractor, aggregator=aggregator,
+		                 compute_missing_reference=compute_missing_reference, reference_props=reference_props,
+		                 **kwargs)
 
 
 
@@ -363,11 +480,12 @@ class ClusteringTask(InferenceTask): # TODO: specify cluster centers
 
 
 class _IterativeTask(Task):
-	def __init__(self, batch_size=60, n_samples=15120, pbar=None, **kwargs):
+	def __init__(self, batch_size=60, n_samples=15120, pbar=None, use_dataset_len=False, **kwargs):
 		super().__init__(**kwargs)
 		self.batch_size = batch_size
 		self.n_samples = n_samples
 		self.pbar = pbar
+		self._use_dataset_len = use_dataset_len
 
 
 	def _get_title(self):
@@ -375,6 +493,8 @@ class _IterativeTask(Task):
 
 
 	def _prep(self, info):
+		if self._use_dataset_len:
+			self.n_samples = len(self.dataset)
 		return info
 
 
@@ -430,8 +550,9 @@ class _IterativeTask(Task):
 		return self._aggregate_results(out)
 
 
+
 class _IterativeTaskC(TaskC, _IterativeTask):
-	def __init__(self, A, batch_size=None, n_samples=None, pbar=unspecified_argument, **kwargs):
+	def __init__(self, A, batch_size=None, n_samples=None, pbar=unspecified_argument, use_dataset_len=None, **kwargs):
 
 		if n_samples is None:
 			n_samples = A.pull('n_samples', 15120)
@@ -442,156 +563,11 @@ class _IterativeTaskC(TaskC, _IterativeTask):
 		if pbar is unspecified_argument:
 			pbar = A.pull('pbar', None)
 
-		super().__init__(A, n_samples=n_samples, batch_size=batch_size, pbar=pbar, **kwargs)
-
-
-
-class GenerationTask(_IterativeTask, _GeneratorTask):
-	def __init__(self, criterion, extractor=None, use_dataset_len=False,
-	             compute_missing_reference=True, keep_scores=False, **kwargs):
-		super().__init__(**kwargs)
-		if extractor is None:
-			prt.warning('No features extractor for generative task')
-		self.extractor = extractor
-		self.criterion = get_loss_type(criterion)
-
-		self._use_dataset_len = use_dataset_len
-		self._compute_missing_reference = compute_missing_reference
-		self._keep_scores = keep_scores
-		self._gen_fn = None
-
-
-	def get_scores(self):
-		return ['score']
-
-
-	def get_results(self):
-		return ['stats', 'reference']
-
-
-	def _compute(self, criterion=unspecified_argument, extractor=unspecified_argument, **kwargs):
-		if criterion is not unspecified_argument:
-			self.criterion = criterion
-		if extractor is not unspecified_argument:
-			self.extractor = extractor
-		return super()._compute(criterion=criterion, extractor=extractor, **kwargs)
-
-
-	def _get_title(self):
-		ref = f' (reference)' if self.generator is None else ''
-		return f'Evaluating Generative Task{ref}'
-
-
-	def _prep(self, info):
-		if self.generator is None:
-			self._gen_fn = self.dataset.to_loader(infinite=True, sample_format='observation',
-			                                      batch_size=self.batch_size)
-			self._gen_fn = self._gen_fn.demand
-		else:
-			self._gen_fn = self.generator.generate if hasattr(self.generator, 'generate') else self.generator
-
-		if self._use_dataset_len:
-			self.n_samples = len(self.dataset)
-
-		info.scores = []
-
-		return super()._prep(info)
-
-
-	def _generate_batch(self, info):
-		info.samples = self._gen_fn(info.num)
-		return super()._generate_batch(info)
-
-
-	def _process_batch(self, info):
-		if 'features' not in info:
-			info.criteria = self.judge(info.samples)
-		info.scores.append(info.criteria)
-		return super()._process_batch(info)
-
-
-	def _aggregate_results(self, info):
-		if 'stats' not in info:
-			info.stats = self._aggregate_scores(info)
-		if self.generator is not None:
-			info = self._compare_to_reference(info)
-		if 'scores' in info and not self._keep_scores:
-			del info.scores
-		return super()._aggregate_results(info)
-
-
-	def judge(self, samples):
-		return samples if self.extractor is None else self.extractor.encode(samples)
-
-
-	def _aggregate_scores(self, info):
-		scores = info.scores
-		X = torch.cat(scores)
-		return X.mean(0), util.cov(X)
-
-
-	def _reference_props(self):
-		props = dict(n_samples=self.n_samples)
-		if self.extractor is not None:
-			props.update(self.extractor.get_hparams())
-		return props
-
-
-	def _find_reference_scores(self, info):
-		props = self._reference_props()
-		try:
-			return self.dataset.load_stats(props)
-		except FileNotFoundError:
-			if self._compute_missing_reference:
-				_gen = self.generator
-				self.generator = None
-				ref_stats = self._run().stats
-				self.dataset.save_stats(props, ref_stats)
-				self.generator = _gen
-				return ref_stats
-
-
-	def _compare_to_reference(self, info):
-		if 'reference' not in info:
-			info.reference = self._find_reference_scores(info)
-		if self.criterion is None:
-			info.score = sum(batch.sum(-1) for batch in info.stats) / self.n_samples
-		else:
-			info.score = self.criterion(info.stats, info.reference)
-		return info
-
-
-
-@fig.Component('task/generation')
-class GenerationTaskC(_IterativeTaskC, _GeneratorTaskC, GenerationTask):
-	def __init__(self, A, criterion=unspecified_argument, extractor=unspecified_argument,
-	             use_dataset_len=None, compute_missing_reference=None,
-	             batch_size=None, n_samples=None, pbar=unspecified_argument, **kwargs):
-
-		if extractor is unspecified_argument:
-			extractor = A.pull('extractor', None, ref=True)
-
-		if criterion is unspecified_argument:
-			criterion = A.pull('criterion', None, ref=True)
-
 		if use_dataset_len is None:
 			use_dataset_len = A.pull('use_dataset_len', False)
 
-		if n_samples is None:
-			n_samples = A.pull('n_samples', 50000, silent=use_dataset_len)
-
-		if compute_missing_reference is None:
-			compute_missing_reference = A.pull('compute_missing_reference', True)
-
-		if batch_size is None:
-			batch_size = A.pull('batch_size', 50)
-
-		if pbar is unspecified_argument:
-			pbar = A.pull('pbar', None)
-
-		super().__init__(A, extractor=extractor, criterion=criterion, use_dataset_len=use_dataset_len,
-		                 compute_missing_reference=compute_missing_reference, n_samples=n_samples,
-		                 batch_size=batch_size, pbar=pbar, **kwargs)
+		super().__init__(A, n_samples=n_samples, batch_size=batch_size, use_dataset_len=use_dataset_len,
+		                 pbar=pbar, **kwargs)
 
 
 
@@ -633,13 +609,10 @@ class _ObservationPairTask(_ObservationTask):
 
 
 class MetricTask(_ObservationPairTask, _EncoderTask):
-	def __init__(self, metric='mse', criterion='cosine-similarity',
-	             keep_distances=False, sample_format=['observations', 'labels'], **kwargs):
+	def __init__(self, metric='l2', criterion='cosine-similarity', sample_format=['observations', 'labels'], **kwargs):
 		super().__init__(sample_format=sample_format, **kwargs)
 		self.metric = get_loss_type(metric)
 		self.criterion = get_loss_type(criterion)
-
-		self._keep_distances = keep_distances
 
 
 	def get_scores(self):
@@ -647,7 +620,7 @@ class MetricTask(_ObservationPairTask, _EncoderTask):
 
 
 	def get_results(self):
-		return ['distances', 'trues'] if self._keep_distances else []
+		return [] if self._slim else ['distances', 'trues']
 
 
 	def _prep(self, info):
@@ -669,11 +642,11 @@ class MetricTask(_ObservationPairTask, _EncoderTask):
 
 
 	def _aggregate_results(self, info):
-		info.distances = torch.stack(info.distances, 0).unsqueeze(0)
-		info.trues = torch.stack(info.trues, 0).unsqueeze(0)
+		info.distances = torch.cat(info.distances, 0).unsqueeze(0)
+		info.trues = torch.cat(info.trues, 0).unsqueeze(0)
 
 		info.score = self.criterion(info.distances, info.trues)
-		if not self._keep_distances:
+		if self._slim:
 			del info.distances, info.trues
 		return info
 
@@ -681,38 +654,231 @@ class MetricTask(_ObservationPairTask, _EncoderTask):
 
 @fig.Component('task/metric')
 class MetricTaskC(_IterativeTaskC, _EncoderTaskC, MetricTask):
-	def __init__(self, A, metric=unspecified_argument, criterion=unspecified_argument, encoder=unspecified_argument,
-	             keep_distances=None, **kwargs):
+	def __init__(self, A, metric=unspecified_argument, criterion=unspecified_argument, **kwargs):
 
 		if metric is unspecified_argument:
-			metric = A.pull('metric', None, ref=True)
+			metric = A.pull('metric', 'l2', ref=True)
 
 		if criterion is unspecified_argument:
-			criterion = A.pull('criterion', None, ref=True)
+			criterion = A.pull('criterion', 'cosine-similarity', ref=True)
 
-		if keep_distances is None:
-			keep_distances = A.pull('keep-distances', False)
-
-		super().__init__(A, metric=metric, criterion=criterion, keep_distances=keep_distances, **kwargs)
+		super().__init__(A, metric=metric, criterion=criterion, **kwargs)
 
 
 
-# @fig.Component('task/creativity')
-class CreativityTask(_GeneratorTask):
+
+class GenerationTask(_GeneratorTask, _ExtractionTask, _IterativeTask):
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+		if self.extractor is None:
+			prt.warning('No feature extractor for the generative task')
+		self._gen_fn = None
+
+
+	def _get_title(self):
+		ref = f' (reference)' if self.generator is None else ''
+		return f'Evaluating Generative Task{ref}'
+
+
+	def _prep(self, info):
+		if self.generator is None:
+			self._gen_fn = self.dataset.to_loader(infinite=True, sample_format='observation',
+			                                      batch_size=self.batch_size).demand
+		else:
+			self._gen_fn = self.generator.generate
+
+		info.features = []
+
+		return super()._prep(info)
+
+
+	def _generate_batch(self, info):
+		if 'feats' in info:
+			del info.feats
+		info.samples = self._gen_fn(info.num)
+		return super()._generate_batch(info)
+
+
+	def _process_batch(self, info):
+		if 'feats' not in info:
+			info.feats = info.samples if self.extractor is None else self.extractor.encode(info.samples)
+		info.features.append(info.feats)
+		return super()._process_batch(info)
+
+
+	def _aggregate_results(self, info):
+		info.stats = self._compute_stats(info)
+		if self.generator is not None:
+			info = self._compare_to_reference(info)
+		if 'features' in info and self._slim:
+			del info.features
+		return super()._aggregate_results(info)
+
+
+	def _compute_reference(self, props):
+		_gen = self.generator
+		self.generator = None
+		ref_stats = self._run().stats
+		self.generator = _gen
+		return ref_stats
+
+
+
+@fig.Component('task/generation')
+class GenerationTaskC(_GeneratorTaskC, _ExtractionTaskC, _IterativeTaskC, GenerationTask):
 	pass
 
 
 
-# @fig.Component('task/interpolation')
-class InterpolationTask(_ObservationPairTask, _EncoderTask, _DecoderTask):
-	def __init__(self, interpolator=None, criterion=None, extractor=None,
-	             num_steps=None, **kwargs):
+class NoveltyTask(_GeneratorTask, _EncoderTask, _IterativeTask):
+	def __init__(self, metric='l2', num_nearest=1, **kwargs):
 		super().__init__(**kwargs)
+		if metric != 'l2':
+			raise NotImplementedError
 
-		self.extractor = extractor
+		self.index = None
+		self.metric = get_loss_type(metric)
+		self.num_nearest = num_nearest
+
+
+	def _prep(self, info):
+		self.index = faiss.IndexFlatL2(self.dataset.din)
+		self.index.add(util.combine_dims(self.dataset.get('observations')))
+
+		info.distances = []
+
+
+	def _generate_batch(self, info):
+		if 'feats' in info:
+			del info.feats
+		info.samples = self.generator.generate(info.num)
+		return super()._generate_batch(info)
+
+
+	def _process_batch(self, info):
+		if 'feats' not in info:
+			info.feats = util.combine_dims(info.samples) if self.encoder is None \
+				else self.encoder.encode(info.samples)
+
+		info.dists, info.nearest = self.find_nearest(info.feats, self.num_nearest)
+		info.distances.append(info.dists)
+		return super()._process_batch(info)
+
+
+	def find_nearest(self, samples, k=1):
+		return self.index.search(samples, k)
+
+
+	def _aggregate_results(self, info):
+		info.distances = torch.cat(info.distances)
+		info.score = info.distances.mean()
+
+		if self._slim:
+			del info.distances
+		return super()._aggregate_results(info)
+
+
+
+@fig.Component('task/novelty')
+class NoveltyTaskC(_GeneratorTaskC, _EncoderTaskC, _IterativeTaskC, NoveltyTask):
+	def __init__(self, A, metric=unspecified_argument, num_nearest=None, **kwargs):
+
+		if metric is unspecified_argument:
+			metric = A.pull('metric', 'l2', ref=True)
+
+		if num_nearest is None:
+			num_nearest = A.pull('num_nearest', 1, ref=True)
+
+		super().__init__(A, metric=metric, num_nearest=num_nearest, **kwargs)
+
+
+
+
+class InterpolationTask(_ObservationPairTask, _ExtractionTask, _EncoderTask, _DecoderTask):
+	def __init__(self, interpolator=None, num_steps=12, batch_size=12, **kwargs):
+		super().__init__(batch_size=batch_size, **kwargs)
 		self.interpolator = interpolator
-		self.criterion = criterion
 
 		self._num_steps = num_steps
 
-		raise NotImplementedError
+
+	def _prep(self, info):
+
+		info.interps = []
+		info.ends = []
+
+		return super()._prep(info)
+
+
+	def _process_batch(self, info):
+
+		a, b = info.a, info.b
+
+		if self.interpolator is None: # linearly interpolate
+			a, b = a.unsqueeze(1), b.unsqueeze(1)
+			progress = torch.linspace(0., 1., steps=self._num_steps, device=a.device)\
+				.view(1, self._num_steps, *[1]*len(a.shape[2:]))
+			info.steps = a + (b-a)*progress
+
+		else:
+			info.steps = self.interpolator(a, b, self._num_steps)
+
+		info.steps = util.combine_dims(info.steps, 0, 1)
+		info.samples = info.steps if self.decoder is None else self.decoder(info.steps)
+
+		if 'stats' in info:
+			del info.stats
+		if 'features' in info:
+			del info.features
+		info = self._compare_to_reference(info)
+		scores = info.score
+		del info.score
+
+		interp = scores[:,1:-1]
+		ends = scores[:, [0,-1]]
+
+		info.interps.append(interp)
+		info.ends.append(ends)
+
+		return info
+
+
+	def _compute_reference(self, props):
+		raise NotImplementedError # TODO: handle this for encoded datasets
+		return GenerationTask(dataset=self.dataset, extractor=self.extractor, n_samples=self.n_samples,
+		                      batch_size=self._num_steps*self.batch_size).compute().stats
+
+
+	def _aggregate_results(self, info):
+
+		info.interps = torch.cat(info.interps)
+		info.ends = torch.cat(info.ends)
+
+		info.score = info.ends.mean() / info.interps.mean()
+
+		if self._slim:
+			del info.interps, info.ends
+		else:
+			info.steps = util.split_dim(info.steps, -1, self._num_steps)
+			info.paths = util.split_dim(info.samples, -1, self._num_steps)
+			del info.samples
+			info.features = util.split_dim(info.features, -1, self._num_steps)
+
+		return super()._aggregate_results(info)
+
+
+
+@fig.Component('task/interpolation')
+class InterpolationTaskC(_IterativeTaskC, _ExtractionTaskC, _EncoderTaskC, InterpolationTask):
+	def __init__(self, A, interpolator=None, num_steps=None, **kwargs):
+
+		if interpolator is unspecified_argument:
+			interpolator = A.pull('interpolator', None, ref=True)
+
+		if num_steps is None:
+			num_steps = A.pull('num_steps', 12)
+
+		super().__init__(A, interpolator=interpolator, num_steps=num_steps, **kwargs)
+
+
+
