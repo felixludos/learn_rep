@@ -8,3 +8,4 @@ old_trained_nets/
 foundation.egg-info/
 extra/
 figures/
+src/tasks/lossless_compression/

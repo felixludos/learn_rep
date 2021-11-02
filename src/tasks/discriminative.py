@@ -15,6 +15,8 @@ prt = get_printer(__file__)
 from .common import ObservationTask, ObservationPairTask, IterativeTaskC, EncoderTask, EncoderTaskC, \
 	ExtractionTask, ExtractionTaskC, DecoderTask, DecoderTaskC
 
+from .lossless_compression import BitsBackCompressor
+
 
 class ReconstructionTask(ObservationTask, EncoderTask, DecoderTask): # TODO: make sure images are bytes when needed
 	def __init__(self, criterion='ms-ssim', **kwargs):
@@ -63,10 +65,6 @@ class ReconstructionTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, Reconstruc
 			criterion = A.pull('criterion', 'mse', ref=True)
 		super().__init__(A, criterion=criterion, **kwargs)
 
-
-
-class CompressionTask(ReconstructionTask):
-	pass
 
 
 
@@ -216,9 +214,64 @@ class InterpolationTaskC(IterativeTaskC, ExtractionTaskC, EncoderTaskC, DecoderT
 
 
 
+class CompressionTask(ObservationTask, EncoderTask, DecoderTask):
+	pass
 
 
 
+class LosslessCompressionTask(ObservationTask, EncoderTask, DecoderTask):
+	def get_scores(self):
+		return ['score', 'bpp']
+
+
+	def get_results(self):
+		return ['counts', 'bytes', 'uncompressed']
+
+
+	def _prep(self, info):
+		info.counts = []
+
+		self.compressor = BitsBackCompressor(self.encoder, self.decoder, seed=5)
+		stream = self.compressor.generate_seed_state()
+		self.compressor.set_state(stream)
+		info.start_stream = self.compressor.state_to_bytes(stream)
+
+		return super()._prep(info)
+
+
+	def _process_batch(self, info):
+		counts = [0]
+		state = self.compressor.generate_seed_state()
+		info.initial_stream = state
+
+		for sample in info.observations:
+			state = self.compressor.compress_append([sample], state)
+			counts.append(self.compressor.count_bits(state) - counts[-1])
+		info.counts.extend(counts[1:])
+
+		info.state = state
+		return super()._process_batch(info)
+
+
+	def _aggregate_results(self, info):
+		info.counts = torch.tensor(info.counts)
+		mean_bits = info.counts.float().mean()
+		info.bpp = mean_bits / info.observations[0].numel()
+		info.score = 1. -  mean_bits / (info.observations[0].numel()*8)
+
+		info.initial_stream = self.compressor.state_to_bytes(info.initial_stream)
+		info.final_stream, info.uncompressed = self.compressor.partial_decompress(info.state)
+		info.final_stream = self.compressor.state_to_bytes(info.final_stream)
+
+		info.bytes = self.compressor.state_to_bytes(info.state)
+		del info.state
+
+		if self._slim:
+			del info.counts
+		return info
 
 
 
+@fig.Component('task/lossless-compression')
+class LosslessCompressionTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, LosslessCompressionTask):
+	pass
