@@ -52,7 +52,16 @@ class EstimatorBuilder(util.Builder):
 
 
 
-class InferenceTask(EncoderTask):
+class DownstreamTask(EncoderTask):
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		if self.encoder is not None:
+			self.dataset.register_wrapper('encoded', encoder=self.encoder)
+		return out
+
+
+
+class InferenceTask(DownstreamTask):
 	def __init__(self, estimator=None, estimator_builder=None, **kwargs):
 		if estimator is not None:
 			estimator_builder = None
@@ -60,18 +69,22 @@ class InferenceTask(EncoderTask):
 		self.estimator = estimator
 		self.estimator_builder = estimator_builder
 
+
 	def get_scores(self):
 		if self.estimator is not None:
 			return self.estimator.get_scores()
+
 
 	def get_results(self):
 		if self.estimator is not None:
 			return self.estimator.get_results()
 
+
 	def _compute(self, estimator=unspecified_argument, **kwargs):
 		if estimator is not unspecified_argument:
 			self.estimator = estimator
 		return super()._compute(**kwargs)
+
 
 	def _run(self, out=None, ):
 		out = super()._run(out=out)

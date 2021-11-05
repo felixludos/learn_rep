@@ -1,11 +1,12 @@
 
-_meta.script_name: test-estimator
+#_meta.script_name: test-estimator
+_meta.script_name: test-compression
 
 parents: [hybrid, m/ae, a/conv, d/3ds]
 
 estimator._type: estimator-builder
 
-
+#model_name: 3ds_vae1_d-conv_s3_210626-030352
 
 cat: real
 

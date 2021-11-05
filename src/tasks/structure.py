@@ -14,7 +14,7 @@ from omnilearn.op import get_save_dir, framework as fm
 from .disentanglement_metrics import metric_beta_vae, metric_factor_vae, mig, dci, sap, \
 	unsupervised_metrics, modularity_explicitness, irs, fairness
 
-from .common import EncoderTask, EncoderTaskC
+from .common import EncoderTask, EncoderTaskC, ObservationTask, IterativeTaskC, DecoderTask, DecoderTaskC
 
 
 
@@ -326,6 +326,50 @@ class FairnessC(DisentanglementTaskC, Fairness):
 		if num_test_points_per_class is None:
 			num_test_points_per_class = A.pull('num_test_points_per_class', 100)
 		super().__init__(A, num_train=num_train, num_test_points_per_class=num_test_points_per_class, **kwargs)
+
+
+
+# class ResponseTask(EncoderTask, DecoderTask, ObservationTask):
+# 	def __init__(self, criterion=None, **kwargs):
+# 		super().__init__(**kwargs)
+# 		self.criterion = criterion
+#
+#
+# 	def _prep(self, info):
+# 		info.scores = []
+# 		return super()._prep(info)
+#
+#
+# 	def _process_batch(self, info):
+#
+#
+#
+# 		pass
+#
+#
+# 	def _apply_interventions(self, info):
+#
+# 		pass
+#
+#
+# 	def response_function(self, z):
+# 		with torch.no_grad():
+# 			return self.encoder(self.decoder(z))
+
+
+
+# @fig.Component('task/consistency')
+# class Consistency(DecoderTask, ObservationTask, DisentanglementTask):
+# 	def _prep(self, info):
+#
+# 		pass
+#
+# 	def response_function(self):
+# 		pass
+#
+#
+# 	def _process_batch(self, info):
+# 		pass
 
 
 

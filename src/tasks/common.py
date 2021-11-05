@@ -21,46 +21,113 @@ from omnilearn import util
 
 from omnilearn.models import get_loss_type
 from omnilearn.op import get_save_dir, framework as fm#, scikit as sk
+from omnilearn.op import Run
 
 
 prt = get_printer(__file__)
 
 
-@fig.Script('test-estimator')
-def _test_estimator(A):
+@fig.Script('tasks')
+def run_tasks(A, run=None):
+	if run is None:
+		run = fig.run('load-run', A)
+	return run.eval_tasks(A)
 
-	seed = A.pull('seed', util.gen_random_seed())
 
-	dataset = fig.run('load-data', A)
-	# dataset.register_wrapper('subset', kwargs={'num': 100, 'update_data': False})
 
-	# model = fig.run('load-model', A)
-	# dataset.set_encoder(model)
+@fig.AutoModifier('tasked')
+class Tasked(Run):
+	def eval_tasks(self, config=None):
+		raise NotImplementedError
 
-	space = dataset.get_target_space()
-	print(space)
 
-	builder = A.pull('estimator')
-	est = builder.build(dataset)
-
-	# obs = dataset.get('observations')
-	# print(obs.shape, )
-
-	# out = est.fit(dataset)
-
-	# pred = est.predict(obs)
-	# y = dataset.get('targets')
-
-	dataset.switch_to('val')
-
-	out = est.compute(dataset=dataset)
-
-	# print(pred[:4])
-	# print(y[:4])
-
-	print(out.keys())
 
 	pass
+
+
+# @fig.Script('test-estimator')
+# def _test_estimator(A):
+#
+# 	seed = A.pull('seed', util.gen_random_seed())
+#
+# 	dataset = fig.run('load-data', A)
+# 	# dataset.register_wrapper('subset', kwargs={'num': 100, 'update_data': False})
+#
+# 	# model = fig.run('load-model', A)
+# 	# dataset.set_encoder(model)
+#
+# 	space = dataset.get_target_space()
+# 	print(space)
+#
+# 	builder = A.pull('estimator')
+# 	est = builder.build(dataset)
+#
+# 	# obs = dataset.get('observations')
+# 	# print(obs.shape, )
+#
+# 	# out = est.fit(dataset)
+#
+# 	# pred = est.predict(obs)
+# 	# y = dataset.get('targets')
+#
+# 	dataset.switch_to('val')
+#
+# 	out = est.compute(dataset=dataset)
+#
+# 	# print(pred[:4])
+# 	# print(y[:4])
+#
+# 	print(out.keys())
+#
+# 	pass
+
+# from .lossy_compression.ppm_compress import compress
+# from .lossy_compression.ppm_decompress import decompress
+
+# import io
+# from collections import Counter
+# from .lossy_compression import arithmeticcoding
+# # from .lossy_compression.adaptive_arithmetic_compress import compress
+# # from .lossy_compression.adaptive_arithmetic_decompress import decompress
+#
+# from src.tasks.lossy_compression.arithmetic_compress import compress
+# from src.tasks.lossy_compression.arithmetic_decompress import decompress
+
+# @fig.Script('test-compression')
+# def _test_compression(A):
+#
+# 	np.random.seed(5)
+# 	X = np.random.randn(20) * 10 > 0
+# 	X = X.astype(np.float32).astype(np.int8)
+#
+# 	x = X.tobytes()
+#
+# 	cnts = Counter(x)
+# 	cnts[256] = 1
+# 	ls = [0] * (max(cnts) + 1)
+# 	for i, v in cnts.items():
+# 		ls[i] = v
+# 	freqs = arithmeticcoding.SimpleFrequencyTable(ls)
+#
+# 	cinp = io.BytesIO(x)
+# 	cout = io.BytesIO()
+# 	bitout = arithmeticcoding.BitOutputStream(cout)
+#
+# 	compress(freqs, cinp, bitout)
+#
+# 	z = cout.getvalue()
+# 	print(len(x), len(z), len(x) / len(z))
+#
+# 	dinp = io.BytesIO(z)
+# 	bitin = arithmeticcoding.BitInputStream(dinp)
+# 	dout = io.BytesIO()
+#
+# 	decompress(freqs, bitin, dout)
+#
+# 	xhat = dout.getvalue()
+# 	print(x == xhat[:len(x)], len(x), len(xhat))
+# 	print('done')
+
 
 
 
@@ -71,8 +138,10 @@ class Task(fm.Computable): # TODO: specify random seed for reproducibility
 		self.dataset = dataset
 		self._slim = slim
 
-	# def compute(self): # compute() should have not args
-	# 	pass
+
+	def required_modules(self):
+		return []
+
 
 	def _compute(self, dataset=unspecified_argument, **kwargs):
 		if dataset is not unspecified_argument:
@@ -103,11 +172,8 @@ class EncoderTask(Task):
 		self.encoder = encoder
 
 
-	def _run(self, out=None):
-		out = super()._run(out=out)
-		if self.encoder is not None:
-			self.dataset.register_wrapper('encoded', encoder=self.encoder)
-		return out
+	def required_modules(self):
+		return ['encoder', *super().required_modules()]
 
 
 	def _compute(self, encoder=unspecified_argument, **kwargs):
@@ -129,6 +195,10 @@ class DecoderTask(Task):
 	def __init__(self, decoder=None, **kwargs):
 		super().__init__(**kwargs)
 		self.decoder = decoder
+
+
+	def required_modules(self):
+		return ['decoder', *super().required_modules()]
 
 
 	def _compute(self, decoder=unspecified_argument, **kwargs):
@@ -162,6 +232,10 @@ class ExtractionTask(Task):
 		self.criterion = get_loss_type(criterion)
 		self._compute_missing_reference = compute_missing_reference
 		self._base_reference_props = reference_props
+
+
+	def required_modules(self):
+		return ['extractor', 'criterion', *super().required_modules()]
 
 
 	def get_scores(self):
@@ -252,6 +326,10 @@ class GeneratorTask(Task):
 	def __init__(self, generator=None, **kwargs):
 		super().__init__(**kwargs)
 		self.generator = generator
+
+
+	def required_modules(self):
+		return ['generator', *super().required_modules()]
 
 
 	def _compute(self, generator=unspecified_argument, **kwargs):
@@ -362,7 +440,7 @@ class IterativeTaskC(TaskC, IterativeTask):
 
 
 class ObservationTask(IterativeTask):
-	def __init__(self, sample_format='observation', **kwargs):
+	def __init__(self, sample_format={'observations'}, **kwargs):
 		super().__init__(**kwargs)
 		self._sample_format = sample_format
 
@@ -374,8 +452,9 @@ class ObservationTask(IterativeTask):
 
 
 	def _generate_batch(self, info):
-		info.batch = self._dataloader.demand(info.num)
-		return super()._generate_batch(info)
+		info = super()._generate_batch(info)
+		batch = self._dataloader.demand(info.num)
+		info.update(batch)
 
 
 	def _aggregate_results(self, info):
@@ -384,18 +463,30 @@ class ObservationTask(IterativeTask):
 
 
 
+class EncodedObservationTask(ObservationTask, EncoderTask):
+	def _generate_batch(self, info):
+		info = super()._generate_batch(info)
+		if 'original' not in info and 'observations' in info:
+			info.originals = info.observations
+			if self.encoder is not None:
+				info.observations = self.encode(info.observations)
+		return info
+
+
+	def encode(self, samples):
+		return self.encoder.encode(samples)
+
+
+
 class ObservationPairTask(ObservationTask):
 	def _split_batch(self, info):
-		info.a, info.b = info.batch.split(2)
-		info.a_labels, info.b_labels = info.labels.split(2)
+		info.a, info.b = info.observations.split(2)
+		return info
 
 
 	def _generate_batch(self, info):
 		info = super()._generate_batch(info)
 		self._split_batch(info)
 		return info
-
-
-
 
 

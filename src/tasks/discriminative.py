@@ -13,37 +13,42 @@ from omnilearn.models import get_loss_type
 prt = get_printer(__file__)
 
 from .common import ObservationTask, ObservationPairTask, IterativeTaskC, EncoderTask, EncoderTaskC, \
-	ExtractionTask, ExtractionTaskC, DecoderTask, DecoderTaskC
+	ExtractionTask, ExtractionTaskC, DecoderTask, DecoderTaskC, EncodedObservationTask
 
-from .lossless_compression import BitsBackCompressor
+from .compat import BitsBackCompressor
 
 
-class ReconstructionTask(ObservationTask, EncoderTask, DecoderTask): # TODO: make sure images are bytes when needed
-	def __init__(self, criterion='ms-ssim', **kwargs):
+class ReconstructionTask(EncodedObservationTask, DecoderTask): # TODO: make sure images are bytes when needed
+	def __init__(self, criterion='ms-ssim', compressor=None, **kwargs):
 		super().__init__(**kwargs)
 		self.criterion = get_loss_type(criterion)
+		self.compressor = compressor
 
 
 	def get_scores(self):
-		return ['score']
+		return ['score', 'bpp']
 
 
 	def get_results(self):
-		return ['scores']
+		return ['scores', 'bits']
 
 
 	def _prep(self, info):
 		info.scores = []
+		info.bits = []
 		return super()._prep(info)
 
 
 	def _rec_scores(self, info):
-		return self.criterion(info.reconstruction, info.observations)
+		return self.criterion(info.reconstruction, info.targets if 'targets' in info else info.observations)
 
 
 	def _process_batch(self, info):
-		info.latent = self.encoder.encode(info.observations)
-		info.reconstruction = self.decoder.decode(info.latent)
+		if self.compressor is not None:
+			bits = self.compressor.compress(info.observations)
+			info.compressed = bits
+			info.bits.append(len(bits) / len(info.observations)) # average over batch
+		info.reconstruction = self.decoder.decode(info.observations)
 		info.scores.append(self._rec_scores(info))
 		return super()._process_batch(info)
 
@@ -52,24 +57,33 @@ class ReconstructionTask(ObservationTask, EncoderTask, DecoderTask): # TODO: mak
 		info.scores = torch.cat(info.scores)
 		info.score = info.scores.mean()
 
+		if len(info.bits):
+			info.bits = torch.cat(info.bits)
+			info.bpp = info.bits.mean() / info.originals[0].numel()
+		else:
+			del info.bits
+
 		if self._slim:
 			del info.scores
+			if 'bits' in info:
+				del info.bits
 		return info
 
 
 
 @fig.Component('task/reconstruction')
 class ReconstructionTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, ReconstructionTask):
-	def __init__(self, A, criterion=unspecified_argument, **kwargs):
+	def __init__(self, A, criterion=unspecified_argument, compressor=unspecified_argument, **kwargs):
 		if criterion is unspecified_argument:
-			criterion = A.pull('criterion', 'mse', ref=True)
+			criterion = A.pull('criterion', 'ms-ssim', ref=True)
+		if compressor is unspecified_argument:
+			compressor = A.pull('compressor', None, ref=True)
 		super().__init__(A, criterion=criterion, **kwargs)
 
 
 
-
-class MetricTask(ObservationPairTask, EncoderTask):
-	def __init__(self, metric='l2', criterion='cosine-similarity', sample_format=['observations', 'labels'], **kwargs):
+class MetricTask(ObservationPairTask, EncodedObservationTask):
+	def __init__(self, metric='l2', criterion='cosine-similarity', sample_format={'observations', 'labels'}, **kwargs):
 		super().__init__(sample_format=sample_format, **kwargs)
 		self.metric = get_loss_type(metric)
 		self.criterion = get_loss_type(criterion)
@@ -80,7 +94,7 @@ class MetricTask(ObservationPairTask, EncoderTask):
 
 
 	def get_results(self):
-		return [] if self._slim else ['distances', 'trues']
+		return ['distances', 'trues']
 
 
 	def _prep(self, info):
@@ -89,10 +103,9 @@ class MetricTask(ObservationPairTask, EncoderTask):
 
 
 	def _split_batch(self, info):
-		info.observations, info.labels = info.batch
-		del info.batch
-		info.a, info.b = info.observations.split(2)
+		info = super()._split_batch(info)
 		info.a_labels, info.b_labels = info.labels.split(2)
+		return info
 
 
 	def _process_batch(self, info):
@@ -113,7 +126,7 @@ class MetricTask(ObservationPairTask, EncoderTask):
 
 
 @fig.Component('task/metric')
-class MetricTaskC(IterativeTaskC, EncoderTaskC, MetricTask):
+class MetricTaskC(IterativeTaskC, MetricTask):
 	def __init__(self, A, metric=unspecified_argument, criterion=unspecified_argument, **kwargs):
 
 		if metric is unspecified_argument:
@@ -126,7 +139,7 @@ class MetricTaskC(IterativeTaskC, EncoderTaskC, MetricTask):
 
 
 
-class InterpolationTask(ObservationPairTask, ExtractionTask, EncoderTask, DecoderTask):
+class InterpolationTask(ObservationPairTask, EncodedObservationTask, DecoderTask, ExtractionTask):
 	def __init__(self, interpolator=None, num_steps=12, batch_size=12, **kwargs):
 		super().__init__(batch_size=batch_size, **kwargs)
 		self.interpolator = interpolator
@@ -201,7 +214,7 @@ class InterpolationTask(ObservationPairTask, ExtractionTask, EncoderTask, Decode
 
 
 @fig.Component('task/interpolation')
-class InterpolationTaskC(IterativeTaskC, ExtractionTaskC, EncoderTaskC, DecoderTaskC, InterpolationTask):
+class InterpolationTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, ExtractionTaskC, InterpolationTask):
 	def __init__(self, A, interpolator=None, num_steps=None, **kwargs):
 
 		if interpolator is unspecified_argument:
@@ -214,12 +227,12 @@ class InterpolationTaskC(IterativeTaskC, ExtractionTaskC, EncoderTaskC, DecoderT
 
 
 
-class CompressionTask(ObservationTask, EncoderTask, DecoderTask):
-	pass
+# class CompressionTask(ObservationTask, EncoderTask, DecoderTask):
+# 	pass
 
 
 
-class LosslessCompressionTask(ObservationTask, EncoderTask, DecoderTask):
+class LosslessCompressionTask(EncodedObservationTask, DecoderTask):
 	def get_scores(self):
 		return ['score', 'bpp']
 
