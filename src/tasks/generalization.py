@@ -67,7 +67,9 @@ class ComparisonTask(GeneralizationTask):
 		return list(chain([f'original-{key}', f'updated-{key}'] for key in  self.task.get_scores()))
 
 
-	def _compute(self, **kwargs):
+	def _compute(self, original_results=None, **kwargs):
+		if original_results is not None:
+			self._original_results = original_results
 		if self._original_results is None:
 			self._evaluating_updated = False
 			self._original_results = self.task._compute(**self._get_originals(**kwargs))

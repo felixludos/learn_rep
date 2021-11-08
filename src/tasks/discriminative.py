@@ -10,6 +10,8 @@ from omnilearn.data import DataLike
 from omnilearn.op import get_save_dir, framework as fm
 from omnilearn.models import get_loss_type
 
+import matplotlib.pyplot as plt
+
 prt = get_printer(__file__)
 
 from .common import ObservationTask, ObservationPairTask, IterativeTaskC, EncoderTask, EncoderTaskC, \
@@ -40,26 +42,26 @@ class ReconstructionTask(EncodedObservationTask, DecoderTask): # TODO: make sure
 
 
 	def _rec_scores(self, info):
-		return self.criterion(info.reconstruction, info.targets if 'targets' in info else info.observations)
+		return self.criterion(info.reconstructions, info.targets if 'targets' in info else info.originals)
 
 
 	def _process_batch(self, info):
 		if self.compressor is not None:
 			bits = self.compressor.compress(info.observations)
 			info.compressed = bits
-			info.bits.append(len(bits) / len(info.observations)) # average over batch
-		info.reconstruction = self.decoder.decode(info.observations)
+			info.bits.append(8*len(bits) / len(info.originals)) # average over batch
+		info.reconstructions = self.decoder.decode(info.observations)
 		info.scores.append(self._rec_scores(info))
 		return super()._process_batch(info)
 
 
 	def _aggregate_results(self, info):
-		info.scores = torch.cat(info.scores)
-		info.score = info.scores.mean()
+		info.scores = torch.as_tensor(info.scores)
+		info.score = info.scores.mean().item()
 
 		if len(info.bits):
-			info.bits = torch.cat(info.bits)
-			info.bpp = info.bits.mean() / info.originals[0].numel()
+			info.bits = torch.as_tensor(info.bits)
+			info.bpp = info.bits.mean().item() / info.originals[0].numel()
 		else:
 			del info.bits
 
@@ -78,7 +80,7 @@ class ReconstructionTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, Reconstruc
 			criterion = A.pull('criterion', 'ms-ssim', ref=True)
 		if compressor is unspecified_argument:
 			compressor = A.pull('compressor', None, ref=True)
-		super().__init__(A, criterion=criterion, **kwargs)
+		super().__init__(A, criterion=criterion, compressor=compressor, **kwargs)
 
 
 

@@ -1,44 +1,61 @@
 
 #_meta.script_name: test-estimator
-_meta.script_name: test-compression
+#_meta.script_name: test-compression
+_meta.script_name: tasks
 
 parents: [hybrid, m/ae, a/conv, d/3ds]
 
-estimator._type: estimator-builder
+#estimator._type: estimator-builder
 
-#model_name: 3ds_vae1_d-conv_s3_210626-030352
+load: 3ds_vae1_d-conv_s3_210626-030352
 
-cat: real
+#model._load-ckpt: 3ds_vae1_d-conv_s3_210626-030352
+#din: [3,64,64]
+#dout: [3,64,64]
 
-dataset:
-  _dataset_mod:
-    encoded: 3
-    subset: 2
-#    shuffled: 1
+compressor._type: lzma-compression
+use-distribution: True
 
-#  name: cifar10
+n_samples: 100
 
-  num: 400
-#  split: None
-  split:
-    val: 0.25
+tasks:
+  rec:
+    _type: task/reconstruction
+    encoder: <>model
+    decoder: <>model
 
-  use-mechanisms: True
 
-  progress-bar: <>pbar
-
-#  wrappers:
-#    - ident: subset
-#      kwargs.num: 100
-
-  supervised: True
-
-model:
-#  din: [3, 128, 128]
-  din: [3, 64, 64]
-#  din: [3, 32, 32]
-
-  dout: <>din
+#cat: real
+#
+#dataset:
+#  _dataset_mod:
+#    encoded: 3
+#    subset: 2
+##    shuffled: 1
+#
+##  name: cifar10
+#
+#  num: 400
+##  split: None
+#  split:
+#    val: 0.25
+#
+#  use-mechanisms: True
+#
+#  progress-bar: <>pbar
+#
+##  wrappers:
+##    - ident: subset
+##      kwargs.num: 100
+#
+#  supervised: True
+#
+#model:
+##  din: [3, 128, 128]
+#  din: [3, 64, 64]
+##  din: [3, 32, 32]
+#
+#  dout: <>din
 
 
 

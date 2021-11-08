@@ -28,21 +28,75 @@ prt = get_printer(__file__)
 
 
 @fig.Script('tasks')
-def run_tasks(A, run=None):
+def run_tasks(config, run=None, tasks=None, overwrite=None, use_dataset=None):
 	if run is None:
-		run = fig.run('load-run', A)
-	return run.eval_tasks(A)
+		run = fig.run('load-run', config)
+	# return run.eval_tasks(config=config)
+
+	if overwrite is None:
+		overwrite = config.pull('overwrite', False)
+
+	if use_dataset is None and config is not None:
+		use_dataset = config.pull('use-dataset', False)
+
+	if tasks is None:
+		tasks = config.pull('tasks')
+
+	names = ', '.join(tasks.keys())
+	print(f'Evaluating {len(tasks)} tasks: {names}')
+	if overwrite:
+		print('Overwriting past results')
+
+	for name, task in tasks.items():
+		if not run.has_datafile(f'tasks/{name}') or overwrite:
+			kwargs = {}
+			if use_dataset:
+				kwargs['dataset'] = run.get_dataset()
+			results = task.compute(**kwargs)
+			run.update_datafile(f'tasks/{name}', results)
+			score = f' (score: {results.score:.3g})' if 'score' in results else ''
+			print(f'{name} complete{score}')
+
+	print('All tasks complete')
 
 
 
 @fig.AutoModifier('tasked')
 class Tasked(Run):
-	def eval_tasks(self, config=None):
-		raise NotImplementedError
 
+	def eval_tasks(self, tasks=None, overwrite=None, use_dataset=None):
+		return run_tasks(config=self.get_config(), tasks=tasks, overwrite=overwrite, use_dataset=use_dataset)
+		# if overwrite is None and config is not None:
+		# 	overwrite = config.pull('overwrite', False)
+		#
+		# if use_dataset is None and config is not None:
+		# 	use_dataset = config.pull('use-dataset', False)
+		#
+		# if tasks is None:
+		# 	if config is not None:
+		# 		tasks = config.pull('tasks')
+		# 	else:
+		# 		tasks = self.tasks
+		#
+		# assert tasks is not None
+		#
+		# names = ', '.join(tasks.keys())
+		# print(f'Evaluating {len(tasks)} tasks: {names}')
+		# if overwrite:
+		# 	print('Overwriting past results')
+		#
+		# for name, task in tasks.items():
+		# 	if not self.has_datafile(f'tasks/{name}') or overwrite:
+		# 		kwargs = {}
+		# 		if use_dataset:
+		# 			kwargs['dataset'] = self.get_dataset()
+		# 		results = task.compute(**kwargs)
+		# 		self.update_datafile(f'tasks/{name}', results)
+		# 		score = f' (score: {results.score:.3g})' if 'score' in results else ''
+		# 		print(f'{name} complete{score}')
+		#
+		# print('All tasks complete')
 
-
-	pass
 
 
 # @fig.Script('test-estimator')
@@ -167,9 +221,10 @@ class TaskC(fig.Configurable, Task):
 
 
 class EncoderTask(Task):
-	def __init__(self, encoder=None, **kwargs):
+	def __init__(self, encoder=None, use_distribution=False, **kwargs):
 		super().__init__(**kwargs)
 		self.encoder = encoder
+		self._use_distribution = use_distribution
 
 
 	def required_modules(self):
@@ -184,10 +239,12 @@ class EncoderTask(Task):
 
 
 class EncoderTaskC(TaskC, EncoderTask):
-	def __init__(self, A, encoder=unspecified_argument, **kwargs):
+	def __init__(self, A, encoder=unspecified_argument, use_distribution=None, **kwargs):
 		if encoder is unspecified_argument:
 			encoder = A.pull('encoder', None, ref=True)
-		super().__init__(A, encoder=encoder, **kwargs)
+		if use_distribution is None:
+			use_distribution = A.pull('use-distribution', False)
+		super().__init__(A, encoder=encoder, use_distribution=use_distribution, **kwargs)
 
 
 
@@ -455,6 +512,7 @@ class ObservationTask(IterativeTask):
 		info = super()._generate_batch(info)
 		batch = self._dataloader.demand(info.num)
 		info.update(batch)
+		return info
 
 
 	def _aggregate_results(self, info):
@@ -465,11 +523,15 @@ class ObservationTask(IterativeTask):
 
 class EncodedObservationTask(ObservationTask, EncoderTask):
 	def _generate_batch(self, info):
+		if 'originals' in info:
+			del info['originals']
 		info = super()._generate_batch(info)
-		if 'original' not in info and 'observations' in info:
+		if 'originals' not in info and 'observations' in info:
 			info.originals = info.observations
 			if self.encoder is not None:
 				info.observations = self.encode(info.observations)
+				if isinstance(info.observations, util.Distribution) and not self._use_distribution:
+					info.observations = info.observations.bsample()
 		return info
 
 
