@@ -1,29 +1,45 @@
 
+#_meta.script_name: test-compress
+
+#_meta.script_name: test-line-compress
+#parents: [hybrid, m/ae, a/conv, d/mnist]
+#load: mnist_vae1_e-conv_d-conv_210910-135535
+
 #_meta.script_name: test-estimator
 #_meta.script_name: test-compression
-_meta.script_name: tasks
 
+_meta.script_name: eval-tasks
 parents: [hybrid, m/ae, a/conv, d/3ds]
-
-#estimator._type: estimator-builder
-
 load: 3ds_vae1_d-conv_s3_210626-030352
+
 
 #model._load-ckpt: 3ds_vae1_d-conv_s3_210626-030352
 #din: [3,64,64]
 #dout: [3,64,64]
 
-compressor._type: lzma-compression
-use-distribution: True
+#bin: True
 
-n_samples: 100
+n_samples: 20
+batch_size: 5
 
-tasks:
-  rec:
-    _type: task/reconstruction
-    encoder: <>model
-    decoder: <>model
+dataset.as_bytes: yes
 
+#compressor._type: lzma-compression
+#use-distribution: True
+
+#autosample: best
+
+tasks.lossless:
+  _type: task/lossless-compression
+  encoder: <>model
+  decoder: <>model
+
+#  use-distribution: False
+
+
+
+
+#estimator._type: estimator-builder
 
 #cat: real
 #

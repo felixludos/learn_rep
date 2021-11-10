@@ -61,7 +61,7 @@ class ReconstructionTask(EncodedObservationTask, DecoderTask): # TODO: make sure
 
 		if len(info.bits):
 			info.bits = torch.as_tensor(info.bits)
-			info.bpp = info.bits.mean().item() / info.originals[0].numel()
+			info.bpd = info.bits.mean().item() / info.originals[0].numel()
 		else:
 			del info.bits
 
@@ -229,58 +229,62 @@ class InterpolationTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, ExtractionT
 
 
 
-# class CompressionTask(ObservationTask, EncoderTask, DecoderTask):
-# 	pass
-
-
-
-class LosslessCompressionTask(EncodedObservationTask, DecoderTask):
+class LosslessCompressionTask(ObservationTask, EncoderTask, DecoderTask):
 	def get_scores(self):
-		return ['score', 'bpp']
+		return ['score', 'bpd']
 
 
 	def get_results(self):
-		return ['counts', 'bytes', 'uncompressed']
+		return ['counts', 'bytes']
 
 
 	def _prep(self, info):
 		info.counts = []
 
 		self.compressor = BitsBackCompressor(self.encoder, self.decoder, seed=5)
-		stream = self.compressor.generate_seed_state()
-		self.compressor.set_state(stream)
-		info.start_stream = self.compressor.state_to_bytes(stream)
+		# stream = self.compressor.generate_seed_state()
+		# self.compressor.set_state(stream)
+		# info.start_stream = self.compressor.state_to_bytes(stream)
 
 		return super()._prep(info)
 
 
 	def _process_batch(self, info):
-		counts = [0]
-		state = self.compressor.generate_seed_state()
-		info.initial_stream = state
+		info.bytes = self.compressor.compress(info.observations)
+		info.counts.append(8*len(info.bytes) / info.observations.numel())
 
-		for sample in info.observations:
-			state = self.compressor.compress_append([sample], state)
-			counts.append(self.compressor.count_bits(state) - counts[-1])
-		info.counts.extend(counts[1:])
+		# counts = []
+		# past = 0
+		# state = self.compressor.generate_seed_state()
+		# info.initial_stream = state
 
-		info.state = state
+		# z = self.compressor.compress(info.observations)
+		# xhat = self.compressor.decompress(z)
+
+		# for sample in info.observations:
+		# 	state = self.compressor.compress_append([sample], state)
+		# 	total = self.compressor.count_bits(state)
+		# 	counts.append(total - past)
+		# 	past = total
+		# info.counts.extend(counts)
+		#
+		# info.state = state
 		return super()._process_batch(info)
 
 
 	def _aggregate_results(self, info):
-		info.counts = torch.tensor(info.counts)
-		mean_bits = info.counts.float().mean()
-		info.bpp = mean_bits / info.observations[0].numel()
-		info.score = 1. -  mean_bits / (info.observations[0].numel()*8)
+		info.counts = torch.as_tensor(info.counts)
+		info.bpd = info.counts.float().mean().item()
+		# mean_bits = info.counts.float().mean()
+		# info.bpd = mean_bits / info.observations[0].numel()
+		info.score = 1. -  info.bpd / 8.
 
-		info.initial_stream = self.compressor.state_to_bytes(info.initial_stream)
-		info.final_stream, info.uncompressed = self.compressor.partial_decompress(info.state)
-		info.final_stream = self.compressor.state_to_bytes(info.final_stream)
+		# info.initial_stream = self.compressor.state_to_bytes(info.initial_stream)
+		# info.final_stream, info.uncompressed = self.compressor.partial_decompress(info.state)
+		# info.final_stream = self.compressor.state_to_bytes(info.final_stream)
+		# info.bytes = self.compressor.state_to_bytes(info.state)
 
-		info.bytes = self.compressor.state_to_bytes(info.state)
-		del info.state
-
+		info.reconstructions = self.compressor.decompress(info.bytes)
 		if self._slim:
 			del info.counts
 		return info
@@ -290,3 +294,8 @@ class LosslessCompressionTask(EncodedObservationTask, DecoderTask):
 @fig.Component('task/lossless-compression')
 class LosslessCompressionTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, LosslessCompressionTask):
 	pass
+
+
+
+
+

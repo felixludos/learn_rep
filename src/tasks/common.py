@@ -27,7 +27,7 @@ from omnilearn.op import Run
 prt = get_printer(__file__)
 
 
-@fig.Script('tasks')
+@fig.Script('eval-tasks')
 def run_tasks(config, run=None, tasks=None, overwrite=None, use_dataset=None):
 	if run is None:
 		run = fig.run('load-run', config)

@@ -1,0 +1,9 @@
+
+compressor._type: lzma-compression
+use-distribution: True
+
+tasks.rec:
+  _type: task/reconstruction
+  encoder: <>model
+  decoder: <>model
+
