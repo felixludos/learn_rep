@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import torch
+import h5py as hf
 
 from omnibelt import unspecified_argument, get_printer
 import omnifig as fig
@@ -21,6 +22,33 @@ from omnilearn.models import get_loss_type
 from .common import GeneratorTask, GeneratorTaskC, ExtractionTask, ExtractionTaskC, \
 	IterativeTask, IterativeTaskC, EncoderTask, EncoderTaskC
 
+
+
+# @fig.Script('reformat-fid')
+# def _reformat_fid(A):
+# 	base_props = {'ID': 'inception-v3', 'pretrained': True}
+#
+# 	dataset = fig.run('load-data', A)
+#
+# 	root = dataset.get_root()
+# 	name = f'{dataset.cat}_fid_stats.h5'
+#
+# 	f = hf.File(root / name)
+# 	list(f.keys())
+#
+# 	for key in [key for key in f.keys() if key.endswith('_mu')]:
+# 		mode, dim, _ = key.split('_')
+# 		dim = int(dim)
+# 		props = {'dim': dim, 'mode': mode, **base_props}
+#
+# 		dataset.save_stats(props, (torch.from_numpy(f[f'{mode}_{dim}_mu'][:]),
+# 		                           torch.from_numpy(f[f'{mode}_{dim}_sigma'][:])))
+#
+# 	table = dataset.get_datafile('stats/table')
+#
+# 	print(table)
+#
+# 	pass
 
 
 class GenerationTask(GeneratorTask, ExtractionTask, IterativeTask):
@@ -58,7 +86,7 @@ class GenerationTask(GeneratorTask, ExtractionTask, IterativeTask):
 	def _process_batch(self, info):
 		if 'feats' not in info:
 			info.feats = info.samples if self.extractor is None else self.extractor.encode(info.samples)
-		info.features.append(info.feats)
+		info.features.append(info.feats.cpu()) # a little hacky
 		return super()._process_batch(info)
 
 
@@ -68,6 +96,8 @@ class GenerationTask(GeneratorTask, ExtractionTask, IterativeTask):
 			info = self._compare_to_reference(info)
 		if 'features' in info and self._slim:
 			del info.features
+		if 'referernce' in info and self._slim:
+			del info.reference
 		return super()._aggregate_results(info)
 
 

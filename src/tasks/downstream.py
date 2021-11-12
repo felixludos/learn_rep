@@ -47,27 +47,34 @@ class EstimatorBuilder(util.Builder):
 
 		if estimator is None:
 			estimator = config.pull(key)
-			estimator.register_out_space(space)
+		estimator.register_out_space(space)
 		return estimator
 
 
 
 class DownstreamTask(EncoderTask):
+	def __init__(self, auto_wrap=True, **kwargs):
+		super().__init__(**kwargs)
+		self._auto_wrap = auto_wrap
+
+
 	def _run(self, out=None):
 		out = super()._run(out=out)
-		if self.encoder is not None:
+		if self._auto_wrap and self.encoder is not None:
 			self.dataset.register_wrapper('encoded', encoder=self.encoder)
 		return out
 
 
 
 class InferenceTask(DownstreamTask):
-	def __init__(self, estimator=None, estimator_builder=None, **kwargs):
+	def __init__(self, estimator=None, estimator_builder=None, eval_mode=None, **kwargs):
 		if estimator is not None:
 			estimator_builder = None
 		super().__init__(**kwargs)
 		self.estimator = estimator
 		self.estimator_builder = estimator_builder
+
+		self._eval_mode = eval_mode
 
 
 	def get_scores(self):
@@ -86,25 +93,31 @@ class InferenceTask(DownstreamTask):
 		return super()._compute(**kwargs)
 
 
-	def _run(self, out=None, ):
+	def _run(self, out=None):
 		out = super()._run(out=out)
+
+		if self._eval_mode is not None:
+			self.dataset.switch_to(self._eval_mode)
 		if self.estimator is None:
 			self.estimator = self.estimator_builder.build(self.dataset)
-		out.update(self.estimator.compute(dataset=self.dataset))
-		return out
+		est_out = self.estimator.compute(dataset=self.dataset, filter_outputs=False)
+		return est_out
+		# out.update(est_out)
+		# return out
 
 
 
 @fig.Component('task/inference')
 class InferenceTaskC(EncoderTaskC, InferenceTask):
-	def __init__(self, A, encoder=unspecified_argument,
-	             estimator=unspecified_argument, estimator_builder=unspecified_argument,
-	             **kwargs):
-		if encoder is unspecified_argument:
-			encoder = A.pull('encoder', None, ref=True)
+	def __init__(self, A, estimator=unspecified_argument, estimator_builder=unspecified_argument,
+	             eval_mode=unspecified_argument, **kwargs):
 		if estimator_builder is unspecified_argument:
 			estimator_builder = A.pull('estimator-builder', None, ref=True)
-		super().__init__(A, encoder=encoder, estimator=estimator, estimator_builder=estimator_builder, **kwargs)
+		if estimator is unspecified_argument:
+			estimator = A.pull('estimator', None, ref=True)
+		if eval_mode is unspecified_argument:
+			eval_mode = A.pull('eval-mode', None)
+		super().__init__(A, estimator=estimator, estimator_builder=estimator_builder, eval_mode=eval_mode, **kwargs)
 
 
 

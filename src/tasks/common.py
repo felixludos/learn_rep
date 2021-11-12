@@ -340,6 +340,7 @@ class ExtractionTask(Task):
 			if 'features' not in info:
 				assert 'samples' in info
 				info.features = info.samples if self.extractor is None else self.extractor.encode(info.samples)
+				info.features = info.features.cpu() # a little hacky
 			info.stats = self._compute_stats(info)
 		assert 'stats' in info, 'no stats to compare to reference'
 		if 'reference' not in info:
@@ -358,22 +359,23 @@ class ExtractionTask(Task):
 
 class ExtractionTaskC(TaskC, ExtractionTask):
 	def __init__(self, A, criterion=unspecified_argument, extractor=unspecified_argument,
-	             aggregator=unspecified_argument,
+	             # aggregator=unspecified_argument,
 	             reference_props=None, compute_missing_reference=None, **kwargs):
 
 		if criterion is unspecified_argument:
 			criterion = A.pull('criterion', None, ref=True)
 		if extractor is unspecified_argument:
 			extractor = A.pull('extractor', None, ref=True)
-		if aggregator is unspecified_argument:
-			aggregator = A.pull('aggregator', None, ref=True)
+		# if aggregator is unspecified_argument:
+		# 	aggregator = A.pull('aggregator', None, ref=True)
 
 		if reference_props is None:
 			reference_props = A.pull('reference-props', {})
 		if compute_missing_reference is None:
 			compute_missing_reference = A.pull('compute_missing_reference', True)
 
-		super().__init__(A, criterion=criterion, extractor=extractor, aggregator=aggregator,
+		super().__init__(A, criterion=criterion, extractor=extractor,
+		                 # aggregator=aggregator,
 		                 compute_missing_reference=compute_missing_reference, reference_props=reference_props,
 		                 **kwargs)
 

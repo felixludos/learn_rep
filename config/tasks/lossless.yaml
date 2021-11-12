@@ -1,0 +1,8 @@
+
+
+dataset.as_bytes: yes
+
+tasks.lossless:
+  _type: task/lossless-compression
+  encoder: <>model
+  decoder: <>model

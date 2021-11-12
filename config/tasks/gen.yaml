@@ -2,15 +2,15 @@
 
 fid-dim: 2048
 
-gen-task:
+tasks.generation:
   _type: task/generation
+
+  generator: <>model
 
   extractor:
     _type: inception-fid
     dim: <>fid-dim
 
   criterion: frechet-distance
-
-
 
 

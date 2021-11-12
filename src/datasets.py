@@ -44,6 +44,8 @@ class Encoded(Batchable, Observation):
 		self._pbar = pbar
 		self._skip_encoder = False
 
+		self._available_data_keys = self._available_data_keys.copy()
+
 		if self.encoder is not None:
 			self.set_encoder(encoder)
 
@@ -89,10 +91,10 @@ class Encoded(Batchable, Observation):
 	# 	pass
 
 	# @DatasetWrapper.condition(Observation)
-	def get_observations(self, idx=None):
+	def get_observations(self, idx=None, **kwargs):
 		if self._observations_encoded:
 			return self.observations if idx is None else self.observations[idx]
-		obs = super().get_observations(idx=idx)
+		obs = super().get_observations(idx=idx, **kwargs)
 		if self._skip_encoder:
 			return obs
 		if self.encoder is not None:

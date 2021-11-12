@@ -1,6 +1,30 @@
 
 
-infer-task:
+num-train: 5000
+num-eval: 1000
+
+eval-mode: val # test
+
+use-mechanisms: True
+
+dataset:
+  mode-wrappers:
+    train:
+      - ident: subset
+        kwargs.num: <>num-train
+    val:
+      - ident: subset
+        kwargs.num: <>num-eval
+    test:
+      - ident: subset
+        kwargs.num: <>num-eval
+
+
+tasks.inference:
   _type: task/inference
 
+  encoder: <>model
+
+  estimator-builder._type: estimator-builder
+  estimator: None
 

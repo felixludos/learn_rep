@@ -8,8 +8,10 @@
 #_meta.script_name: test-estimator
 #_meta.script_name: test-compression
 
+cat: sim
+
 _meta.script_name: eval-tasks
-parents: [hybrid, m/ae, a/conv, d/3ds]
+parents: [tasks/inference, hybrid, m/ae, a/conv, d/3ds]
 load: 3ds_vae1_d-conv_s3_210626-030352
 
 
@@ -17,29 +19,46 @@ load: 3ds_vae1_d-conv_s3_210626-030352
 #din: [3,64,64]
 #dout: [3,64,64]
 
-#bin: True
 
-n_samples: 20
-batch_size: 5
-
-dataset.as_bytes: yes
-
-#compressor._type: lzma-compression
-#use-distribution: True
+#n_samples: 5
+#batch_size: 5
 
 #autosample: best
 
-tasks.lossless:
-  _type: task/lossless-compression
-  encoder: <>model
-  decoder: <>model
+
+#num-train: 500
+#num-eval: 500
+#
+#dataset:
+#  mode-wrappers:
+#    train:
+#      - ident: subset
+#        kwargs.num: <>num-train
+#    val:
+#      - ident: subset
+#        kwargs.num: <>num-eval
+#
+#  use-mechanisms: True
+#
+#
+#
+#tasks.inference:
+#  _type: task/inference
+#
+#  encoder: <>model
+#
+#  eval-mode: val
+#
+#  estimator-builder._type: estimator-builder
+#  estimator: None
+
 
 #  use-distribution: False
 
 
 
 
-#estimator._type: estimator-builder
+#
 
 #cat: real
 #
