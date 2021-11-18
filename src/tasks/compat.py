@@ -283,3 +283,73 @@ class BitsBackCompressor:
 		return self.partial_decompress(state)[-1]
 
 
+
+
+class GroundTruthData(object):
+	"""Abstract class for data sets that are two-step generative models."""
+
+	@property
+	def num_factors(self):
+		raise NotImplementedError()
+
+	@property
+	def factors_num_values(self):
+		raise NotImplementedError()
+
+	@property
+	def observation_shape(self):
+		raise NotImplementedError()
+
+
+
+class DisentanglementDatasetCompat(GroundTruthData):
+	def __init__(self, dataset):
+		self.base = dataset
+
+	@property
+	def num_factors(self):
+		return len(self.base.get_target_space())
+
+	@property
+	def factors_num_values(self):
+		return [len(dim) for dim in self.base.get_target_space()]
+
+	@property
+	def observation_shape(self):
+		return self.base.din
+
+
+	def sample_factors(self, num, random_state, to_numpy=True):
+		"""Sample a batch of factors Y."""
+		factors = self.base._generate_labels(num, seed=int.from_bytes(random_state.bytes(4),
+		                                                           byteorder='big', signed=True))
+		if to_numpy:
+			factors = factors.numpy()
+		return factors
+
+
+	def sample_observations_from_factors(self, factors, random_state, to_numpy=True):
+		"""Sample a batch of observations X given a batch of factors Y."""
+		obs = self.base.true_generative_process(factors, seed=int.from_bytes(random_state.bytes(4),
+		                                                           byteorder='big', signed=True))
+		if to_numpy:
+			obs = obs.numpy()
+		return obs
+
+
+
+	def sample(self, num, random_state, to_numpy=True):
+		"""Sample a batch of factors Y and observations X."""
+		factors = self.sample_factors(num, random_state, to_numpy=False)
+		obs = self.sample_observations_from_factors(factors, random_state, to_numpy=False)
+		if to_numpy:
+			factors = factors.numpy()
+			obs = obs.numpy()
+		return factors, obs
+
+
+	def sample_observations(self, num, random_state, to_numpy=True):
+		"""Sample a batch of observations X."""
+		return self.sample(num, random_state, to_numpy=to_numpy)[1]
+
+

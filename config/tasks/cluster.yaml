@@ -1,0 +1,20 @@
+
+parents: [tasks/downstream]
+
+true-label-index: 0
+
+dataset:
+  wrappers:
+    - ident: single-label
+      kwargs.idx: <>true-label-index
+
+
+tasks.cluster:
+  _type: task/cluster
+
+
+  score-key: ami
+
+  estimator-builder._type: cluster-builder
+  estimator: None
+

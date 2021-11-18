@@ -85,7 +85,8 @@ class ReconstructionTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, Reconstruc
 
 
 class MetricTask(ObservationPairTask, EncodedObservationTask):
-	def __init__(self, metric='l2', criterion='cosine-similarity', sample_format={'observations', 'labels'}, **kwargs):
+	def __init__(self, metric='l2', criterion='cosine-similarity',
+	             sample_format={'observations', 'labels'}, **kwargs):
 		super().__init__(sample_format=sample_format, **kwargs)
 		self.metric = get_loss_type(metric)
 		self.criterion = get_loss_type(criterion)
@@ -102,25 +103,26 @@ class MetricTask(ObservationPairTask, EncodedObservationTask):
 	def _prep(self, info):
 		info.distances = []
 		info.trues = []
+		return super()._prep(info)
 
 
 	def _split_batch(self, info):
 		info = super()._split_batch(info)
-		info.a_labels, info.b_labels = info.labels.split(2)
+		info.a_labels, info.b_labels = info.labels.chunk(2)
 		return info
 
 
 	def _process_batch(self, info):
-		info.distances.append(self.metric.distance(info.a, info.b).squeeze())
-		info.trues.append(self.dataset.distance(info.a_labels, info.b_labels).squeeze())
+		info.distances.append(self.metric.distance(info.a, info.b).squeeze().cpu())
+		info.trues.append(self.dataset.distance(info.a_labels.cpu(), info.b_labels.cpu()).squeeze())
 		return super()._process_batch(info)
 
 
 	def _aggregate_results(self, info):
-		info.distances = torch.cat(info.distances, 0).unsqueeze(0)
-		info.trues = torch.cat(info.trues, 0).unsqueeze(0)
+		info.distances = torch.cat(info.distances, 0)
+		info.trues = torch.cat(info.trues, 0)
 
-		info.score = self.criterion(info.distances, info.trues)
+		info.score = self.criterion(info.distances.unsqueeze(0), info.trues.unsqueeze(0)).item()
 		if self._slim:
 			del info.distances, info.trues
 		return info
@@ -128,7 +130,7 @@ class MetricTask(ObservationPairTask, EncodedObservationTask):
 
 
 @fig.Component('task/metric')
-class MetricTaskC(IterativeTaskC, MetricTask):
+class MetricTaskC(IterativeTaskC, EncoderTaskC, MetricTask):
 	def __init__(self, A, metric=unspecified_argument, criterion=unspecified_argument, **kwargs):
 
 		if metric is unspecified_argument:
@@ -146,7 +148,7 @@ class InterpolationTask(ObservationPairTask, EncodedObservationTask, DecoderTask
 		super().__init__(batch_size=batch_size, **kwargs)
 		self.interpolator = interpolator
 
-		self._num_steps = num_steps
+		self._num_steps = num_steps+2
 
 
 	def _prep(self, info):
@@ -170,8 +172,8 @@ class InterpolationTask(ObservationPairTask, EncodedObservationTask, DecoderTask
 		else:
 			info.steps = self.interpolator(a, b, self._num_steps)
 
-		info.steps = util.combine_dims(info.steps, 0, 1)
-		info.samples = info.steps if self.decoder is None else self.decoder(info.steps)
+		info.steps = util.combine_dims(info.steps, 0, 2)
+		info.samples = info.steps if self.decoder is None else self.decoder.decode(info.steps)
 
 		if 'stats' in info:
 			del info.stats

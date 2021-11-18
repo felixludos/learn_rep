@@ -3,12 +3,15 @@
 #n_samples: 15120
 #batch_size: 60
 
+#num_steps: 5
+
 fid-dim: 2048
 
-tasks.generation:
-  _type: task/generation
+tasks.interpolation:
+  _type: task/interpolation
 
-  generator: <>model
+  encoder: <>model
+  decoder: <>model
 
   extractor:
     _type: inception-fid

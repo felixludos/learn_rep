@@ -11,8 +11,26 @@
 cat: sim
 
 _meta.script_name: eval-tasks
-parents: [tasks/inference, hybrid, m/ae, a/conv, d/3ds]
+parents: [tasks/interpolation, hybrid, m/ae, a/conv, d/3ds]
 load: 3ds_vae1_d-conv_s3_210626-030352
+
+#dataset.mode: full
+#
+
+#num-train: 500
+#num-eval: 100
+
+#import matplotlib.pyplot as plt; from torch.nn.functional import normalize; plt.plot(normalize(results['distances'],2,0)); plt.plot(normalize(results['trues'],2,0));plt.show()
+
+
+#true-label-index: 4
+#
+#auto-anomaly-class: 0
+
+n_samples: 128
+batch_size: 64
+
+num_steps: 5
 
 
 #model._load-ckpt: 3ds_vae1_d-conv_s3_210626-030352
@@ -24,33 +42,6 @@ load: 3ds_vae1_d-conv_s3_210626-030352
 #batch_size: 5
 
 #autosample: best
-
-
-#num-train: 500
-#num-eval: 500
-#
-#dataset:
-#  mode-wrappers:
-#    train:
-#      - ident: subset
-#        kwargs.num: <>num-train
-#    val:
-#      - ident: subset
-#        kwargs.num: <>num-eval
-#
-#  use-mechanisms: True
-#
-#
-#
-#tasks.inference:
-#  _type: task/inference
-#
-#  encoder: <>model
-#
-#  eval-mode: val
-#
-#  estimator-builder._type: estimator-builder
-#  estimator: None
 
 
 #  use-distribution: False

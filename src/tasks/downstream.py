@@ -9,14 +9,15 @@ from omnilearn import util
 from omnilearn.data import DataLike
 from omnilearn.op import get_save_dir, framework as fm
 
-from .common import EncoderTask, EncoderTaskC
+from .common import EncoderTask, EncoderTaskC, DownstreamTask
 
 
-@fig.Component('estimator-builder')
-class EstimatorBuilder(util.Builder):
-	def __init__(self, A, use_mechanisms=None, **kwargs):
-		A.push('default-regressor', 'gbt-regressor', overwrite=False)
-		A.push('default-classifier', 'gbt-classifier', overwrite=False)
+@fig.Component('inference-builder')
+class InferenceBuilder(util.Builder):
+	def __init__(self, A, default_regressor='gbt-regressor', default_classifier='gbt-classifier',
+	             use_mechanisms=None, **kwargs):
+		A.push('default-regressor', default_regressor, overwrite=False)
+		A.push('default-classifier', default_classifier, overwrite=False)
 		super().__init__(A, **kwargs)
 		self._use_mechanisms = use_mechanisms
 
@@ -52,21 +53,39 @@ class EstimatorBuilder(util.Builder):
 
 
 
-class DownstreamTask(EncoderTask):
-	def __init__(self, auto_wrap=True, **kwargs):
-		super().__init__(**kwargs)
-		self._auto_wrap = auto_wrap
+@fig.Component('cluster-builder')
+class ClusterBuilder(util.Builder):
+	def __init__(self, A, default_cluster='kmeans', **kwargs):
+		A.push('default-cluster', default_cluster, overwrite=False)
+		super().__init__(A, **kwargs)
 
 
-	def _run(self, out=None):
-		out = super()._run(out=out)
-		if self._auto_wrap and self.encoder is not None:
-			self.dataset.register_wrapper('encoded', encoder=self.encoder)
-		return out
+	def _build(self, config, dataset, n_clusters=None):
+		if n_clusters is None:
+			try:
+				space = dataset.get_target_space()
+			except AttributeError:
+				n_clusters = dataset.dout
+			else:
+				assert isinstance(space, util.CategoricalDim)
+				n_clusters = space.n
+
+		config.push('n-clusters', n_clusters)
+		config.push('clustering._type', '<>default-cluster', overwrite=False, silent=True)
+		return config.pull('clustering')
 
 
 
-class InferenceTask(DownstreamTask):
+@fig.Component('outlier-builder')
+class OutlierBuilder(ClusterBuilder):
+	def __init__(self, A, default_cluster=None, **kwargs):
+		if default_cluster is None:
+			default_cluster = 'isolation-forest'
+		super().__init__(A, default_cluster=default_cluster, **kwargs)
+
+
+
+class EstimatorTask(DownstreamTask):
 	def __init__(self, estimator=None, estimator_builder=None, eval_mode=None, **kwargs):
 		if estimator is not None:
 			estimator_builder = None
@@ -78,13 +97,17 @@ class InferenceTask(DownstreamTask):
 
 
 	def get_scores(self):
+		scores = super().get_scores()
 		if self.estimator is not None:
-			return self.estimator.get_scores()
+			scores.extend(self.estimator.get_scores())
+		return scores
 
 
 	def get_results(self):
+		results = super().get_results()
 		if self.estimator is not None:
-			return self.estimator.get_results()
+			results.extend(self.estimator.get_results())
+		return results
 
 
 	def _compute(self, estimator=unspecified_argument, **kwargs):
@@ -100,15 +123,29 @@ class InferenceTask(DownstreamTask):
 			self.dataset.switch_to(self._eval_mode)
 		if self.estimator is None:
 			self.estimator = self.estimator_builder.build(self.dataset)
-		est_out = self.estimator.compute(dataset=self.dataset, filter_outputs=False)
-		return est_out
+		scores, results = self.estimator.compute(dataset=self.dataset, filter_outputs=False)
+		return {**scores, **results}
 		# out.update(est_out)
 		# return out
 
 
 
-@fig.Component('task/inference')
-class InferenceTaskC(EncoderTaskC, InferenceTask):
+class InferenceTask(EstimatorTask):
+	pass
+
+
+
+class ClusterTask(EstimatorTask):
+	pass
+
+
+
+class AnomalyDetectionTask(EstimatorTask):
+	pass
+
+
+
+class EstimatorTaskC(EncoderTaskC, EstimatorTask):
 	def __init__(self, A, estimator=unspecified_argument, estimator_builder=unspecified_argument,
 	             eval_mode=unspecified_argument, **kwargs):
 		if estimator_builder is unspecified_argument:
@@ -119,6 +156,23 @@ class InferenceTaskC(EncoderTaskC, InferenceTask):
 			eval_mode = A.pull('eval-mode', None)
 		super().__init__(A, estimator=estimator, estimator_builder=estimator_builder, eval_mode=eval_mode, **kwargs)
 
+
+
+@fig.Component('task/inference')
+class InferenceTaskC(EstimatorTaskC, InferenceTask):
+	pass
+
+
+
+@fig.Component('task/cluster')
+class ClusterTaskC(EstimatorTaskC, ClusterTask):
+	pass
+
+
+
+@fig.Component('task/anomaly')
+class AnomalyDetectionTaskC(EstimatorTaskC, AnomalyDetectionTask):
+	pass
 
 
 

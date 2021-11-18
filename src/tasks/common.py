@@ -52,8 +52,8 @@ def run_tasks(config, run=None, tasks=None, overwrite=None, use_dataset=None):
 			kwargs = {}
 			if use_dataset:
 				kwargs['dataset'] = run.get_dataset()
-			results = task.compute(**kwargs)
-			run.update_datafile(f'tasks/{name}', results)
+			scores, results = task.compute(**kwargs)
+			run.update_datafile(f'tasks/{name}', {'scores':scores, 'results':results})
 			score = f' (score: {results.score:.3g})' if 'score' in results else ''
 			print(f'{name} complete{score}')
 
@@ -187,20 +187,28 @@ class Tasked(Run):
 
 
 class Task(fm.Computable): # TODO: specify random seed for reproducibility
-	def __init__(self, dataset, slim=False, **kwargs):
+	def __init__(self, dataset, slim=False, score_key=None, **kwargs):
 		super().__init__(**kwargs)
 		self.dataset = dataset
 		self._slim = slim
+		self._score_key = score_key
 
 
 	def required_modules(self):
 		return []
 
 
+	def get_scores(self):
+		return ['score', *super().get_scores()]
+
+
 	def _compute(self, dataset=unspecified_argument, **kwargs):
 		if dataset is not unspecified_argument:
 			self.dataset = dataset
-		return self._run(**kwargs)
+		out = self._run(**kwargs)
+		if 'score' not in out and self._score_key is not None:
+			out['score'] = out[self._score_key]
+		return out
 
 
 	def _run(self, out=None):
@@ -211,12 +219,14 @@ class Task(fm.Computable): # TODO: specify random seed for reproducibility
 
 
 class TaskC(fig.Configurable, Task):
-	def __init__(self, A, dataset=unspecified_argument, slim=None, **kwargs):
+	def __init__(self, A, dataset=unspecified_argument, slim=None, score_key=unspecified_argument, **kwargs):
 		if dataset is unspecified_argument:
 			dataset = A.pull('dataset', None, ref=True)
 		if slim is None:
 			slim = A.pull('slim', False)
-		super().__init__(A, dataset=dataset, slim=slim, **kwargs)
+		if score_key is unspecified_argument:
+			score_key = A.pull('score-key', None)
+		super().__init__(A, dataset=dataset, slim=slim, score_key=score_key, **kwargs)
 
 
 
@@ -245,6 +255,20 @@ class EncoderTaskC(TaskC, EncoderTask):
 		if use_distribution is None:
 			use_distribution = A.pull('use-distribution', False)
 		super().__init__(A, encoder=encoder, use_distribution=use_distribution, **kwargs)
+
+
+
+class DownstreamTask(EncoderTask):
+	def __init__(self, auto_wrap=True, **kwargs):
+		super().__init__(**kwargs)
+		self._auto_wrap = auto_wrap
+
+
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		if self._auto_wrap and self.encoder is not None:
+			self.dataset.register_wrapper('encoded', encoder=self.encoder)
+		return out
 
 
 
@@ -544,7 +568,7 @@ class EncodedObservationTask(ObservationTask, EncoderTask):
 
 class ObservationPairTask(ObservationTask):
 	def _split_batch(self, info):
-		info.a, info.b = info.observations.split(2)
+		info.a, info.b = info.observations.chunk(2)
 		return info
 
 

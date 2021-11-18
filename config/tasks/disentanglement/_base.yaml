@@ -1,0 +1,6 @@
+
+encoder: <>model
+
+num-train: 10000
+num-eval: 5000
+

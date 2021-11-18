@@ -1,0 +1,24 @@
+
+parents: [tasks/downstream]
+
+true-label-index: 0
+
+dataset:
+  wrappers:
+    - ident: single-label
+      kwargs.idx: <>true-label-index
+
+
+#auto-anomaly-class: 0
+
+#auto-remove-training: yes
+
+
+tasks.anomaly:
+  _type: task/anomaly
+
+  score-key: auroc
+
+  estimator-builder._type: outlier-builder
+  estimator: None
+

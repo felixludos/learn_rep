@@ -1,0 +1,26 @@
+
+
+
+#n_samples: 15120
+#batch_size: 60
+
+standardize-scale: True
+
+
+tasks.metric-learning:
+  _type: task/metric
+
+  encoder: <>model
+
+  metric:
+    _type: criterion
+    ident: l2
+    kwargs:
+      reduction: sample-sum
+      dim: 1
+
+#  criterion: cosine-similarity
+
+
+
+

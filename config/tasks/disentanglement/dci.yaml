@@ -1,0 +1,10 @@
+
+parents: [tasks/disentanglement/_base]
+
+
+tasks.dci:
+  _type: task/disentanglement/dci
+
+  score-key: disentanglement
+
+  num_train: <>num-train

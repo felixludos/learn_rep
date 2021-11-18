@@ -15,13 +15,14 @@ from .disentanglement_metrics import metric_beta_vae, metric_factor_vae, mig, dc
 	unsupervised_metrics, modularity_explicitness, irs, fairness
 
 from .common import EncoderTask, EncoderTaskC, ObservationTask, IterativeTaskC, DecoderTask, DecoderTaskC
+from .compat import DisentanglementDatasetCompat
 
 
-
-class DisentanglementTask(EncoderTask):
+class DisentanglementTask(EncoderTask): # from disentanglement lib
 	def __init__(self, batch_size=64, **kwargs):
 		super().__init__(**kwargs)
 		self.batch_size = batch_size
+		self._compat_dataset = None
 
 
 	def get_name(self):
@@ -30,10 +31,22 @@ class DisentanglementTask(EncoderTask):
 
 	def _representation_function(self, images):
 		with torch.no_grad():
-			output = self.model.encode(images.to(self.get_device()))
+			output = self.encoder.encode(torch.from_numpy(images).to(self.encoder.get_device()))
 		if isinstance(output, distrib.Distribution):
-			output = output.loc
+			output = output.bsample()
+			# output = output.loc
 		return output.detach().cpu().numpy()
+
+
+	def _make_compat_dataset(self, dataset):
+		return DisentanglementDatasetCompat(dataset)
+
+
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		if self._compat_dataset is None:
+			self._compat_dataset = self._make_compat_dataset(self.dataset)
+		return out
 
 
 
@@ -51,18 +64,18 @@ class UnsupervisedMetrics(DisentanglementTask):
 		self.num_train = num_train
 
 
-	def _compute(self, **kwargs):
-		return unsupervised_metrics.unsupervised_metrics(self.dataset, self._representation_function,
+	def _run(self, **kwargs):
+		return unsupervised_metrics.unsupervised_metrics(self._compat_dataset, self._representation_function,
 		                                                 np.random, self.num_train, self.batch_size)
 
 
 	def get_scores(self):
 		return ['gaussian_total_correlation', 'gaussian_wasserstein_correlation',
-		        'gaussian_wasserstein_correlation_norm']
+		        'gaussian_wasserstein_correlation_norm', *super().get_scores()]
 
 
 	def get_results(self):
-		return ['covariance_matrix']
+		return ['covariance_matrix', *super().get_results()]
 
 
 
@@ -82,14 +95,15 @@ class ModularityExplicitness(DisentanglementTask):
 		self.num_test = num_test
 
 
-	def _compute(self, **kwargs):
-		return modularity_explicitness.compute_modularity_explicitness(self.dataset, self._representation_function,
+	def _run(self, **kwargs):
+		return modularity_explicitness.compute_modularity_explicitness(self._compat_dataset,
+		                                                               self._representation_function,
 		                                                               np.random, self.num_train, self.num_test,
 		                                                               self.batch_size)
 
 
 	def get_scores(self):
-		return ['modularity_score', 'explicitness_score_train', 'explicitness_score_test']
+		return ['modularity_score', 'explicitness_score_train', 'explicitness_score_test', *super().get_scores()]
 
 
 
@@ -113,17 +127,18 @@ class SAP(DisentanglementTask):
 		self.continuous_factors = continuous_factors
 
 
-	def _compute(self, info=None):
-		return sap.compute_sap(self.dataset, self._representation_function, np.random,
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		return sap.compute_sap(self._compat_dataset, self._representation_function, np.random,
 		                       self.num_train, self.num_test, self.continuous_factors, self.batch_size)
 
 
 	def get_scores(self):
-		return ['SAP_score']
+		return ['SAP_score', *super().get_scores()]
 
 
 	def get_results(self):
-		return ['SAP_matrix']
+		return ['SAP_matrix', *super().get_results()]
 
 
 
@@ -147,17 +162,18 @@ class IRS(DisentanglementTask):
 		self.diff_quantile = diff_quantile
 
 
-	def _compute(self, **kwargs):
-		return irs.compute_irs(self.dataset, self._representation_function, np.random,
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		return irs.compute_irs(self._compat_dataset, self._representation_function, np.random,
 		                       self.num_train, self.batch_size, self.diff_quantile)
 
 
 	def get_scores(self):
-		return ['avg_score', 'num_active_dims', ]
+		return ['avg_score', 'num_active_dims', *super().get_scores()]
 
 
 	def get_results(self):
-		return ['IRS_matrix', 'disentanglement_scores', 'parents', 'max_deviations']
+		return ['IRS_matrix', 'disentanglement_scores', 'parents', 'max_deviations', *super().get_results()]
 
 
 
@@ -179,17 +195,19 @@ class DCI(DisentanglementTask):
 		self.num_test = num_test
 
 
-	def _compute(self, **kwargs):
-		return dci.compute_dci(self.dataset, self._representation_function, np.random,
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		return dci.compute_dci(self._compat_dataset, self._representation_function, np.random,
 		                       self.num_train, self.num_test, self.batch_size)
 
 
 	def get_scores(self):
-		return ['informativeness_train', 'informativeness_test', 'disentanglement', 'completeness']
+		return ['informativeness_train', 'informativeness_test', 'disentanglement', 'completeness',
+		        *super().get_scores()]
 
 
 	def get_results(self):
-		return ['importance_matrix']
+		return ['importance_matrix', *super().get_results()]
 
 
 
@@ -210,17 +228,19 @@ class MIG(DisentanglementTask):
 		self.num_train = num_train
 
 
-	def _compute(self, **kwargs):
-		return mig.compute_mig(self.dataset, self._representation_function, np.random,
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		return mig.compute_mig(self._compat_dataset, self._representation_function, np.random,
 		                       self.num_train, self.batch_size)
 
 
 	def get_scores(self):
-		return ['discrete_mig']
+		return ['discrete_mig',
+		        *super().get_scores()]
 
 
 	def get_results(self):
-		return ['entropy']
+		return ['entropy', *super().get_results()]
 
 
 
@@ -242,14 +262,16 @@ class FactorVAE(DisentanglementTask):
 		self.num_variance_estimate = num_variance_estimate
 
 
-	def _compute(self, **kwargs):
-		return metric_factor_vae.compute_factor_vae(self.dataset, self._representation_function, np.random,
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		return metric_factor_vae.compute_factor_vae(self._compat_dataset, self._representation_function, np.random,
 		                                            self.batch_size, self.num_train, self.num_test,
 		                                            self.num_variance_estimate)
 
 
 	def get_scores(self):
-		return ['train_accuracy', 'eval_accuracy', 'num_active_dims']
+		return ['train_accuracy', 'eval_accuracy', 'num_active_dims',
+		        *super().get_scores()]
 
 
 
@@ -275,13 +297,15 @@ class BetaVAE(DisentanglementTask):
 		self.num_test = num_test
 
 
-	def _compute(self, **kwargs):
-		return metric_beta_vae.compute_beta_vae_sklearn(self.dataset, self._representation_function, np.random,
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		return metric_beta_vae.compute_beta_vae_sklearn(self._compat_dataset, self._representation_function, np.random,
 		                                                self.num_train, self.num_test, self.batch_size)
 
 
 	def get_scores(self):
-		return ['train_accuracy', 'eval_accuracy']
+		return ['train_accuracy', 'eval_accuracy',
+		        *super().get_scores()]
 
 
 
@@ -304,17 +328,19 @@ class Fairness(DisentanglementTask):
 		self.num_test_points_per_class = num_test_points_per_class
 
 
-	def _compute(self, **kwargs):
-		return fairness.compute_fairness(self.dataset, self._representation_function, np.random,
+	def _run(self, out=None):
+		out = super()._run(out=out)
+		return fairness.compute_fairness(self._compat_dataset, self._representation_function, np.random,
 		                                 self.num_train, self.num_test_points_per_class, self.batch_size)
 
 
 	def get_scores(self):
-		return ['informativeness_train', 'informativeness_test', 'disentanglement', 'completeness']
+		return ['informativeness_train', 'informativeness_test', 'disentanglement', 'completeness',
+		        *super().get_scores()]
 
 
 	def get_results(self):
-		return ['importance_matrix']
+		return ['importance_matrix', *super().get_results()]
 
 
 
