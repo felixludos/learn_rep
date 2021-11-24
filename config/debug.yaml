@@ -12,7 +12,10 @@ cat: sim
 
 _meta.script_name: eval-tasks
 parents: [tasks/interpolation, hybrid, m/ae, a/conv, d/3ds]
-load: 3ds_vae1_d-conv_s3_210626-030352
+#load: 3ds_vae1_d-conv_s3_210626-030352
+
+#din: [3,64,64]
+#dout: [3,64,64]
 
 #dataset.mode: full
 #
@@ -28,14 +31,17 @@ load: 3ds_vae1_d-conv_s3_210626-030352
 #auto-anomaly-class: 0
 
 n_samples: 128
-batch_size: 64
+batch_size: 16
 
 num_steps: 5
 
+#tasks.interpolation:
+#  encoder: None
+#  decoder: None
+
 
 #model._load-ckpt: 3ds_vae1_d-conv_s3_210626-030352
-#din: [3,64,64]
-#dout: [3,64,64]
+
 
 
 #n_samples: 5

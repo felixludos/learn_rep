@@ -110,6 +110,16 @@ class GenerationTask(GeneratorTask, ExtractionTask, IterativeTask):
 
 
 
+class DiscriminatorGenerationTask(GenerationTask):
+	pass
+
+
+
+class AggregateGenerationTask(GenerationTask):
+	pass
+
+
+
 @fig.Component('task/generation')
 class GenerationTaskC(GeneratorTaskC, ExtractionTaskC, IterativeTaskC, GenerationTask):
 	pass

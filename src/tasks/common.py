@@ -567,14 +567,19 @@ class EncodedObservationTask(ObservationTask, EncoderTask):
 
 
 class ObservationPairTask(ObservationTask):
+
+
+	def _generate_batch(self, info):
+		info.num *= 2
+		info = super()._generate_batch(info)
+		info.num //= 2
+		self._split_batch(info)
+		return info
+
+
 	def _split_batch(self, info):
 		info.a, info.b = info.observations.chunk(2)
 		return info
 
-
-	def _generate_batch(self, info):
-		info = super()._generate_batch(info)
-		self._split_batch(info)
-		return info
 
 

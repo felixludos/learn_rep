@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import torch
+from torch import nn
 
 from omnibelt import unspecified_argument, get_printer
 import omnifig as fig
@@ -93,11 +94,11 @@ class MetricTask(ObservationPairTask, EncodedObservationTask):
 
 
 	def get_scores(self):
-		return ['score']
+		return ['score', *super().get_scores()]
 
 
 	def get_results(self):
-		return ['distances', 'trues']
+		return ['distances', 'trues', *super().get_results()]
 
 
 	def _prep(self, info):
@@ -143,7 +144,42 @@ class MetricTaskC(IterativeTaskC, EncoderTaskC, MetricTask):
 
 
 
-class InterpolationTask(ObservationPairTask, EncodedObservationTask, DecoderTask, ExtractionTask):
+# class PerceptualSmoothness(nn.Module):
+# 	def __init__(self, criterion='rmse'):
+# 		super().__init__()
+# 		self.criterion = get_loss_type(criterion, reduction='sample-mean')
+#
+#
+# 	def forward(self, paths): # steps x batch x [vec...]
+# 		# paths = util.swap_dim(paths)
+# 		N, B, *other = paths.shape
+#
+# 		# full = util.pairwise(self.criterion, paths, dim=1) # batch x steps x steps x score
+#
+# 		full = self.criterion(paths[-1], paths[0])
+# 		steps = torch.stack([self.criterion(paths[i], paths[i-1]) for i in range(1,N)])
+#
+# 		alignment = full / steps.sum(0)
+#
+# 		diffs = util.pairwise(lambda a,b: a.sub(b).abs(), steps, as_mat=False)
+#
+# 		gini = diffs.sum(0) / steps.mean(0) / N**2
+# 		uniformity = 1 - gini
+#
+# 		smoothness = 2 * (alignment * uniformity) / (alignment + uniformity)
+#
+# 		return smoothness
+#
+# 		pass
+
+
+# class PerceptualSmoothness(Loss):
+# 	# from https://arxiv.org/pdf/2106.09016.pdf
+#
+# 	def for
+
+
+class InterpolationTask(ObservationPairTask, EncodedObservationTask, DecoderTask):
 	def __init__(self, interpolator=None, num_steps=12, batch_size=12, **kwargs):
 		super().__init__(batch_size=batch_size, **kwargs)
 		self.interpolator = interpolator
@@ -151,15 +187,17 @@ class InterpolationTask(ObservationPairTask, EncodedObservationTask, DecoderTask
 		self._num_steps = num_steps+2
 
 
-	def _prep(self, info):
+	# def _prep(self, info):
+	#
+	# 	info.interps = []
+	# 	info.ends = []
+	#
+	# 	return super()._prep(info)
 
-		info.interps = []
-		info.ends = []
 
-		return super()._prep(info)
+	def _generate_batch(self, info):
 
-
-	def _process_batch(self, info):
+		info = super()._generate_batch(info)
 
 		a, b = info.a, info.b
 
@@ -173,52 +211,125 @@ class InterpolationTask(ObservationPairTask, EncodedObservationTask, DecoderTask
 			info.steps = self.interpolator(a, b, self._num_steps)
 
 		info.steps = util.combine_dims(info.steps, 0, 2)
-		info.samples = info.steps if self.decoder is None else self.decoder.decode(info.steps)
+		info.paths = info.steps if self.decoder is None else self.decoder.decode(info.steps)
+		info.paths = util.split_dim(info.paths, -1, self._num_steps)
+		info.steps = util.split_dim(info.steps, -1, self._num_steps)
 
-		if 'stats' in info:
-			del info.stats
-		if 'features' in info:
-			del info.features
-		info = self._compare_to_reference(info)
-		scores = info.score
-		del info.score
+		# info = self._evaluate_paths(info)
 
-		interp = scores[:,1:-1]
-		ends = scores[:, [0,-1]]
-
-		info.interps.append(interp)
-		info.ends.append(ends)
+		# if 'stats' in info:
+		# 	del info.stats
+		# if 'features' in info:
+		# 	del info.features
+		# info = self._compare_to_reference(info)
+		# scores = info.score
+		# del info.score
+		#
+		# interp = scores[:,1:-1]
+		# ends = scores[:, [0,-1]]
+		#
+		# info.interps.append(interp)
+		# info.ends.append(ends)
 
 		return info
 
 
-	def _compute_reference(self, props):
-		raise NotImplementedError # TODO: handle this for encoded datasets
-		return GenerationTask(dataset=self.dataset, extractor=self.extractor, n_samples=self.n_samples,
-		                      batch_size=self._num_steps*self.batch_size).compute().stats
+	# def _evaluate_paths(self, info):
+	# 	return info
+
+
+	# def _compute_reference(self, props):
+	# 	raise NotImplementedError # TODO: handle this for encoded datasets
+	# 	return GenerationTask(dataset=self.dataset, extractor=self.extractor, n_samples=self.n_samples,
+	# 	                      batch_size=self._num_steps*self.batch_size).compute().stats
+
+
+	# def _aggregate_results(self, info):
+	#
+	# 	info.interps = torch.cat(info.interps)
+	# 	info.ends = torch.cat(info.ends)
+	#
+	# 	info.score = info.ends.mean() / info.interps.mean()
+	#
+	# 	if self._slim:
+	# 		del info.interps, info.ends
+	# 	else:
+	# 		info.steps = util.split_dim(info.steps, -1, self._num_steps)
+	# 		info.paths = util.split_dim(info.samples, -1, self._num_steps)
+	# 		del info.samples
+	# 		info.features = util.split_dim(info.features, -1, self._num_steps)
+	#
+	# 	return super()._aggregate_results(info)
+
+
+class PSInterpolationTask(InterpolationTask):
+	def __init__(self, criterion='rmse', score_key=None, **kwargs):
+		if score_key is None:
+			score_key = 'smoothness'
+		super().__init__(score_key=score_key, **kwargs)
+		self.criterion = get_loss_type(criterion, reduction='sample-mean')
+
+
+	def get_scores(self):
+		return ['smoothness', 'uniformity', 'alignment', *super().get_scores()]
+
+
+	def get_results(self):
+		return ['paths', 'steps', *super().get_results()]
+
+
+	def _prep(self, info):
+
+		info.als = []
+		info.unis = []
+		info.sms = []
+
+		return super()._prep(info)
+
+
+	def _process_batch(self, info):
+		info = super()._process_batch(info)
+		paths = info.paths
+		paths = util.swap_dim(paths)
+		N, B, *other = paths.shape
+
+		full = self.criterion(paths[-1], paths[0])
+		steps = torch.stack([self.criterion(paths[i], paths[i - 1]) for i in range(1, N)])
+
+		alignment = full / steps.sum(0)
+
+		diffs = util.pairwise(lambda a, b: a.sub(b).abs(), steps, as_mat=False)
+
+		gini = diffs.sum(0) / steps.mean(0) / N ** 2
+		uniformity = 1 - gini
+
+		smoothness = 2 * (alignment * uniformity) / (alignment + uniformity)
+
+		info.diffs = util.swap_dim(steps)
+		info.als.append(alignment)
+		info.unis.append(uniformity)
+		info.sms.append(smoothness)
+
+		return info
 
 
 	def _aggregate_results(self, info):
+		info.als = torch.cat(info.als)
+		info.unis = torch.cat(info.unis)
+		info.sms = torch.cat(info.sms)
 
-		info.interps = torch.cat(info.interps)
-		info.ends = torch.cat(info.ends)
-
-		info.score = info.ends.mean() / info.interps.mean()
+		info.alignment = info.als.mean().item()
+		info.uniformity = info.unis.mean().item()
+		info.smoothness = info.sms.mean().item()
 
 		if self._slim:
-			del info.interps, info.ends
-		else:
-			info.steps = util.split_dim(info.steps, -1, self._num_steps)
-			info.paths = util.split_dim(info.samples, -1, self._num_steps)
-			del info.samples
-			info.features = util.split_dim(info.features, -1, self._num_steps)
+			del info.als, info.unis, info.sms
 
 		return super()._aggregate_results(info)
 
 
-
-@fig.Component('task/interpolation')
-class InterpolationTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, ExtractionTaskC, InterpolationTask):
+# @fig.Component('task/interpolation')
+class InterpolationTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, InterpolationTask):
 	def __init__(self, A, interpolator=None, num_steps=None, **kwargs):
 
 		if interpolator is unspecified_argument:
@@ -228,6 +339,16 @@ class InterpolationTaskC(IterativeTaskC, EncoderTaskC, DecoderTaskC, ExtractionT
 			num_steps = A.pull('num_steps', 12)
 
 		super().__init__(A, interpolator=interpolator, num_steps=num_steps, **kwargs)
+
+
+@fig.Component('task/interpolation/ps')
+class PSInterpolationTaskC(InterpolationTaskC, PSInterpolationTask):
+	def __init__(self, A, criterion=unspecified_argument, **kwargs):
+
+		if criterion is unspecified_argument:
+			criterion = A.pull('criterion', 'rmse', ref=True)
+
+		super().__init__(A, criterion=criterion, **kwargs)
 
 
 
