@@ -8,15 +8,13 @@
 fid-dim: 2048
 
 tasks.interpolation:
-  _type: task/interpolation
+  _type: task/interpolation/ps
+
+#  interpolator: None
 
   encoder: <>model
   decoder: <>model
 
-  extractor:
-    _type: inception-fid
-    dim: <>fid-dim
-
-  criterion: frechet-distance
+  criterion: rmse
 
 
