@@ -136,7 +136,7 @@ _meta.script_name: train
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/vae, d/3ds]
 #parents: [hybrid, a/conv, m/tcvae, d/3ds]
 #parents: [hybrid, a/conv, m/fvae, d/mnist]
-parents: [hybrid, a/conv, m/tcvae, d/3ds] #, eval/disentanglement]
+parents: [hybrid, a/conv, m/vae, d/mnist] #, eval/disentanglement]
 #parents: [eval/disentanglement]
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, eval/disentanglement, d/3ds]
@@ -144,6 +144,8 @@ parents: [hybrid, a/conv, m/tcvae, d/3ds] #, eval/disentanglement]
 #parents: [demo]
 
 #model.nonlin: mish
+
+#model.fc-norm: <>norm
 
 #cat: toy
 

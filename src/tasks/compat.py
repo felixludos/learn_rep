@@ -14,18 +14,18 @@ import omnifig as fig
 
 prt = get_printer(__file__)
 
-# try:
+try:
 	# The code in these files can be found at https://github.com/bits-back/bits-back
 	# Also, after the code is copied, you must change the import statements to be relative instead of absolute
-from .lossless_compression import util
-from .lossless_compression import rans
-from .lossless_compression.torch_vae.tvae_beta_binomial import BetaBinomialVAE
-from .lossless_compression.torch_vae import tvae_utils
-from .lossless_compression.torch_vae.torch_mnist_compress import run_compress
-from .lossless_compression.torch_vae.torch_bin_mnist_compress import run_bin_compress
+	from .lossless_compression import util
+	from .lossless_compression import rans
+	from .lossless_compression.torch_vae.tvae_beta_binomial import BetaBinomialVAE
+	from .lossless_compression.torch_vae import tvae_utils
+	from .lossless_compression.torch_vae.torch_mnist_compress import run_compress
+	from .lossless_compression.torch_vae.torch_bin_mnist_compress import run_bin_compress
 
-# except ImportError:
-# 	prt.warning('Unable to import lossless compression files (find the code at https://github.com/bits-back/bits-back)')
+except ImportError:
+	prt.warning('Unable to import lossless compression files (find the code at https://github.com/bits-back/bits-back)')
 
 @fig.Script('test-compress')
 def _test_compress(A):
