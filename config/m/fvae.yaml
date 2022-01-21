@@ -1,0 +1,17 @@
+
+parents: [m/vae]
+
+model:
+  _model_type: fvae
+
+  discriminator:
+    _type: mlp
+    din: <>latent-dim
+    dout: 2
+    hidden: [1000, 1000, 1000]
+    norm: batch
+
+
+info.model_type: fvae
+
+

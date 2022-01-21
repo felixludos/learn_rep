@@ -4,7 +4,7 @@ import os  #, traceback, ipdb
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.distributions as distrib
+# import torch.distributions as distrib
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -26,6 +26,7 @@ from sklearn.decomposition import PCA
 import omnilearn as fd
 from omnilearn import models
 from omnilearn import util
+from omnilearn.util import distrib
 from omnilearn.models.unsup import Autoencoder as SimpleAutoencoder, Generative_AE, Variational_Autoencoder, Wasserstein_Autoencoder
 from omnilearn import viz as viz_util
 from omnilearn.data.collectors import MissingFIDStatsError
@@ -344,7 +345,7 @@ class Prior(Autoencoder, Generative_AE):
 	
 	def generate(self, N=1, prior=None):
 		return self.generate_prior(N, prior=prior)
-		
+
 	def generate_prior(self, N=1, prior=None):
 		if prior is None:
 			prior = self.sample_prior(N)

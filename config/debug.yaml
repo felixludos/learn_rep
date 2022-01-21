@@ -1,58 +1,58 @@
 
 #_meta.script_name: test-compress
 
-#_meta.script_name: test-line-compress
-#parents: [hybrid, m/ae, a/conv, d/mnist]
-#load: mnist_vae1_e-conv_d-conv_210910-135535
-
-#_meta.script_name: test-estimator
-#_meta.script_name: test-compression
-
-cat: sim
-
-_meta.script_name: eval-tasks
-parents: [tasks/interpolation, hybrid, m/ae, a/conv, d/3ds]
-#load: 3ds_vae1_d-conv_s3_210626-030352
-
-#din: [3,64,64]
-#dout: [3,64,64]
-
-#dataset.mode: full
+##_meta.script_name: test-line-compress
+##parents: [hybrid, m/ae, a/conv, d/mnist]
+##load: mnist_vae1_e-conv_d-conv_210910-135535
 #
-
-#num-train: 500
-#num-eval: 100
-
-#import matplotlib.pyplot as plt; from torch.nn.functional import normalize; plt.plot(normalize(results['distances'],2,0)); plt.plot(normalize(results['trues'],2,0));plt.show()
-
-
-#true-label-index: 4
+##_meta.script_name: test-estimator
+##_meta.script_name: test-compression
 #
-#auto-anomaly-class: 0
+#cat: sim
+#
+#_meta.script_name: eval-tasks
+#parents: [tasks/interpolation, hybrid, m/ae, a/conv, d/3ds]
+##load: 3ds_vae1_d-conv_s3_210626-030352
+#
+##din: [3,64,64]
+##dout: [3,64,64]
+#
+##dataset.mode: full
+##
+#
+##num-train: 500
+##num-eval: 100
+#
+##import matplotlib.pyplot as plt; from torch.nn.functional import normalize; plt.plot(normalize(results['distances'],2,0)); plt.plot(normalize(results['trues'],2,0));plt.show()
+#
+#
+##true-label-index: 4
+##
+##auto-anomaly-class: 0
+#
+#n_samples: 128
+#batch_size: 16
+#
+#num_steps: 5
+#
+##tasks.interpolation:
+##  encoder: None
+##  decoder: None
+#
+#
+##model._load-ckpt: 3ds_vae1_d-conv_s3_210626-030352
+#
+#
+#
+##n_samples: 5
+##batch_size: 5
+#
+##autosample: best
+#
+#
+##  use-distribution: False
 
-n_samples: 128
-batch_size: 16
-
-num_steps: 5
-
-#tasks.interpolation:
-#  encoder: None
-#  decoder: None
-
-
-#model._load-ckpt: 3ds_vae1_d-conv_s3_210626-030352
-
-
-
-#n_samples: 5
-#batch_size: 5
-
-#autosample: best
-
-
-#  use-distribution: False
-
-
+################
 
 
 #
@@ -126,7 +126,7 @@ num_steps: 5
 
 ####################################
 
-#_meta.script_name: train
+_meta.script_name: train
 #_meta.script_name: eval
 
 #budget: 10
@@ -134,14 +134,16 @@ num_steps: 5
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
 #parents: [hybrid, a/conv12, m/vae, d/3ds]
+parents: [hybrid, a/conv, m/tcvae, d/mnist]
 #parents: [demo]
 
+cat: toy
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, d/scm]
 #budget: 10
 #dataset.net: None
 
-soft-constraint-transform: True
+#soft-constraint-transform: True
 
 #seed: 1000
 #load: scm_ae_e-c12_d-s12_210210-044938
@@ -202,6 +204,7 @@ soft-constraint-transform: True
 
 #budget: 1000
 #viz.freq: 5
+#validation.freq: 5
 
 #evaluation: None
 #validation: None

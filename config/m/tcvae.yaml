@@ -1,0 +1,7 @@
+
+parents: [m/vae]
+
+model._model_type: tcvae
+
+info.model_type: tcvae
+
