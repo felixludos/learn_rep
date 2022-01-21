@@ -14,7 +14,7 @@ from omnilearn import util
 from omnilearn.util import distributions as distrib
 from omnilearn.op import get_save_dir
 # from omnilearn.eval import Metric
-from omnilearn.data import InterventionSamplerBase
+# from omnilearn.data import InterventionSamplerBase
 
 # from .responses import sample_full_interventions, response_mat, conditioned_reponses
 # from src.tasks.disentanglement_metrics import metric_beta_vae, metric_factor_vae, mig, dci, sap, \
