@@ -337,7 +337,7 @@ class TCVAE(VAE):
 
 @fig.Component('fvae')
 class FVAE(VAE):
-	def __init__(self, A, discriminator=unspecified_argument, gamma=unspecified_argument,
+	def __init__(self, A, discriminator=unspecified_argument, gamma=unspecified_argument, disc_wt=unspecified_argument,
 	             **kwargs):
 
 		if discriminator is unspecified_argument:
@@ -346,13 +346,158 @@ class FVAE(VAE):
 		if gamma is unspecified_argument:
 			gamma = A.pull('gamma', 40)
 
+		if disc_wt is unspecified_argument:
+			disc_wt = A.pull('disc-wt', 1)
 		super().__init__(A, **kwargs)
 
 		self.discriminator = discriminator
-		self.register_hparams(gamma=gamma)
+		self.register_attr('take_disc_step', False)
+		self.register_hparams(gamma=gamma, disc_wt=disc_wt)
+		self.register_stats('tc-loss-disc', 'tc-loss', 'kl-loss', 'disc-true', 'disc-false')
+	
+	
+	def permute_latent(self, z):
+		"""
+		Permutes each of the latent codes in the batch
+		:param z: [B x D]
+		:return: [B x D]
+		"""
+		B, D = z.size()
+		
+		# Returns a shuffled inds for each latent code in the batch
+		inds = torch.cat([(D * i) + torch.randperm(D) for i in range(B)])
+		return z.view(-1)[inds].view(B, D)
+	
+	
+	def _disc_step(self, out):
+		device = self.device
+		
+		for param in self.discriminator.parameters():
+			param.requires_grad = True
 
+		z_perm = self.permute_latent(out.latent_samples.detach())
+		
+		true_labels = torch.ones(z_perm.size(0), dtype=torch.long,
+		                         requires_grad=False).to(device)
+		false_labels = torch.zeros(z_perm.size(0), dtype=torch.long,
+		                           requires_grad=False).to(device)
+		
+		D_z_perm = self.discriminator(z_perm)
+		D_z = self.discriminator(out.latent.sample().detach())
+		D_tc_loss = 0.5 * (F.cross_entropy(D_z, false_labels) +
+		                   F.cross_entropy(D_z_perm, true_labels))
+		
+		self.mete('tc-loss-disc', D_tc_loss)
+		self.mete('disc-true', F.softmax(D_z_perm.detach(), 1)[:, 0].mean())
+		self.mete('disc-false', F.softmax(D_z.detach(), 1)[:, 0].mean())
+		
+		for param in self.discriminator.parameters():
+			param.requires_grad = False
+		
+		return self.disc_wt * D_tc_loss
+	
+	
+	def _reg_step(self, out):
+		if 'latent' not in out:
+			out.latent = self.encode(out.original)
+			out.latent_samples = out.latent.rsample() if isinstance(out.latent, util.Distribution) else out.latent
 
-		# # Discriminator network for the Total Correlation (TC) loss
+		q = out.latent
+		kld_loss = self.regularize(q)
+		
+		D_z = self.discriminator(out.latent_samples)
+		vae_tc_loss = (D_z[:, 0] - D_z[:, 1]).mean()
+		
+		reg_loss = self.reg_wt * kld_loss + self.gamma * vae_tc_loss
+		
+		self.mete('kl-loss', kld_loss)
+		self.mete('tc-loss', vae_tc_loss)
+		self.mete('reg-loss', reg_loss)
+		
+		disc_loss = self._disc_step(out)
+		
+		return reg_loss + disc_loss
+
+	
+	# def _step(self, batch, out=None):
+	#
+	# 	if self.train_me() and self.take_disc_step:
+	# 		out = self._process_batch(batch, out)
+	#
+	# 		if self.train_me():
+	# 			self.optim.zero_grad()
+	#
+	# 		loss = self._disc_step(out)
+	#
+	# 		if self.train_me():
+	# 			loss.backward()
+	# 			self.optim.step()
+	# 		out.reconstruction, out.original = self._viz_rec, self._viz_ori
+	# 	else:
+	# 		out = super()._step(batch, out=out)
+	# 		self._viz_rec, self._viz_ori = out.reconstruction, out.original
+	#
+	# 	if self.train_me():
+	# 		self.take_disc_step ^= True
+	# 	return out
+		
+	
+	# def loss_function(self,
+	#                   *args,
+	#                   **kwargs) -> dict:
+	# 	"""
+	# 	Computes the VAE loss function.
+	# 	KL(N(\mu, \sigma), N(0, 1)) = \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
+	#
+	# 	from https://github.com/AntixK/PyTorch-VAE/blob/master/models/fvae.py
+	#
+	# 	:param args:
+	# 	:param kwargs:
+	# 	:return:
+	# 	"""
+	# 	recons = args[0]
+	# 	input = args[1]
+	# 	mu = args[2]
+	# 	log_var = args[3]
+	# 	z = args[4]
+	#
+	# 	kld_weight = kwargs['M_N']  # Account for the minibatch samples from the dataset
+	# 	optimizer_idx = kwargs['optimizer_idx']
+	#
+	# 	# Update the VAE
+	# 	if optimizer_idx == 0:
+	# 		recons_loss = F.mse_loss(recons, input)
+	# 		kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
+	#
+	# 		self.D_z_reserve = self.discriminator(z)
+	# 		vae_tc_loss = (self.D_z_reserve[:, 0] - self.D_z_reserve[:, 1]).mean()
+	#
+	# 		loss = recons_loss + kld_weight * kld_loss + self.gamma * vae_tc_loss
+	#
+	# 		# print(f' recons: {recons_loss}, kld: {kld_loss}, VAE_TC_loss: {vae_tc_loss}')
+	# 		return {'loss': loss,
+	# 		        'Reconstruction_Loss': recons_loss,
+	# 		        'KLD': -kld_loss,
+	# 		        'VAE_TC_Loss': vae_tc_loss}
+	#
+	# 	# Update the Discriminator
+	# 	elif optimizer_idx == 1:
+	# 		device = input.device
+	# 		true_labels = torch.ones(input.size(0), dtype=torch.long,
+	# 		                         requires_grad=False).to(device)
+	# 		false_labels = torch.zeros(input.size(0), dtype=torch.long,
+	# 		                           requires_grad=False).to(device)
+	#
+	# 		z = z.detach()  # Detach so that VAE is not trained again
+	# 		z_perm = self.permute_latent(z)
+	# 		D_z_perm = self.discriminator(z_perm)
+	# 		D_tc_loss = 0.5 * (F.cross_entropy(self.D_z_reserve, false_labels) +
+	# 		                   F.cross_entropy(D_z_perm, true_labels))
+	# 		# print(f'D_TC: {D_tc_loss}')
+	# 		return {'loss': D_tc_loss,
+	# 		        'D_TC_Loss': D_tc_loss}
+	
+	# # Discriminator network for the Total Correlation (TC) loss
 		# self.discriminator = nn.Sequential(nn.Linear(self.latent_dim, 1000),
 		#                                    nn.BatchNorm1d(1000),
 		#                                    nn.LeakyReLU(0.2),
@@ -416,74 +561,6 @@ class FVAE(VAE):
 	# 	z = self.reparameterize(mu, log_var)
 	# 	return [self.decode(z), input, mu, log_var, z]
 
-
-	def permute_latent(self, z):
-		"""
-		Permutes each of the latent codes in the batch
-		:param z: [B x D]
-		:return: [B x D]
-		"""
-		B, D = z.size()
-
-		# Returns a shuffled inds for each latent code in the batch
-		inds = torch.cat([(D * i) + torch.randperm(D) for i in range(B)])
-		return z.view(-1)[inds].view(B, D)
-
-
-	def loss_function(self,
-	                  *args,
-	                  **kwargs) -> dict:
-		"""
-		Computes the VAE loss function.
-		KL(N(\mu, \sigma), N(0, 1)) = \log \frac{1}{\sigma} + \frac{\sigma^2 + \mu^2}{2} - \frac{1}{2}
-
-		from https://github.com/AntixK/PyTorch-VAE/blob/master/models/fvae.py
-
-		:param args:
-		:param kwargs:
-		:return:
-		"""
-		recons = args[0]
-		input = args[1]
-		mu = args[2]
-		log_var = args[3]
-		z = args[4]
-
-		kld_weight = kwargs['M_N']  # Account for the minibatch samples from the dataset
-		optimizer_idx = kwargs['optimizer_idx']
-
-		# Update the VAE
-		if optimizer_idx == 0:
-			recons_loss = F.mse_loss(recons, input)
-			kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0)
-
-			self.D_z_reserve = self.discriminator(z)
-			vae_tc_loss = (self.D_z_reserve[:, 0] - self.D_z_reserve[:, 1]).mean()
-
-			loss = recons_loss + kld_weight * kld_loss + self.gamma * vae_tc_loss
-
-			# print(f' recons: {recons_loss}, kld: {kld_loss}, VAE_TC_loss: {vae_tc_loss}')
-			return {'loss': loss,
-			        'Reconstruction_Loss': recons_loss,
-			        'KLD': -kld_loss,
-			        'VAE_TC_Loss': vae_tc_loss}
-
-		# Update the Discriminator
-		elif optimizer_idx == 1:
-			device = input.device
-			true_labels = torch.ones(input.size(0), dtype=torch.long,
-			                         requires_grad=False).to(device)
-			false_labels = torch.zeros(input.size(0), dtype=torch.long,
-			                           requires_grad=False).to(device)
-
-			z = z.detach()  # Detach so that VAE is not trained again
-			z_perm = self.permute_latent(z)
-			D_z_perm = self.discriminator(z_perm)
-			D_tc_loss = 0.5 * (F.cross_entropy(self.D_z_reserve, false_labels) +
-			                   F.cross_entropy(D_z_perm, true_labels))
-			# print(f'D_TC: {D_tc_loss}')
-			return {'loss': D_tc_loss,
-			        'D_TC_Loss': D_tc_loss}
 
 
 	# def sample(self,
