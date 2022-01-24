@@ -40,6 +40,7 @@ from tqdm import tqdm
 # import encoders
 # import pointnets
 # from . import transfer, visualizations as viz_util
+from .tasks import run_tasks
 
 MY_PATH = os.path.dirname(os.path.abspath(__file__))
 
@@ -63,6 +64,8 @@ class Autoencoder(SimpleAutoencoder):
 		self._viz_settings.add('gen-prior')
 		if A.pull('force-viz', False):
 			self._viz_settings.add('force')
+
+		self._record_eval_scores = A.pull('record-eval-scores', True)
 
 	def _compute_fid(self, fid, generate_fn, name, out):
 		
@@ -94,10 +97,10 @@ class Autoencoder(SimpleAutoencoder):
 			dataset = info.get_dataset()
 		if config is None:
 			config = info.get_config()
-		return self._evaluate(dataset, config=config, **kwargs)
+		return self._evaluate(dataset, config=config, run=info, **kwargs)
 		
 		
-	def _evaluate(self, dataset, config=None, out=None):
+	def _evaluate(self, dataset, config=None, out=None, run=None):
 		if out is None:
 			out = super()._evaluate(dataset, config=config, out=out)
 		
@@ -119,8 +122,21 @@ class Autoencoder(SimpleAutoencoder):
 				return self(img)
 			
 			self._compute_fid(fid, generate_fn=_rec_gen, name='rec', out=out)
-			
-		
+
+		scores = run_tasks(config, run=run)
+		out.scores = scores
+		for name, vals in scores.items():
+			if self._record_eval_scores:
+				if 'score' in vals:
+					key = f'{name}-score'
+					self.register_stats(key)
+					self.mete(key, vals['score'])
+			else:
+				for key, val in vals.items():
+					key = f'{name}-{key}'
+					self.register_stats(key)
+					self.mete(key, val)
+
 		return out
 
 	def _visualize(self, info, records):
@@ -225,9 +241,9 @@ class Hybrid(Autoencoder, Generative_AE):
 		if viz_gen_hybrid:
 			self._viz_settings.add('gen-hybrid')
 	
-	def _evaluate(self, dataset, config, out=None):
+	def _evaluate(self, dataset, config, out=None, **kwargs):
 		
-		out = super()._evaluate(dataset, config, out=out)
+		out = super()._evaluate(dataset, config, out=out, **kwargs)
 		
 		if not config.pull('skip-hyb-fid', False):
 		
@@ -320,9 +336,9 @@ class Prior(Autoencoder, Generative_AE):
 		if viz_gen_prior:
 			self._viz_settings.add('gen-prior')
 	
-	def _evaluate(self, dataset, config, out=None):
+	def _evaluate(self, dataset, config, out=None, **kwargs):
 		
-		out = super()._evaluate(dataset, config, out=out)
+		out = super()._evaluate(dataset, config, out=out, **kwargs)
 		
 		fid = config.pull('fid', None, ref=True, silent=True)
 		if fid is not None:

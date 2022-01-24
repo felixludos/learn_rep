@@ -134,7 +134,7 @@ _meta.script_name: train
 #dataset.batch_size: 64
 
 #parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
-parents: [hybrid, a/conv16, m/tcvae, d/celeba]
+#parents: [hybrid, a/conv, m/tcvae, d/3ds]
 #parents: [hybrid, a/conv, m/fvae, d/3ds, eval/disentanglement]
 #parents: [eval/disentanglement, d/3ds]
 #parents: [d/celeba]
@@ -214,7 +214,9 @@ evaluation.step-limit: 20
 #validation: None
 #validation.freq: 5
 validation.step-limit: 10
+
 save-results: false
+skip-save: true
 
 #eval.mode: test
 

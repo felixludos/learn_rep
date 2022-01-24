@@ -1,4 +1,4 @@
-from . import common
+from .common import run_tasks
 from .downstream import InferenceTask
 # from .discriminative import MetricTask
 from .generative import GenerationTask, NoveltyTask

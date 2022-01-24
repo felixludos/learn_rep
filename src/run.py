@@ -46,12 +46,9 @@ class SAE_Run(fd.op.Torch_Run):
 		return name.replace(' ', '')
 
 
-	def evaluate(self, ident='eval', config=None, **kwargs):
-
-		out = super().evaluate(ident, config=config, **kwargs)
-
-		if config is None:
-			config = self.get_config()
-		fig.run('eval-tasks', config)
-
-		return out
+	# def evaluate(self, ident='eval', config=None, **kwargs):
+	#
+	# 	out = super().evaluate(ident, config=config, **kwargs)
+	#
+	#
+	# 	return out

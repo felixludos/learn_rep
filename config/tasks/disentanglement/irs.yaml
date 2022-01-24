@@ -5,6 +5,6 @@ tasks.irs:
   _type: task/disentanglement/irs
 
 
-#  score-key: disentanglement
+  score-key: avg_score
 
   num_train: <>num-train

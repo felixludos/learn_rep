@@ -28,10 +28,15 @@ prt = get_printer(__file__)
 
 
 @fig.Script('eval-tasks')
-def run_tasks(config, run=None, tasks=None, overwrite=None, use_dataset=None):
+def run_tasks(config, run=None, tasks=None, overwrite=None, use_dataset=None, skip_save=None):
 	if run is None:
 		run = fig.run('load-run', config)
 	# return run.eval_tasks(config=config)
+
+	if skip_save is None:
+		skip_save = config.pull('skip-save', False)
+	if skip_save:
+		print('WARNING: not saving results from tasks')
 
 	if overwrite is None:
 		overwrite = config.pull('overwrite', False)
@@ -47,17 +52,22 @@ def run_tasks(config, run=None, tasks=None, overwrite=None, use_dataset=None):
 	if overwrite:
 		print('Overwriting past results')
 
+	task_scores = {}
+
 	for name, task in tasks.items():
 		if not run.has_datafile(f'tasks/{name}') or overwrite:
 			kwargs = {}
 			if use_dataset:
 				kwargs['dataset'] = run.get_dataset()
 			scores, results = task.compute(**kwargs)
-			run.update_datafile(f'tasks/{name}', {'scores':scores, 'results':results})
-			score = f' (score: {results.score:.3g})' if 'score' in results else ''
+			if not skip_save:
+				run.update_datafile(f'tasks/{name}', {'scores':scores, 'results':results})
+			score = ' (score: {:.3g})'.format(scores['score']) if 'score' in scores else ''
+			task_scores[name] = scores
 			print(f'{name} complete{score}')
 
 	print('All tasks complete')
+	return task_scores
 
 
 
