@@ -1,0 +1,11 @@
+parents: [tasks/disentanglement/_base]
+
+
+tasks.modexp:
+  _type: task/disentanglement/mod-exp
+
+
+  score-key: explicitness_score_test
+
+  num_train: <>num-train
+  num_test: <>num-eval

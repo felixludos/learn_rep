@@ -304,6 +304,7 @@ class GroundTruthData(object):
 
 class DisentanglementDatasetCompat(GroundTruthData):
 	def __init__(self, dataset):
+		dataset.switch_to('full')
 		self.base = dataset
 
 	@property
@@ -321,7 +322,7 @@ class DisentanglementDatasetCompat(GroundTruthData):
 
 	def sample_factors(self, num, random_state, to_numpy=True):
 		"""Sample a batch of factors Y."""
-		factors = self.base._generate_labels(num, seed=int.from_bytes(random_state.bytes(4),
+		factors = self.base.generate_labels(num, seed=int.from_bytes(random_state.bytes(4),
 		                                                           byteorder='big', signed=True))
 		if to_numpy:
 			factors = factors.numpy()

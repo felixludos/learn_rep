@@ -1,0 +1,10 @@
+parents: [tasks/disentanglement/_base]
+
+
+tasks.unsup:
+  _type: task/disentanglement/unsupervised
+
+
+  score-key: gaussian_total_correlation
+
+  num_train: <>num-train

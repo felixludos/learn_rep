@@ -1,0 +1,11 @@
+parents: [tasks/disentanglement/_base]
+
+
+tasks.sap:
+  _type: task/disentanglement/sap
+
+
+  score-key: SAP_score
+
+  num_train: <>num-train
+  num_test: <>num-eval

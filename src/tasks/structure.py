@@ -64,7 +64,8 @@ class UnsupervisedMetrics(DisentanglementTask):
 		self.num_train = num_train
 
 
-	def _run(self, **kwargs):
+	def _run(self, out=None):
+		out = super()._run(out=out)
 		return unsupervised_metrics.unsupervised_metrics(self._compat_dataset, self._representation_function,
 		                                                 np.random, self.num_train, self.batch_size)
 
@@ -95,7 +96,8 @@ class ModularityExplicitness(DisentanglementTask):
 		self.num_test = num_test
 
 
-	def _run(self, **kwargs):
+	def _run(self, out=None):
+		out = super()._run(out=out)
 		return modularity_explicitness.compute_modularity_explicitness(self._compat_dataset,
 		                                                               self._representation_function,
 		                                                               np.random, self.num_train, self.num_test,

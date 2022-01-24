@@ -1,0 +1,10 @@
+parents: [tasks/disentanglement/_base]
+
+
+tasks.irs:
+  _type: task/disentanglement/irs
+
+
+#  score-key: disentanglement
+
+  num_train: <>num-train

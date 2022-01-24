@@ -1,0 +1,9 @@
+parents: [tasks/disentanglement/_base]
+
+
+tasks.mig:
+  _type: task/disentanglement/mig
+
+  score-key: discrete_mig
+
+  num_train: <>num-train
