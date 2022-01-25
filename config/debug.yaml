@@ -126,23 +126,28 @@
 
 ####################################
 
-_meta.script_name: train
-#_meta.script_name: eval
+#_meta.script_name: train
+_meta.script_name: eval
 #_meta.script_name: eval-tasks
 
 #budget: 10
 #dataset.batch_size: 64
 
-#parents: [hybrid, a/e/conv12, a/d/strc/2, m/vae, d/3ds]
+#parents: [hybrid, a/e/conv12, a/d/strc/12, m/vae, d/3ds]
 #parents: [hybrid, a/conv, m/tcvae, d/3ds]
+#parents: [hybrid, a/conv, m/fvae, d/mnist]
 #parents: [hybrid, a/conv, m/fvae, d/3ds, eval/disentanglement]
-#parents: [eval/disentanglement, d/3ds]
+parents: [eval/disentanglement, d/3ds]
+
+#parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, eval/disentanglement, d/3ds]
 #parents: [d/celeba]
 #parents: [demo]
 
-cat: toy
+#model.nonlin: mish
 
-reg-wt: 4
+#cat: toy
+
+#reg-wt: 4
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, d/scm]
 #budget: 10
@@ -153,6 +158,9 @@ reg-wt: 4
 #seed: 1000
 #load: scm_ae_e-c12_d-s12_210210-044938
 #load: test-pycharm_220124-120338
+#load: 3ds_fvae4_e-c12_d-c12_220124-171141
+load: 3ds_ae0_e-c12_d-s12_mish_210125-050335
+
 #parents: [eval/scm]
 #run-name: scm_ae_e-c12_d-s12_210210-044938
 #run-name: sim_vae1_e-c12_d-c12_210126-035851

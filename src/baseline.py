@@ -250,7 +250,7 @@ class TCVAE(VAE):
 
 		self.register_attr('num_iter', 0)
 		self.register_hparams(alpha=alpha, beta=beta, gamma=gamma, anneal_steps=anneal_steps)
-		self.register_stats('mi-loss', 'tc-loss', 'kld-loss')
+		self.register_stats('mi-loss', 'tc-loss', 'kl-loss')
 
 		self.register_buffer('_wt_mat', None)
 
@@ -318,7 +318,7 @@ class TCVAE(VAE):
 
 		self.mete('mi-loss', mi_loss)
 		self.mete('tc-loss', tc_loss)
-		self.mete('kld-loss', kld_loss)
+		self.mete('kl-loss', kld_loss)
 
 		# kld_loss = torch.mean(-0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim = 1), dim = 0)
 

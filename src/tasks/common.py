@@ -45,7 +45,7 @@ def run_tasks(config, run=None, tasks=None, overwrite=None, use_dataset=None, sk
 		use_dataset = config.pull('use-dataset', False)
 
 	if tasks is None:
-		tasks = config.pull('tasks')
+		tasks = config.pull('tasks', {})
 
 	names = ', '.join(tasks.keys())
 	print(f'Evaluating {len(tasks)} tasks: {names}')

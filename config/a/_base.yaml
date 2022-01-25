@@ -25,6 +25,7 @@ model:
     last:
       _type: mlp
       out_nonlin: None
+      group: None
 
   decoder:
     _type: multilayer
