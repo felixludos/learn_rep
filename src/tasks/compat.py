@@ -313,7 +313,7 @@ class DisentanglementDatasetCompat(GroundTruthData):
 
 	@property
 	def factors_num_values(self):
-		return [len(dim) for dim in self.base.get_target_space()]
+		return [dim.expanded_len() for dim in self.base.get_target_space()]
 
 	@property
 	def observation_shape(self):

@@ -126,8 +126,8 @@
 
 ####################################
 
-#_meta.script_name: train
-_meta.script_name: eval
+_meta.script_name: train
+#_meta.script_name: eval
 #_meta.script_name: eval-tasks
 
 #budget: 10
@@ -136,8 +136,8 @@ _meta.script_name: eval
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/vae, d/3ds]
 #parents: [hybrid, a/conv, m/tcvae, d/3ds]
 #parents: [hybrid, a/conv, m/fvae, d/mnist]
-#parents: [hybrid, a/conv, m/fvae, d/3ds, eval/disentanglement]
-parents: [eval/disentanglement, d/3ds]
+parents: [hybrid, a/conv, m/tcvae, d/3ds] #, eval/disentanglement]
+#parents: [eval/disentanglement]
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, eval/disentanglement, d/3ds]
 #parents: [d/celeba]
@@ -153,13 +153,14 @@ parents: [eval/disentanglement, d/3ds]
 #budget: 10
 #dataset.net: None
 
+
 #soft-constraint-transform: True
 
 #seed: 1000
 #load: scm_ae_e-c12_d-s12_210210-044938
 #load: test-pycharm_220124-120338
 #load: 3ds_fvae4_e-c12_d-c12_220124-171141
-load: 3ds_ae0_e-c12_d-s12_mish_210125-050335
+#load: 3ds_ae0_e-c12_d-s12_mish_210125-050335
 
 #parents: [eval/scm]
 #run-name: scm_ae_e-c12_d-s12_210210-044938
@@ -215,46 +216,49 @@ load: 3ds_ae0_e-c12_d-s12_mish_210125-050335
 
 #model.encoder.layers.0._type: coord-conv-layer
 
+#device: cuda
+
+#model.optim.lr: 0.001
+
 budget: 20
 #evaluation: None
 evaluation.step-limit: 20
+evaluation.headless: yes
 #viz.freq: 5
 #validation: None
 #validation.freq: 5
 validation.step-limit: 10
 
+#overwrite: yes
 save-results: false
 skip-save: true
 
+eval.ident: seconds
 #eval.mode: test
 
+#fid.dim: 2048
+#fid: None
+fid.dim: 64
+fid.n_samples: 1000
+fid.batch_size: 16
 
-#residual: yes
-
-#reg-wt: 10000
 
 
-#device: cuda
-
-#model.optim.lr: 0.001
 
 
 name: test-pycharm
 inline: True
 #device: cuda:1
 
-#fid.dim: 2048
-fid.dim: 64
-fid.n_samples: 1000
-fid.batch_size: 16
+pbar._type: progress-bar
+
+print_dims: True
+
 
 #dataset:
 #  device: cpu
 #  category: real
 
-pbar._type: progress-bar
-
-print_dims: True
 
 
 
