@@ -1,4 +1,4 @@
-parents: [a/size/64, base]
+parents: [eval/disentanglement, a/size/64, base]
 
 dataset:
     name: 3dshapes
