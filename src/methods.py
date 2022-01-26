@@ -65,6 +65,7 @@ class Autoencoder(SimpleAutoencoder):
 		if A.pull('force-viz', False):
 			self._viz_settings.add('force')
 
+		self._skip_evaluation_tasks = A.pull('skip-eval-tasks', False)
 		self._record_eval_scores = A.pull('record-eval-scores', True)
 
 	def _compute_fid(self, fid, generate_fn, name, out):
@@ -123,20 +124,20 @@ class Autoencoder(SimpleAutoencoder):
 			
 			self._compute_fid(fid, generate_fn=_rec_gen, name='rec', out=out)
 
-		scores = run_tasks(config, run=run)
-		out.scores = scores
-		for name, vals in scores.items():
-			if self._record_eval_scores:
-				if 'score' in vals:
-					key = f'{name}-score'
-					self.register_stats(key)
-					self.mete(key, vals['score'])
-			else:
-				for key, val in vals.items():
-					key = f'{name}-{key}'
-					self.register_stats(key)
-					self.mete(key, val)
-
+		if not self._skip_evaluation_tasks:
+			scores = run_tasks(config, run=run)
+			out.scores = scores
+			for name, vals in scores.items():
+				if self._record_eval_scores:
+					if 'score' in vals:
+						key = f'{name}-score'
+						self.register_stats(key)
+						self.mete(key, vals['score'])
+				else:
+					for key, val in vals.items():
+						key = f'{name}-{key}'
+						self.register_stats(key)
+						self.mete(key, val)
 		return out
 
 	def _visualize(self, info, records):

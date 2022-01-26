@@ -126,8 +126,8 @@
 
 ####################################
 
-_meta.script_name: train
-#_meta.script_name: eval
+#_meta.script_name: train
+_meta.script_name: eval
 #_meta.script_name: eval-tasks
 
 #budget: 10
@@ -136,7 +136,7 @@ _meta.script_name: train
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/vae, d/3ds]
 #parents: [hybrid, a/conv, m/tcvae, d/3ds]
 #parents: [hybrid, a/conv, m/fvae, d/mnist]
-parents: [hybrid, a/conv, m/vae, d/mnist] #, eval/disentanglement]
+#parents: [hybrid, a/conv, m/vae, d/mnist] #, eval/disentanglement]
 #parents: [eval/disentanglement]
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, eval/disentanglement, d/3ds]
@@ -159,6 +159,7 @@ parents: [hybrid, a/conv, m/vae, d/mnist] #, eval/disentanglement]
 #soft-constraint-transform: True
 
 #seed: 1000
+load: 3ds_vae1_e-c12_d-c12_mish-fcn_220126-000408
 #load: scm_ae_e-c12_d-s12_210210-044938
 #load: test-pycharm_220124-120338
 #load: 3ds_fvae4_e-c12_d-c12_220124-171141
@@ -235,8 +236,8 @@ validation.step-limit: 10
 save-results: false
 skip-save: true
 
-eval.ident: seconds
-#eval.mode: test
+ident: seconds
+mode: test
 
 #fid.dim: 2048
 #fid: None
