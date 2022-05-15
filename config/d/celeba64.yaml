@@ -1,8 +1,12 @@
-parents: [a/size/128, base128]
+parents: [base128, a/size/64]
 
 batch-size: 32
 
 dataset:
+    _dataset_mod: interpolated
+
+    size: 64
+
     name: 'celeba'
 
     batch_size: <>batch-size

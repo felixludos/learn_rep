@@ -126,8 +126,8 @@
 
 ####################################
 
-#_meta.script_name: train
-_meta.script_name: eval
+_meta.script_name: train
+#_meta.script_name: eval
 #_meta.script_name: eval-tasks
 
 #budget: 10
@@ -139,6 +139,8 @@ _meta.script_name: eval
 #parents: [hybrid, a/conv, m/vae, d/mnist] #, eval/disentanglement]
 #parents: [eval/disentanglement]
 
+parents: [hybrid, a/conv, m/vae, d/celeba64]
+
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, eval/disentanglement, d/3ds]
 #parents: [d/celeba]
 #parents: [demo]
@@ -148,6 +150,10 @@ _meta.script_name: eval
 #model.fc-norm: <>norm
 
 #cat: toy
+
+batch-size: 256
+model.channels: 128
+latent-dim: 64
 
 #reg-wt: 4
 
@@ -159,7 +165,7 @@ _meta.script_name: eval
 #soft-constraint-transform: True
 
 #seed: 1000
-load: 3ds_vae1_e-c12_d-c12_mish-fcn_220126-000408
+#load: 3ds_vae1_e-c12_d-c12_mish-fcn_220126-000408
 #load: scm_ae_e-c12_d-s12_210210-044938
 #load: test-pycharm_220124-120338
 #load: 3ds_fvae4_e-c12_d-c12_220124-171141
