@@ -139,7 +139,8 @@ _meta.script_name: train
 #parents: [hybrid, a/conv, m/vae, d/mnist] #, eval/disentanglement]
 #parents: [eval/disentanglement]
 
-parents: [hybrid, a/conv, m/vae, d/celeba64]
+#parents: [hybrid, a/conv, m/vae, d/celeba64]
+parents: [hybrid, a/conv, m/vae, d/mnist]
 
 #parents: [hybrid, a/e/conv12, a/d/strc/12, m/ae, eval/disentanglement, d/3ds]
 #parents: [d/celeba]
@@ -151,9 +152,9 @@ parents: [hybrid, a/conv, m/vae, d/celeba64]
 
 #cat: toy
 
-batch-size: 256
-model.channels: 128
-latent-dim: 64
+#batch-size: 256
+#model.channels: 128
+#latent-dim: 64
 
 #reg-wt: 4
 
